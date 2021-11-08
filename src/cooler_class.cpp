@@ -1,11 +1,12 @@
 class Cooling {
-    int status = 2;
+    int status_code = 2;
     //Measurement in this case is value from thermocoupler, so no array required
     double lastMeasurements;
 
     int init() {
         //Run setup procedures and return appropriate status code
-        return 0;
+        status_code = 0;
+        return status_code;
     }
 
     double odometry() {
