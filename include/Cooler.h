@@ -1,12 +1,11 @@
-class Cooler {
+#include <Subsystem.h>
+
+class Cooler: public Subsystem {
     //PINS
     int THERMO_PIN;
 
     int temperature;
     bool fanOn;
-
-    int status;
-    int report;
     /*
     Report structure:
     ABBBCD
@@ -16,8 +15,4 @@ class Cooler {
     D: Other errors (specific case)
     */
     Cooler(int thermo_pin);
-    int init() {return status;}
-    int odometry() {return status;}
-    int action() {return status;}
-    int report() {return report;}
 };

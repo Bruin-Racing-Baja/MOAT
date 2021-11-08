@@ -1,13 +1,12 @@
-class Actuator {
+#include <Subsystem.h>
+
+class Actuator: public Subsystem {
     //Pins
 
 
 
     int position;
     bool currently_moving;
-
-    int status;
-    int report;
     /*
     Report Structure:
     ABBBCCCDDDEF
@@ -19,8 +18,4 @@ class Actuator {
     F: Other error (specific)
     */
     Actuator();
-    int init() {return status;}
-    int odometry() {return status;}
-    int action() {return status;}
-    int report() {return report;}
 };
