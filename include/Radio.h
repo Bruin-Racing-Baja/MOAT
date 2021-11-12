@@ -14,7 +14,9 @@ class Radio {
     int status;
     
     RH_RF95 radio; //Radio object for use with library
-    Radio(int CS, int RST, int INT, double freq);
-    int init() {return status;}
-    int send(char* data, int len) {return status;}
+    
+    public:
+        Radio(int CS, int RST, int INT, double freq);
+        int init() {return status;}
+        int send(char* data, int len) {return status;}
 };

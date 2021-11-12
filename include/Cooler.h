@@ -14,5 +14,7 @@ class Cooler: public Subsystem {
     C: Fan status (0 = off, 1 = on)
     D: Other errors (specific case)
     */
-    Cooler(int thermo_pin);
+    public:
+        Cooler(int thermo_pin);
+        int init();
 };

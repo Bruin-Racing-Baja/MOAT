@@ -1,5 +1,10 @@
-class Actuator {
-    int status_code = 2;
-    Actuator();
-    int get_status_code();
-};
+#include <Actuator.h>
+
+Actuator::Actuator() {
+    status = 0;
+}
+
+int Actuator::init() {
+    status = 0;
+    return status;
+}

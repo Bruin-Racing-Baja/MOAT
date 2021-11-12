@@ -17,5 +17,7 @@ class Actuator: public Subsystem {
     E: Currently moving
     F: Other error (specific)
     */
-    Actuator();
+    public:
+        Actuator(int pin);
+        int init();
 };
