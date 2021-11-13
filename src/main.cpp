@@ -14,9 +14,9 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
-#include <Battery.h>
-#include <Cooler.h>
-#include <Radio.h>
+//#include <Battery.h>
+//#include <Cooler.h>
+//#include <Radio.h>
 
 
 //GENERAL SETTINGS
@@ -32,11 +32,14 @@ General code to oversee all functions of the Teensy
   //Add like req ports, 
 
   //PINS
-  #define actuator_pin_1 2
+  #define eg_tooth 1
+  #define gb_tooth 1
+  #define inbound_hall 1
+  #define outbound_hall 1
   //CONSTANTS
-
+  #define odrive_serial Serial1
   //CREATE OBJECT
-  Actuator actuator(actuator_pin_1);
+  Actuator actuator(odrive_serial, eg_tooth, gb_tooth, inbound_hall, outbound_hall);
 
 
 
@@ -48,7 +51,7 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
 
   //CREATE OBJECT
-  Battery battery(battery_pin_1);
+  //Battery battery(battery_pin_1);
 
 
 
@@ -61,7 +64,7 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
 
   //CREATE OBJECT
-  Cooler cooler(THERMO_PIN);
+  //Cooler cooler(THERMO_PIN);
 
 
 
@@ -75,7 +78,7 @@ General code to oversee all functions of the Teensy
   #define RADIO_FREQ 915.0
 
   //CREATE OBJECT
-  Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
+  //Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
 
 
 
@@ -86,35 +89,38 @@ General code to oversee all functions of the Teensy
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
-  if (DEBUG_MODE) {
-    Serial.begin(9600);
-    while (!Serial) {
-      ; //Wait for serial to be ready
-    }
-    Serial.println("[DEBUG MODE]");
-  }
+  // if (DEBUG_MODE) {
+  //   Serial.begin(9600);
+  //   while (!Serial) {
+  //     ; //Wait for serial to be ready
+  //   }
+  //   Serial.println("[DEBUG MODE]");
+  // }
 
-  error_tracker[0] = actuator.init();
-  if (error_tracker[0] != 0 && req_actuator){
-    debugMessage("[ERROR] Actuator failed to initialize");
-    while(1);
-  }
-  error_tracker[2] = cooler.init();
-  if (error_tracker[2] != 0 && req_cooler){
-    debugMessage("[ERROR] Cooler failed to initialize");
-    while(1);
-  }
-  error_tracker[3] = radio.init();
-  if (error_tracker[3] != 0 && req_radio){
-    debugMessage("[ERROR] Radio failed to initialize");
-    while(1);
-  }
+  // error_tracker[0] = actuator.init();
+  // if (error_tracker[0] != 0 && req_actuator){
+  //   debugMessage("[ERROR] Actuator failed to initialize");
+  //   while(1);
+  // }
+  // error_tracker[2] = cooler.init();
+  // if (error_tracker[2] != 0 && req_cooler){
+  //   debugMessage("[ERROR] Cooler failed to initialize");
+  //   while(1);
+  // }
+  // error_tracker[3] = radio.init();
+  // if (error_tracker[3] != 0 && req_radio){
+  //   debugMessage("[ERROR] Radio failed to initialize");
+  //   while(1);
+  // }
 
-  debugMessage("All systems initialized successfully");
+  // debugMessage("All systems initialized successfully");
+
+
+  actuator.initialize();
 }
 
 void loop() {
-  
+  actuator.control_function();
 }
 
 void debugMessage(const char* message) {
