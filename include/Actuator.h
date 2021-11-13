@@ -1,10 +1,8 @@
-#include <Subsystem.h>
-
-class Actuator: public Subsystem {
+class Actuator {
     //Pins
 
 
-
+    int status;
     int position;
     bool currently_moving;
     /*
@@ -18,6 +16,8 @@ class Actuator: public Subsystem {
     F: Other error (specific)
     */
     public:
-        Actuator(int pin);
+        Actuator();
         int init();
+        int * odometry();
+        
 };

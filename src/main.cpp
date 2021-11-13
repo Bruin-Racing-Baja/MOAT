@@ -17,6 +17,7 @@ General code to oversee all functions of the Teensy
 #include <Battery.h>
 #include <Cooler.h>
 #include <Radio.h>
+#include <Report.h>
 
 
 //GENERAL SETTINGS
@@ -114,7 +115,21 @@ void setup() {
 }
 
 void loop() {
-  
+/*---------------------------[Overall Init]---------------------------*/
+  Report report; //Generates a new report object
+
+  report.battery(battery.measureVoltage()); //Measures battery voltage and adds to the report
+  report.cooler_temp()
+
+
+  int code_temp[4] = actuator.odometry();
+  if (code_temp[0] != 0){
+    error_tracker[0] = code_temp[0];
+    debugMessage("[ERROR] Actuator failed to measure");
+  }
+  else {
+    report.actuator(code_temp);
+  }
 }
 
 void debugMessage(const char* message) {
