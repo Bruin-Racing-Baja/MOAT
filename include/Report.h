@@ -1,13 +1,15 @@
 class Report {
-    int actuator_report;
+    int* actuator_report[4] = {0, 0, 0, 0};
     double battery_report;
-    int cooling_report;
+    int* cooling_report;
+
+    // char* strFromArray(int* array, int len);
 
     public:
-        int actuator(int* in);
-        int battery(double voltage);
-        int cooling_temp(double in);
-        int cooling_fan(int in);
+        void a_odometry(int* odometry_results);
+        void a_action(int action_status);
+        void cooling(int* in);
 
-        int get_report(); //Gives fully compiled report
+        char* getReport(); //Returns fully compiled report
+        //TODO: A DESTRUCTOR
 };

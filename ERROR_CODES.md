@@ -33,7 +33,11 @@ HOMING
 INITIALIZATION ERROR
     0001 - LoRa radio init failed (Teensy -/-> radio module)
     0002 - SetFrequency failed
+    0003 - Not Initiated yet
 
 SENT MESSAGE FAILURE
     0011 - Reply failed (but was given a response)
     0012 - No reply, timeout (Unable to connect to reciever)
+
+SENDING FAILURE
+    0021 - radio.send failed

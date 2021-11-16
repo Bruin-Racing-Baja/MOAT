@@ -21,7 +21,11 @@ General code to oversee all functions of the Teensy
 
 
 //GENERAL SETTINGS
-  #define DEBUG_MODE 0 //Starts with Serial output, waits for connection
+  #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
+
+  #define WAIT_FOR_RADIO 0 //Waits for a radio connection before continuing
+  //Useful for debugging issues with startup report
+
   #define req_battery 1 //Halts program if battery allocation fails
   #define req_radio 1 //Halts program if radio allocation fails
   #define req_actuator 1 //Halts program if actuator allocation fails
@@ -112,24 +116,33 @@ void setup() {
   }
 
   debugMessage("All systems initialized successfully");
+  if (WAIT_FOR_RADIO) {
+    while (true) {
+      int response = radio.checkConnection();
+      if (response) {
+        break;
+      }
+      delay(200);
+    }
+  }
 }
 
 void loop() {
 /*---------------------------[Overall Init]---------------------------*/
   Report report; //Generates a new report object
 
-  report.battery(battery.measureVoltage()); //Measures battery voltage and adds to the report
-  report.cooler_temp()
+  // report.battery(battery.measureVoltage()); //Measures battery voltage and adds to the report
 
+  // report.cooler_temp()
 
-  int code_temp[4] = actuator.odometry();
-  if (code_temp[0] != 0){
-    error_tracker[0] = code_temp[0];
-    debugMessage("[ERROR] Actuator failed to measure");
-  }
-  else {
-    report.actuator(code_temp);
-  }
+  report.actuator(actuator.odometry());
+
+  actuator.action();
+
+  char* generated_report = report.getReport();
+
+  radio.send(generated_report, sizeof(generated_report)); //Sends the report to the radio
+
 }
 
 void debugMessage(const char* message) {

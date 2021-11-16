@@ -13,3 +13,7 @@ int* Actuator::odometry() {
     int return_code[4] = {0, 0, 0, 0};
     return return_code;
 }
+
+int Actuator::action() {
+    return status_code;
+}

@@ -19,5 +19,6 @@ class Actuator {
         Actuator();
         int init();
         int * odometry();
+        int action();
         
 };
