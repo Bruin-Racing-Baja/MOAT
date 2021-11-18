@@ -135,14 +135,15 @@ void loop() {
 
   // report.cooler_temp()
 
-  report.actuator(actuator.odometry());
+  report.a_odometry(actuator.odometry());
+
+  report.a_action(actuator.action());
 
   actuator.action();
 
   char* generated_report = report.getReport();
 
   radio.send(generated_report, sizeof(generated_report)); //Sends the report to the radio
-
 }
 
 void debugMessage(const char* message) {

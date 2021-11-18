@@ -1,6 +1,4 @@
-#include <Subsystem.h>
-
-class Cooler: public Subsystem {
+class Cooler{
     //PINS
     int THERMO_PIN;
 
