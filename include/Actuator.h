@@ -8,14 +8,14 @@
 class Actuator{
     public:
     Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound);
-    void initialize();
+    int init();
     void control_function();
     int get_status_code();
     int get_encoder_pos();
 
 
     private:
-    HardwareSerial& serial_;
+    HardwareSerial& Serial;
     Encoder encoder;
 
 

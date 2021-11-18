@@ -34,14 +34,23 @@ General code to oversee all functions of the Teensy
 
 
 //ACTUATOR SETTINGS
-  //Add like req ports, 
+  //Add req ports
+  #define input_pot 14
+
+  #define enc_A 20
+  #define enc_B 21
+  #define enc_PPR 2048
+  #define enc_index 22
+
+  #define hall_inbound 10
+  #define hall_outbound 11
 
   //PINS
   #define actuator_pin_1 2
   //CONSTANTS
 
   //CREATE OBJECT
-  Actuator actuator(actuator_pin_1);
+  Actuator actuator(Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound);
 
 
 

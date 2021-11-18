@@ -8,7 +8,7 @@ template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(a
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
 Actuator::Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound)
-    :serial_(serial), encoder(enc_A, enc_B){
+    :Serial(serial), encoder(enc_A, enc_B){
     // save pin values
     m_egTooth = egTooth;
     m_gbTooth = gbTooth;
@@ -18,12 +18,10 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, con
     hasRun = false;
 }
 
-void Actuator::initialize(){
-    Serial.println("Connecting to Odrive!");
-    serial_.begin(115200);
-
+int Actuator::init(){
     Serial.begin(115200);
-    while (!Serial) ; // wait for Arduino Serial Monitor to open
+
+    while(!Serial); //Wait for arduino -- Odrive connection
 
     run_state(0, 1, true, 0);
 
