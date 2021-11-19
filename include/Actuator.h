@@ -7,8 +7,12 @@
 
 class Actuator{
     public:
-    Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound, void (*external_interrupt_handler)());
-    int init();
+    Actuator(
+        HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, 
+        const int gbTooth, const int hall_inbound, const int hall_outbound, 
+        const int motor_number, const int homing_timeout, const int cycle_period, 
+        void (*external_interrupt_handler)());
+    int init(); 
     void control_function();
     int get_status_code();
     int get_encoder_pos();
@@ -42,12 +46,11 @@ class Actuator{
     int m_encoder_inbound;
 
     //Constants
-    const int m_motor_number = 0;
-    const int status_code = 2;
-    int HOMING_TIMEOUT = 30000;
-    //Can use either berh
-    int CYCLE_FREQ = 1/5000;
-    int CYCLE_TIME = 1/CYCLE_FREQ;
+    int motor_number;
+    int homing_timeout;
+    int cycle_period;
+
+    //Debugging vars
     static int control_function_count;
     bool hasRun;
 };

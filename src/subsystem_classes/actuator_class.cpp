@@ -12,24 +12,40 @@ void be_happy() {
     ;
 }
 
-Actuator::Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound, void (*external_interrupt_handler)())
+Actuator::Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, 
+const int gbTooth, const int hall_inbound, const int hall_outbound, const int motor_number_in,
+const int homing_timeout_in, const int cycle_period_in, void (*external_interrupt_handler)())
     :Serial(serial), encoder(enc_A, enc_B){
-    // save pin values
+
+    //Save pin values
     m_egTooth = egTooth;
     m_gbTooth = gbTooth;
     m_hall_inbound = hall_inbound;
     m_hall_outbound = hall_outbound;
+
+    //Save constant values
+    motor_number = motor_number_in;
+    homing_timeout = homing_timeout_in;
+    cycle_period = cycle_period_in;
+
+    //Function to support interrupt
     m_external_interrupt_handler = external_interrupt_handler;
 
+    //Test variable
     hasRun = false;
 }
 
 int Actuator::init(){
-    control_function_count = 0;
+    control_function_count = 0; //Testing var
     Serial.begin(115200); //This is connection to ODrive
 
-    //TODO: Have some kinda timout for this
-    while(!Serial); //Wait for arduino -- Odrive connection
+    int start = millis();
+    while(!Serial){
+        if(millis() - start > homing_timeout){
+            status = 0051;
+            return -status;
+        }
+    } //Wait for Teensy <--> Odrive connection (Uses same timeout as homing)
 
     run_state(0, 1, true, 0); //Sets ODrive to IDLE
 
@@ -41,7 +57,7 @@ int Actuator::init(){
     set_velocity(10);
     while (digitalReadFast(m_hall_outbound) == 1) {
         m_encoder_outbound = encoder.read();
-        if (millis() - start > HOMING_TIMEOUT) {
+        if (millis() - start > homing_timeout) {
             status = 0041;
             return status;
         }
@@ -55,7 +71,16 @@ int Actuator::init(){
     set_velocity(0); //Stop spinning after homing
     run_state(0, 1, false, 0); //Idle state
 
-    Timer1.initialize(CYCLE_TIME);
+    //Starts interrupt timer and attaches method to interrupt
+    Timer1.initialize(cycle_period);
+    /*
+    Let me tell you kids a story about a burning dorm and 3 hours to spare.
+    All jokes aside, basically we are unable to attach the actuator control function method
+    directly to the interupt as it wouldn't know which object to execute the method on.
+    As we only will have one object, we always know which object to execute the method on,
+    thus this function calls the method on the object we make.
+    Basically: CS VooDoo magic words make things way harder than they should be
+    */
     Timer1.attachInterrupt(m_external_interrupt_handler);
 }
 
@@ -76,7 +101,7 @@ void Actuator::control_function(){
 }
 
 void Actuator::set_velocity(float velocity) {
-    Serial << "v " << m_motor_number  << " " << velocity << " " << "0.0f" << "\n";;
+    Serial << "v " << motor_number  << " " << velocity << " " << "0.0f" << "\n";;
 }
 
 int32_t Actuator::read_int() {

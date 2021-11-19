@@ -2,7 +2,6 @@
 MOAT - Model 2O Awesome Teensy
 mk. V.0
 General code to oversee all functions of the Teensy
-
 */
 
 #include <Arduino.h>
@@ -34,27 +33,25 @@ General code to oversee all functions of the Teensy
 
 
 //ACTUATOR SETTINGS
-  //Add req ports
-  #define input_pot 14
-
+  //PINS
   #define enc_A 20
   #define enc_B 21
-  #define enc_PPR 2048
-  #define enc_index 22
-
   #define hall_inbound 10
   #define hall_outbound 11
 
-  //PINS
-  #define actuator_pin_1 2
   //CONSTANTS
-
-  
+  #define enc_PPR 2048
+  #define enc_index 22
+  #define motor_number 0
+  #define homing_timeout 30000 //NOTE: In ms
+  #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
 
   //CREATE OBJECT
-  Actuator actuator(Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, &external_interrupt_handler);
+  Actuator actuator(
+    Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
+    motor_number, homing_timeout, cycle_period, &external_interrupt_handler);
 
-  //CREATE GODFRSAKEN FUNCTIO |N NO QUESTIONS
+  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
   static void external_interrupt_handler() {
     actuator.control_function();
   }
@@ -99,11 +96,6 @@ General code to oversee all functions of the Teensy
 
 
 
-//ERROR TRACKER {ACTUATOR, BATTERY, COOLER, RADIO} (alphabetical)
-  int error_tracker[4] = {0,0,0,0};
-
-
-
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
   if (DEBUG_MODE) {
@@ -114,8 +106,7 @@ void setup() {
     Serial.println("[DEBUG MODE]");
   }
 
-  error_tracker[0] = actuator.init();
-  if (error_tracker[0] != 0 && req_actuator){
+  if (actuator.init() != 0 && req_actuator){
     debugMessage("[ERROR] Actuator failed to initialize");
     while(1);
   }
