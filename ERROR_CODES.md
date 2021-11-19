@@ -27,12 +27,12 @@ STORED ENCODER VALUE
     0032 - Unable to store encoder value (perhaps out of storage?)
 
 HOMING
-    0041 - Unable to complete homing process
+    0041 - Homing Timeout
 
 STARTUP
     0051 - Cannot initiate serial connection to ODRIVE
     0052 - run_state(0, 1, true, 0) failed
-    
+
 
 ---------------[ Radio ]---------------
 INITIALIZATION ERROR

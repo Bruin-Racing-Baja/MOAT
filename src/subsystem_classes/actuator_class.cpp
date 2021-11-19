@@ -2,59 +2,77 @@
 #include <HardwareSerial.h>
 #include <SoftwareSerial.h>
 #include <Encoder.h>
+#include <TimerOne.h>
 
 // Print with stream operator
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
-Actuator::Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound)
+void be_happy() {
+    ;
+}
+
+Actuator::Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound, void (*external_interrupt_handler)())
     :Serial(serial), encoder(enc_A, enc_B){
     // save pin values
     m_egTooth = egTooth;
     m_gbTooth = gbTooth;
     m_hall_inbound = hall_inbound;
     m_hall_outbound = hall_outbound;
+    m_external_interrupt_handler = external_interrupt_handler;
 
     hasRun = false;
 }
 
 int Actuator::init(){
+    control_function_count = 0;
     Serial.begin(115200); //This is connection to ODrive
 
     //TODO: Have some kinda timout for this
     while(!Serial); //Wait for arduino -- Odrive connection
 
-    if (run_state(0, 1, true, 0)) {
-        status = 0052;
-        return status;
-    }
+    run_state(0, 1, true, 0); //Sets ODrive to IDLE
 
-    run_state(0, 8, false, 0);
+    run_state(0, 8, false, 0); //Enter velocity control mode
+    //TODO: Enums for IDLE, VELOCITY_CONTROL
+
+    //Home outbound
+    int start = millis();
+    set_velocity(10);
     while (digitalReadFast(m_hall_outbound) == 1) {
-        set_velocity(10);
         m_encoder_outbound = encoder.read();
+        if (millis() - start > HOMING_TIMEOUT) {
+            status = 0041;
+            return status;
+        }
     }
+    //Home inbound - [IN PURGATORY]
+    // set_velocity(-10);
+    // while (digitalReadFast(m_hall_inbound) == 1) {
+    //     m_encoder_inbound = encoder.read();
+    // }
 
-    while (digitalReadFast(m_hall_inbound) == 1) {
-        set_velocity(-10);
-        m_encoder_inbound = encoder.read();
-    }
+    set_velocity(0); //Stop spinning after homing
+    run_state(0, 1, false, 0); //Idle state
 
-    set_velocity(0);
-    run_state(0, 1, false, 0);
+    Timer1.initialize(CYCLE_TIME);
+    Timer1.attachInterrupt(m_external_interrupt_handler);
 }
 
 void Actuator::control_function(){
     
-    if(!hasRun){
-        Serial.println("OogaBookga!");
-        set_velocity(10);
-        run_state(0, 8, false, 0);
-        delay(5000);
-        run_state(0, 1, false, 0);
-        Serial.println(dump_errors());
-        hasRun = true;
-    }
+    control_function_count++;
+    run_state(0, 1, true, 0); //Sets ODrive to IDLE
+    // run_state(0, 8, false, 0); //Enter velocity control mode
+    // if(!hasRun){
+    //     Serial.println("OogaBookga!");
+    //     set_velocity(10);
+    //     run_state(0, 8, false, 0);
+    //     delay(5000);
+    //     run_state(0, 1, false, 0);
+    //     Serial.println(dump_errors());
+    //     hasRun = true;
+    // }
 }
 
 void Actuator::set_velocity(float velocity) {

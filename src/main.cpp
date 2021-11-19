@@ -49,10 +49,16 @@ General code to oversee all functions of the Teensy
   #define actuator_pin_1 2
   //CONSTANTS
 
+  
+
   //CREATE OBJECT
-  Actuator actuator(Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound);
+  Actuator actuator(Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, &external_interrupt_handler);
 
-
+  //CREATE GODFRSAKEN FUNCTIO |N NO QUESTIONS
+  static void external_interrupt_handler() {
+    actuator.control_function();
+  }
+  
 
 //BATTERY SETTINGS
   //Add like req ports, 
@@ -144,11 +150,11 @@ void loop() {
 
   // report.cooler_temp()
 
-  report.a_odometry(actuator.odometry());
+  // report.a_odometry(actuator.odometry());
 
-  report.a_action(actuator.action());
+  // report.a_action(actuator.action());
 
-  actuator.action();
+  // actuator.action();
 
   char* generated_report = report.getReport();
 

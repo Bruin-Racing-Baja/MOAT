@@ -7,7 +7,7 @@
 
 class Actuator{
     public:
-    Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound);
+    Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, const int egTooth, const int gbTooth, const int hall_inbound, const int hall_outbound, void (*external_interrupt_handler)());
     int init();
     void control_function();
     int get_status_code();
@@ -18,6 +18,7 @@ class Actuator{
     int status;
     HardwareSerial& Serial;
     Encoder encoder;
+    void (*m_external_interrupt_handler)();
 
 
     // Functions that command ODrive
@@ -40,10 +41,14 @@ class Actuator{
     int m_encoder_outbound;
     int m_encoder_inbound;
 
-    // Rando Constants
+    //Constants
     const int m_motor_number = 0;
     const int status_code = 2;
-
+    int HOMING_TIMEOUT = 30000;
+    //Can use either berh
+    int CYCLE_FREQ = 1/5000;
+    int CYCLE_TIME = 1/CYCLE_FREQ;
+    static int control_function_count;
     bool hasRun;
 };
 
