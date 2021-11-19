@@ -15,6 +15,7 @@ class Actuator{
 
 
     private:
+    int status;
     HardwareSerial& Serial;
     Encoder encoder;
 

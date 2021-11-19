@@ -29,6 +29,11 @@ STORED ENCODER VALUE
 HOMING
     0041 - Unable to complete homing process
 
+STARTUP
+    0051 - Cannot initiate serial connection to ODRIVE
+    0052 - run_state(0, 1, true, 0) failed
+    
+
 ---------------[ Radio ]---------------
 INITIALIZATION ERROR
     0001 - LoRa radio init failed (Teensy -/-> radio module)

@@ -19,34 +19,29 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_A, const int enc_B, con
 }
 
 int Actuator::init(){
-    Serial.begin(115200);
+    Serial.begin(115200); //This is connection to ODrive
 
+    //TODO: Have some kinda timout for this
     while(!Serial); //Wait for arduino -- Odrive connection
 
-    run_state(0, 1, true, 0);
-
-    Serial.println("Connected");
-    Serial.println("Calibrating");
+    if (run_state(0, 1, true, 0)) {
+        status = 0052;
+        return status;
+    }
 
     run_state(0, 8, false, 0);
     while (digitalReadFast(m_hall_outbound) == 1) {
         set_velocity(10);
         m_encoder_outbound = encoder.read();
     }
-    Serial.print("encoder outbound: ");
-    Serial.println(m_encoder_outbound);
-
 
     while (digitalReadFast(m_hall_inbound) == 1) {
         set_velocity(-10);
         m_encoder_inbound = encoder.read();
     }
-    Serial.print("encoder inbound: ");
-    Serial.println(m_encoder_inbound);
 
     set_velocity(0);
     run_state(0, 1, false, 0);
-    
 }
 
 void Actuator::control_function(){
@@ -63,7 +58,7 @@ void Actuator::control_function(){
 }
 
 void Actuator::set_velocity(float velocity) {
-    serial_ << "v " << m_motor_number  << " " << velocity << " " << "0.0f" << "\n";;
+    Serial << "v " << m_motor_number  << " " << velocity << " " << "0.0f" << "\n";;
 }
 
 int32_t Actuator::read_int() {
@@ -72,11 +67,11 @@ int32_t Actuator::read_int() {
  
 bool Actuator::run_state(int axis, int requested_state, bool wait_for_idle, float timeout) {
     int timeout_ctr = (int)(timeout * 10.0f);
-    serial_ << "w axis" << axis << ".requested_state " << requested_state << '\n';
+    Serial << "w axis" << axis << ".requested_state " << requested_state << '\n';
     if (wait_for_idle) {
         do {
             delay(100);
-            serial_ << "r axis" << axis << ".current_state\n";
+            Serial << "r axis" << axis << ".current_state\n";
         } while (read_int() != 1 && --timeout_ctr > 0);
     }
 
@@ -88,12 +83,12 @@ String Actuator::read_string() {
     static const unsigned long timeout = 1000;
     unsigned long timeout_start = millis();
     for (;;) {
-        while (!serial_.available()) {
+        while (!Serial.available()) {
             if (millis() - timeout_start >= timeout) {
                 return str;
             }
         }
-        char c = serial_.read();
+        char c = Serial.read();
         if (c == '\n')
             break;
         str += c;
@@ -105,30 +100,30 @@ String Actuator::dump_errors(){
     String output= "";
     output += "system: ";
 
-    serial_<< "r error\n";
+    Serial<< "r error\n";
     output += Actuator::read_string();
     for (int axis = 0; axis < 2; ++axis){
         output += "\naxis";
         output += axis;
 
         output += "\n  axis: ";
-        serial_<< "r axis"<<axis<<".error\n";
+        Serial<< "r axis"<<axis<<".error\n";
         output += Actuator::read_string();
 
         output += "\n  motor: ";
-        serial_<< "r axis"<<axis<<".motor.error\n";
+        Serial<< "r axis"<<axis<<".motor.error\n";
         output += Actuator::read_string();
 
         output += "\n  sensorless_estimator: ";
-        serial_<< "r axis"<<axis<<".sensorless_estimator.error\n";
+        Serial<< "r axis"<<axis<<".sensorless_estimator.error\n";
         output += Actuator::read_string();
 
         output += "\n  encoder: ";
-        serial_<< "r axis"<<axis<<".encoder.error\n";
+        Serial<< "r axis"<<axis<<".encoder.error\n";
         output += Actuator::read_string();
 
         output += "\n  controller: ";
-        serial_<< "r axis"<<axis<<".controller.error\n";
+        Serial<< "r axis"<<axis<<".controller.error\n";
         output += Actuator::read_string();
     }
     return output;
