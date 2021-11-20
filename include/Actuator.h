@@ -49,9 +49,10 @@ class Actuator{
     int motor_number;
     int homing_timeout;
     int cycle_period;
+    int start;
 
     //Debugging vars
-    static int control_function_count;
+    int control_function_count;
     bool hasRun;
 };
 

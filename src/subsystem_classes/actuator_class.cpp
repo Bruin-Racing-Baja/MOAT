@@ -39,7 +39,7 @@ int Actuator::init(){
     control_function_count = 0; //Testing var
     Serial.begin(115200); //This is connection to ODrive
 
-    int start = millis();
+    start = millis();
     while(!Serial){
         if(millis() - start > homing_timeout){
             status = 0051;
