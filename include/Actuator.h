@@ -16,11 +16,13 @@ class Actuator{
     void control_function();
     int get_status_code();
     int get_encoder_pos();
+    int communication_speed();
 
 
     private:
+    int homing_sequence();
     int status;
-    HardwareSerial& Serial;
+    HardwareSerial& OdriveSerial;
     Encoder encoder;
     void (*m_external_interrupt_handler)();
 
@@ -30,9 +32,11 @@ class Actuator{
     void set_velocity(float velocity);
 
     // Functions that get information from Odrive
+    float get_vel();
     int32_t read_int();
     String read_string();
     String dump_errors();
+    float read_float();
 
 
     // member variables for sensor pins

@@ -42,7 +42,8 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
   #define enc_PPR 2048
   #define enc_index 22
-  #define motor_number 0
+  #define motor_number 1  //Is this where we should define our constants?
+                          //Would it be more intuitive to put them before the class definition in actuator_class.cpp?
   #define homing_timeout 30000 //NOTE: In ms
   #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
 
@@ -107,8 +108,11 @@ void setup() {
   //   }
   //   Serial.println("[DEBUG MODE]");
   // }
+  bool goodboy = true;
   actuator.init();
-
+  Serial.begin(115200);
+  while (!Serial) ; // wait for Arduino Serial Monitor to open
+  Serial.print(actuator.communication_speed());
   // if (actuator.init() != 0 && req_actuator){
   //   debugMessage("[ERROR] Actuator failed to initialize");
   //   while(1);
@@ -137,6 +141,7 @@ void setup() {
 }
 
 void loop() {
+  
 /*---------------------------[Overall Init]---------------------------*/
   // Report report; //Generates a new report object
 
