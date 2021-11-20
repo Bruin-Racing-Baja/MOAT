@@ -46,7 +46,7 @@ int Actuator::init(){
 
     run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE
 
-    status = homing_sequence();
+    //status = homing_sequence();
     if(status != 0) return status;
 
     //Starts interrupt timer and attaches method to interrupt
@@ -65,7 +65,7 @@ int Actuator::init(){
 int Actuator::homing_sequence(){
     run_state(motor_number, 8, false, 0); //Enter velocity control mode
     //TODO: Enums for IDLE, VELOCITY_CONTROL
-
+    
     //Home outbound
     int start = millis();
     set_velocity(.5);
@@ -94,31 +94,40 @@ void Actuator::control_function(){
 }
 
 //John asked how long it takes to talk to the odrive so this is a little benchmark test for debugging
-int Actuator::communication_speed(){
-    const int data_points = 100;
+float Actuator::communication_speed(){
+    const int data_points = 1000;
     int com_start = 0;
     int com_end = 0;
     int com_total = 0;
-    
+    int com_bench = 0;
+    float test = 0;
     run_state(motor_number, 8, false, 0);
-    set_velocity(.5); 
+    set_velocity(-.5); 
+    delay(1000);
 
+    //Benchmark
+    for(int i; i < data_points; i++){
+        com_start = millis();
+        com_end = millis();
+        com_bench += com_end-com_start;
+    }
+    Serial.println(com_bench);
+
+    //With command to odrive
     for(int i; i < data_points; i++){
         com_start = millis();
 
         //command to odrive
-        Serial.print(get_vel());
-        Serial.print(" ");
+        test = get_vel();
 
         com_end = millis();
         com_total += com_end-com_start;
-        Serial.println(com_total);
     }
-
+    Serial.println(com_total);
     set_velocity(0); //Stop spinning after homing
     run_state(motor_number, 1, false, 0);
 
-    return com_total/data_points;
+    return float(com_total-com_bench)/float(data_points);
 }
 
 //-----------------ODrive Setters--------------//

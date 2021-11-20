@@ -16,7 +16,7 @@ class Actuator{
     void control_function();
     int get_status_code();
     int get_encoder_pos();
-    int communication_speed();
+    float communication_speed();
 
 
     private:
