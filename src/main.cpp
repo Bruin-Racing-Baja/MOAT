@@ -97,7 +97,7 @@ General code to oversee all functions of the Teensy
 
 
 void setup() {
-/*---------------------------[Overall Init]---------------------------*/
+/*---------------------------[Debug Init]---------------------------*/
   if (DEBUG_MODE) {
     Serial.begin(9600);
     while (!Serial) {
@@ -106,22 +106,21 @@ void setup() {
     Serial.println("[DEBUG MODE]");
   }
 
+/*---------------------------[Actuator Init]---------------------------*/
   if (actuator.init() != 0 && req_actuator){
     debugMessage("[ERROR] Actuator failed to initialize");
     while(1);
   }
-  error_tracker[2] = cooler.init();
-  if (error_tracker[2] != 0 && req_cooler){
-    debugMessage("[ERROR] Cooler failed to initialize");
-    while(1);
-  }
-  error_tracker[3] = radio.init();
-  if (error_tracker[3] != 0 && req_radio){
+
+/*---------------------------[Radio Init]---------------------------*/
+  if (radio.init() != 0 && req_radio){
     debugMessage("[ERROR] Radio failed to initialize");
     while(1);
   }
 
   debugMessage("All systems initialized successfully");
+
+/*---------------------------[Wait for radio]---------------------------*/
   if (WAIT_FOR_RADIO) {
     while (true) {
       int response = radio.checkConnection();
