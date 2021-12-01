@@ -13,10 +13,10 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
-#include <Battery.h>
-#include <Cooler.h>
-#include <Radio.h>
-#include <Report.h>
+//#include <Battery.h>
+//#include <Cooler.h>
+//#include <Radio.h>
+//#include <Report.h>
 
 
 //GENERAL SETTINGS
@@ -42,11 +42,14 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
   #define enc_PPR 2048
   #define enc_index 22
-  #define motor_number 0
+  #define motor_number 1  //Is this where we should define our constants?
+                          //Would it be more intuitive to put them before the class definition in actuator_class.cpp?
   #define homing_timeout 30000 //NOTE: In ms
   #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
 
   //CREATE OBJECT
+  static void external_interrupt_handler();
+
   Actuator actuator(
     Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
     motor_number, homing_timeout, cycle_period, &external_interrupt_handler);
@@ -65,7 +68,7 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
 
   //CREATE OBJECT
-  Battery battery(battery_pin_1);
+  //Battery battery(battery_pin_1);
 
 
 
@@ -78,7 +81,7 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
 
   //CREATE OBJECT
-  Cooler cooler(THERMO_PIN);
+  //Cooler cooler(THERMO_PIN);
 
 
 
@@ -92,49 +95,55 @@ General code to oversee all functions of the Teensy
   #define RADIO_FREQ 915.0
 
   //CREATE OBJECT
-  Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
+  //Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
 
 
 
 void setup() {
-/*---------------------------[Debug Init]---------------------------*/
-  if (DEBUG_MODE) {
-    Serial.begin(9600);
-    while (!Serial) {
-      ; //Wait for serial to be ready
-    }
-    Serial.println("[DEBUG MODE]");
-  }
+/*---------------------------[Overall Init]---------------------------*/
+  // if (DEBUG_MODE) {
+  //   Serial.begin(9600);
+  //   while (!Serial) {
+  //     ; //Wait for serial to be ready
+  //   }
+  //   Serial.println("[DEBUG MODE]");
+  // }
+  bool goodboy = true;
+  actuator.init();
+  Serial.begin(115200);
+  while (!Serial) ; // wait for Arduino Serial Monitor to open
+  Serial.print(actuator.communication_speed());
+  // if (actuator.init() != 0 && req_actuator){
+  //   debugMessage("[ERROR] Actuator failed to initialize");
+  //   while(1);
+  // }
+  // error_tracker[2] = cooler.init();
+  // if (error_tracker[2] != 0 && req_cooler){
+  //   debugMessage("[ERROR] Cooler failed to initialize");
+  //   while(1);
+  // }
+  // error_tracker[3] = radio.init();
+  // if (error_tracker[3] != 0 && req_radio){
+  //   debugMessage("[ERROR] Radio failed to initialize");
+  //   while(1);
+  // }
 
-/*---------------------------[Actuator Init]---------------------------*/
-  if (actuator.init() != 0 && req_actuator){
-    debugMessage("[ERROR] Actuator failed to initialize");
-    while(1);
-  }
-
-/*---------------------------[Radio Init]---------------------------*/
-  if (radio.init() != 0 && req_radio){
-    debugMessage("[ERROR] Radio failed to initialize");
-    while(1);
-  }
-
-  debugMessage("All systems initialized successfully");
-
-/*---------------------------[Wait for radio]---------------------------*/
-  if (WAIT_FOR_RADIO) {
-    while (true) {
-      int response = radio.checkConnection();
-      if (response) {
-        break;
-      }
-      delay(200);
-    }
-  }
+  // debugMessage("All systems initialized successfully");
+  // if (WAIT_FOR_RADIO) {
+  //   while (true) {
+  //     int response = radio.checkConnection();
+  //     if (response) {
+  //       break;
+  //     }
+  //     delay(200);
+  //   }
+  // }
 }
 
 void loop() {
+  
 /*---------------------------[Overall Init]---------------------------*/
-  Report report; //Generates a new report object
+  // Report report; //Generates a new report object
 
   // report.battery(battery.measureVoltage()); //Measures battery voltage and adds to the report
 
@@ -146,9 +155,9 @@ void loop() {
 
   // actuator.action();
 
-  char* generated_report = report.getReport();
+  // char* generated_report = report.getReport();
 
-  radio.send(generated_report, sizeof(generated_report)); //Sends the report to the radio
+  // radio.send(generated_report, sizeof(generated_report)); //Sends the report to the radio
 }
 
 void debugMessage(const char* message) {
