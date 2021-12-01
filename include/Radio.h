@@ -20,5 +20,5 @@ class Radio {
         int init();
         int getStatus();
         bool checkConnection();
-        int send(char* data, int len);
+        int send(const char* data, int len);
 };

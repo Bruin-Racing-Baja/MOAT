@@ -2,7 +2,6 @@
 MOAT - Model 2O Awesome Teensy
 mk. V.0
 General code to oversee all functions of the Teensy
-
 */
 
 #include <Arduino.h>
@@ -14,36 +13,58 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
-#include <Battery.h>
-#include <Cooler.h>
+//#include <Battery.h>
+//#include <Cooler.h>
 #include <Radio.h>
-#include <Report.h>
+//#include <Report.h>
 
 
 //GENERAL SETTINGS
   #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
 
+  #define RADIO_DEBUG_MESSAGES 0 //Sends debugMessages over radio as well as Serial (no confirmation that signal is recieved)
+  //NOTE: This makes no guarantees that the messages are actually sent or recieved
+
   #define WAIT_FOR_RADIO 0 //Waits for a radio connection before continuing
   //Useful for debugging issues with startup report
+  
+  #define HOME_ON_STARTUP 1 //Homes actuator immediately after homing
+  //Enabled systems will initialize and run, while disbaled systems will not
+  #define enable_actuator 1
+  #define enable_radio 1
 
-  #define req_battery 1 //Halts program if battery allocation fails
-  #define req_radio 1 //Halts program if radio allocation fails
-  #define req_actuator 1 //Halts program if actuator allocation fails
-  #define req_cooler 1 //Halts program if cooler allocation fails
 
-
+  //Halts program if the initializtion of the system fails
+  #define req_battery 1
+  #define req_radio 1
+  #define req_actuator 1
+  #define req_cooler 1
 
 //ACTUATOR SETTINGS
-  //Add like req ports, 
-
   //PINS
-  #define actuator_pin_1 2
+  #define enc_A 20
+  #define enc_B 21
+  #define hall_inbound 10
+  #define hall_outbound 11
+
   //CONSTANTS
-
+  #define enc_PPR 2048
+  #define enc_index 22
+  #define motor_number 1
+  #define homing_timeout 30000 //NOTE: In ms
+  #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
+  
   //CREATE OBJECT
-  Actuator actuator(actuator_pin_1);
+  static void external_interrupt_handler();
 
+  Actuator actuator(
+    Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
+    motor_number, homing_timeout, cycle_period, &external_interrupt_handler);
 
+  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
+  static void external_interrupt_handler() {
+    actuator.control_function();
+  }  
 
 //BATTERY SETTINGS
   //Add like req ports, 
@@ -53,7 +74,7 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
 
   //CREATE OBJECT
-  Battery battery(battery_pin_1);
+  //Battery battery(battery_pin_1);
 
 
 
@@ -66,7 +87,7 @@ General code to oversee all functions of the Teensy
   //CONSTANTS
 
   //CREATE OBJECT
-  Cooler cooler(THERMO_PIN);
+  //Cooler cooler(THERMO_PIN);
 
 
 
@@ -83,70 +104,92 @@ General code to oversee all functions of the Teensy
   Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
 
 
-
-//ERROR TRACKER {ACTUATOR, BATTERY, COOLER, RADIO} (alphabetical)
-  int error_tracker[4] = {0,0,0,0};
-
-
-
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
+  int return_code;
+
   if (DEBUG_MODE) {
     Serial.begin(9600);
-    while (!Serial) {
-      ; //Wait for serial to be ready
-    }
+    while (!Serial) ; //Wait for serial to be ready
     Serial.println("[DEBUG MODE]");
   }
 
-  error_tracker[0] = actuator.init();
-  if (error_tracker[0] != 0 && req_actuator){
-    debugMessage("[ERROR] Actuator failed to initialize");
-    while(1);
-  }
-  error_tracker[2] = cooler.init();
-  if (error_tracker[2] != 0 && req_cooler){
-    debugMessage("[ERROR] Cooler failed to initialize");
-    while(1);
-  }
-  error_tracker[3] = radio.init();
-  if (error_tracker[3] != 0 && req_radio){
-    debugMessage("[ERROR] Radio failed to initialize");
-    while(1);
-  }
+/*---------------------------[Radio Init]---------------------------*/
+  if (enable_radio) {
+    if (return_code = radio.init() != 0) {
+      debugMessage("[ERROR] Radio init failed with error code");
+      debugMessage("0" + return_code);
+    }
 
-  debugMessage("All systems initialized successfully");
-  if (WAIT_FOR_RADIO) {
-    while (true) {
-      int response = radio.checkConnection();
-      if (response) {
-        break;
-      }
-      delay(200);
+    if (WAIT_FOR_RADIO) {
+      debugMessage("Waiting for radio connection");
+      while (!radio.checkConnection()) ;
+      debugMessage("Radio connection success");
     }
   }
+
+/*---------------------------[Actuator Init]---------------------------*/
+  
+
+  if (enable_actuator) {
+    if (return_code = actuator.init() != 0) {
+      debugMessage("[ERROR] Actuator init failed with error code");
+      debugMessage("0" + return_code);
+      if (req_actuator) {
+        while (1) ;
+      }
+    }
+    // if (HOME_ON_STARTUP) {
+    //   if (return_code = actuator.homing_sequence() != 0) {
+    //     debugMessage("[ERROR] Actuator init failed with error code");
+    //     debugMessage("0" + return_code);
+    //   }
+    // }
+  }
+
+  bool goodboy = true;
+  actuator.init();
+  Serial.begin(115200);
+  while (!Serial) ; // wait for Arduino Serial Monitor to open
+  Serial.print(actuator.communication_speed());
+
+  // if (actuator.init() != 0 && req_actuator){
+  //   debugMessage("[ERROR] Actuator failed to initialize");
+  //   while(1);
+  // }
+  // error_tracker[2] = cooler.init();
+  // if (error_tracker[2] != 0 && req_cooler){
+  //   debugMessage("[ERROR] Cooler failed to initialize");
+  //   while(1);
+  // }
+  // error_tracker[3] = radio.init();
+  // if (error_tracker[3] != 0 && req_radio){
+  //   debugMessage("[ERROR] Radio failed to initialize");
+  //   while(1);
+  // }
+
+  // debugMessage("All systems initialized successfully");
+  // if (WAIT_FOR_RADIO) {
+  //   while (true) {
+  //     int response = radio.checkConnection();
+  //     if (response) {
+  //       break;
+  //     }
+  //     delay(200);
+  //   }
+  // }
 }
 
 void loop() {
-/*---------------------------[Overall Init]---------------------------*/
-  Report report; //Generates a new report object
-
-  // report.battery(battery.measureVoltage()); //Measures battery voltage and adds to the report
-
-  // report.cooler_temp()
-
-  report.actuator(actuator.odometry());
-
-  actuator.action();
-
-  char* generated_report = report.getReport();
-
-  radio.send(generated_report, sizeof(generated_report)); //Sends the report to the radio
-
+  
 }
 
 void debugMessage(const char* message) {
   if (DEBUG_MODE) {
     Serial.println(message);
   }
+  if (RADIO_DEBUG_MESSAGES) {
+    radio.send(message, sizeof(message));
+  }
+  
 }

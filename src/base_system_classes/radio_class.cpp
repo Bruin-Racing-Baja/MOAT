@@ -74,7 +74,7 @@ bool Radio::checkConnection() {
 
 }
 
-int Radio::send(char* data, int len) {
+int Radio::send(const char* data, int len) {
     /*
     0: Success with reply
     1: Data sent but no reply (timeout)
