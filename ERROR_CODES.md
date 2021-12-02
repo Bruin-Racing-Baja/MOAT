@@ -10,34 +10,42 @@ STATUS CODE
 
 Then, each class has its own set of error codes, explained below. Error code groupings are technically arbitrary, but I would recommend following the general ideas as laid out in the actuator codes below. Basically, grouping the errors to a family of things that can go wrong, then going specifically into what went wrong
 
----------------[ Actuator ]---------------
-POSITION OUT OF BOUNDS
-    0001 - Encoder reported a position outside of bounds
-    0002 - Outer Limit switch depressed
-    0003 - Inner limit switch depressed
-UNABLE TO CHANGE POSITION
-    0011 - No change in encoder reading despite taking action
-
-UNABLE TO READ ENCODER VALUE
-    0021 - Unable to read value from encoder
-    0022 - Unable to read stored encoder value
-
-STORED ENCODER VALUE
-    0031 - Unable to locate a stored encoder value
-    0032 - Unable to store encoder value (perhaps out of storage?)
-
-HOMING
-    0041 - Unable to complete homing process
-
 ---------------[ Radio ]---------------
 INITIALIZATION ERROR
-    0001 - LoRa radio init failed (Teensy -/-> radio module)
-    0002 - SetFrequency failed
-    0003 - Not Initiated yet
+    1001 - LoRa radio init failed (Teensy -/-> radio module)
+    1002 - SetFrequency failed
+    1003 - Not Initiated yet
 
 SENT MESSAGE FAILURE
-    0011 - Reply failed (but was given a response)
-    0012 - No reply, timeout (Unable to connect to reciever)
+    1011 - Reply failed (but was given a response)
+    1012 - No reply, timeout (Unable to connect to reciever)
 
 SENDING FAILURE
-    0021 - radio.send failed
+    1021 - radio.send failed
+
+WAIT FOR REPLY SENDING FAILURE
+    1031 - Recieve detected but failed (idk)
+    1032 - Timeout
+
+---------------[ Actuator ]---------------
+POSITION OUT OF BOUNDS
+    2001 - Encoder reported a position outside of bounds
+    2002 - Outer Limit switch depressed
+    2003 - Inner limit switch depressed
+UNABLE TO CHANGE POSITION
+    2011 - No change in encoder reading despite taking action
+
+UNABLE TO READ ENCODER VALUE
+    2021 - Unable to read value from encoder
+    2022 - Unable to read stored encoder value
+
+STORED ENCODER VALUE
+    2031 - Unable to locate a stored encoder value
+    2032 - Unable to store encoder value (perhaps out of storage?)
+
+HOMING
+    2041 - Homing Timeout
+
+STARTUP
+    2051 - Cannot initiate serial connection to ODRIVE
+    2052 - run_state(0, 1, true, 0) failed

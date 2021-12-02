@@ -103,6 +103,16 @@ General code to oversee all functions of the Teensy
   //CREATE OBJECT
   Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
 
+//FREE FUNCTIONS
+
+void debugMessage(const char* message) {
+  if (DEBUG_MODE) {
+    Serial.println(message);
+  }
+  if (RADIO_DEBUG_MESSAGES) {
+    int result = radio.send(message, sizeof(message));
+  }
+}
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
@@ -116,7 +126,8 @@ void setup() {
 
 /*---------------------------[Radio Init]---------------------------*/
   if (enable_radio) {
-    if (return_code = radio.init() != 0) {
+    return_code = radio.init();
+    if (return_code != 0) {
       debugMessage("[ERROR] Radio init failed with error code");
       debugMessage("0" + return_code);
     }
@@ -132,7 +143,8 @@ void setup() {
   
 
   if (enable_actuator) {
-    if (return_code = actuator.init() != 0) {
+    return_code = actuator.init();
+    if (return_code != 0) {
       debugMessage("[ERROR] Actuator init failed with error code");
       debugMessage("0" + return_code);
       if (req_actuator) {
@@ -184,12 +196,3 @@ void loop() {
   
 }
 
-void debugMessage(const char* message) {
-  if (DEBUG_MODE) {
-    Serial.println(message);
-  }
-  if (RADIO_DEBUG_MESSAGES) {
-    radio.send(message, sizeof(message));
-  }
-  
-}

@@ -17,8 +17,9 @@ class Radio {
     
     public:
         Radio(int CS, int RST, int INT, double freq);
-        int init();
+        int init(); //Initializes vital stuffs
         int getStatus();
         bool checkConnection();
         int send(const char* data, int len);
+        int wait_reply_send(const char* data, int len, int timeout);
 };
