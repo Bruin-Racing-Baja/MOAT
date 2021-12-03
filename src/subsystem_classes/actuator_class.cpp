@@ -46,9 +46,10 @@ int Actuator::init(){
 
     run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE
 
-    //status = homing_sequence();
+    status = homing_sequence();
     if(status != 0) return status;
 
+    test_voltage(); //voltage testing code
     //Starts interrupt timer and attaches method to interrupt
     //Timer1.initialize(cycle_period);
     /*
@@ -60,6 +61,7 @@ int Actuator::init(){
     Basically: CS VooDoo magic words make things way harder than they should be
     */
     //Timer1.attachInterrupt(m_external_interrupt_handler);
+    return status;
 }
 
 int Actuator::homing_sequence(){
@@ -68,9 +70,9 @@ int Actuator::homing_sequence(){
     
     //Home outbound
     int start = millis();
-    set_velocity(.5);
+    set_velocity(1);
     while (digitalReadFast(m_hall_outbound) == 1) {
-        m_encoder_outbound = encoder.read();
+        //m_encoder_outbound = get_encoder_count();
         if (millis() - start > homing_timeout) {
             status = 0041;
             return status;
@@ -85,6 +87,8 @@ int Actuator::homing_sequence(){
 
     set_velocity(0); //Stop spinning after homing
     run_state(motor_number, 1, false, 0); //Idle state
+
+    Serial.print(dump_errors());
     return 0;
 }
 
@@ -93,6 +97,8 @@ void Actuator::control_function(){
     run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE
 }
 
+
+//-----------------Diagnostic Functions--------------//
 //John asked how long it takes to talk to the odrive so this is a little benchmark test for debugging
 float Actuator::communication_speed(){
     const int data_points = 1000;
@@ -130,6 +136,22 @@ float Actuator::communication_speed(){
     return float(com_total-com_bench)/float(data_points);
 }
 
+//Been having bus voltage issues with the odrive. I want to see what happens
+//to bus voltage right after I command the odrive to move.
+void Actuator::test_voltage(){
+    delay(1000);
+    Serial.println("Reading Voltage");
+    run_state(motor_number, 8, false, 0); //Tells Odrive to rotate motor
+    set_velocity(-1); 
+    for(int i; i < 250; i++){
+        Serial.println(get_voltage()); //Show bus voltage on serial moniter
+        delay(10);
+    }
+    run_state(motor_number, 1, false, 0); //Tell Odrive to stop rotating
+    set_velocity(0); 
+}
+
+
 //-----------------ODrive Setters--------------//
 bool Actuator::run_state(int axis, int requested_state, bool wait_for_idle, float timeout) {
     int timeout_ctr = (int)(timeout * 10.0f);
@@ -147,13 +169,23 @@ bool Actuator::run_state(int axis, int requested_state, bool wait_for_idle, floa
 void Actuator::set_velocity(float velocity) {
     OdriveSerial << "v " << motor_number  << " " << velocity << " " << "0.0f" << "\n";;
 }
- 
+
 
 
 //-----------------ODrive Getters--------------//
 float Actuator::get_vel() {
 	OdriveSerial<< "r axis" << motor_number << ".encoder.vel_estimate\n";
 	return Actuator::read_float();
+}
+
+int Actuator::get_encoder_count(){
+    OdriveSerial<< "r axis" << motor_number << ".encoder.shadow_count\n";
+    return Actuator::read_int();
+}
+
+float Actuator::get_voltage() {
+    OdriveSerial<< "r vbus_voltage\n";
+    return Actuator::read_float();
 }
 
 String Actuator::dump_errors(){

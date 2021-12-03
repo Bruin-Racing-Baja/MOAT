@@ -109,10 +109,12 @@ void setup() {
   //   Serial.println("[DEBUG MODE]");
   // }
   bool goodboy = true;
-  actuator.init();
+  
   Serial.begin(115200);
   while (!Serial) ; // wait for Arduino Serial Monitor to open
-  Serial.print(actuator.communication_speed());
+  actuator.init();
+  //Serial.print(actuator.communication_speed());
+  
   // if (actuator.init() != 0 && req_actuator){
   //   debugMessage("[ERROR] Actuator failed to initialize");
   //   while(1);

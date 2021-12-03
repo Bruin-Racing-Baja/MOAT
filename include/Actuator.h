@@ -21,6 +21,7 @@ class Actuator{
 
     private:
     int homing_sequence();
+    void test_voltage();
     int status;
     HardwareSerial& OdriveSerial;
     Encoder encoder;
@@ -33,6 +34,8 @@ class Actuator{
 
     // Functions that get information from Odrive
     float get_vel();
+    int get_encoder_count();
+    float get_voltage();
     int32_t read_int();
     String read_string();
     String dump_errors();
