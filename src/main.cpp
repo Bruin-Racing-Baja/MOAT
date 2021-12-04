@@ -165,21 +165,6 @@ void setup() {
   while (!Serial) ; // wait for Arduino Serial Monitor to open
   Serial.print(actuator.communication_speed());
 
-  // if (actuator.init() != 0 && req_actuator){
-  //   debugMessage("[ERROR] Actuator failed to initialize");
-  //   while(1);
-  // }
-  // error_tracker[2] = cooler.init();
-  // if (error_tracker[2] != 0 && req_cooler){
-  //   debugMessage("[ERROR] Cooler failed to initialize");
-  //   while(1);
-  // }
-  // error_tracker[3] = radio.init();
-  // if (error_tracker[3] != 0 && req_radio){
-  //   debugMessage("[ERROR] Radio failed to initialize");
-  //   while(1);
-  // }
-
   // debugMessage("All systems initialized successfully");
   // if (WAIT_FOR_RADIO) {
   //   while (true) {
