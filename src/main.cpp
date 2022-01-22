@@ -21,6 +21,7 @@ General code to oversee all functions of the Teensy
 
 //GENERAL SETTINGS
   #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
+  #define PRINTTOSERIAL 1 //Set to 1 if connected to the serial moniter 0 if not
 
   #define WAIT_FOR_RADIO 0 //Waits for a radio connection before continuing
   //Useful for debugging issues with startup report
@@ -38,25 +39,20 @@ General code to oversee all functions of the Teensy
   #define enc_B 21
   #define hall_inbound 10
   #define hall_outbound 11
-
-  //CONSTANTS
-  #define enc_PPR 2048
-  #define enc_index 22
-  #define motor_number 1  //Is this where we should define our constants?
-                          //Would it be more intuitive to put them before the class definition in actuator_class.cpp?
-  #define homing_timeout 30000 //NOTE: In ms
-  #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
-
+  #define gearTooth_engine 15 //rn just attached to encoder B haha
   //CREATE OBJECT
   static void external_interrupt_handler();
+  static void external_count_egTooth();
 
-  Actuator actuator(
-    Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
-    motor_number, homing_timeout, cycle_period, &external_interrupt_handler);
+  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound,  &external_interrupt_handler, &external_count_egTooth, PRINTTOSERIAL);
 
   //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
   static void external_interrupt_handler() {
     actuator.control_function();
+  }
+
+  static void external_count_egTooth(){
+    actuator.count_egTooth();
   }
   
 
@@ -112,6 +108,7 @@ void setup() {
   
   Serial.begin(115200);
   while (!Serial) ; // wait for Arduino Serial Monitor to open
+  Serial.println("Getty is cool");
   actuator.init();
   //Serial.print(actuator.communication_speed());
   
@@ -143,7 +140,9 @@ void setup() {
 }
 
 void loop() {
-  
+    Serial.print(" encoder position: ");
+    Serial.println(actuator.get_encoder_pos());
+    delay(100);
 /*---------------------------[Overall Init]---------------------------*/
   // Report report; //Generates a new report object
 
