@@ -32,6 +32,8 @@ Actuator::Actuator(HardwareSerial& serial,
     //initialize count vairables
     egTooth_Count = 0;
     egTooth_Count_last = 0;
+    last_control_execution = 0;
+    currentrpm_eg = 0;
 
     //Functions to support interrupt
     m_external_interrupt_handler = external_interrupt_handler;
@@ -69,7 +71,7 @@ int Actuator::init(){
 
     //Starts interrupt timer and attaches method to interrupt
     interrupts(); //allows interupts
-    Timer3.initialize(cycle_period);
+    //Timer3.initialize(cycle_period);
     /*
     Let me tell you kids a story about a burning dorm and 3 hours to spare.
     All jokes aside, basically we are unable to attach the actuator control function method
@@ -78,8 +80,8 @@ int Actuator::init(){
     thus this function calls the method on the object we make.
     Basically: CS VooDoo magic words make things way harder than they should be
     */
-    Timer3.attachInterrupt(m_external_interrupt_handler);
-    Timer3.setPeriod(cycle_period);
+    //Timer3.attachInterrupt(m_external_interrupt_handler);
+    //Timer3.setPeriod(cycle_period);
 
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
     return status;
@@ -144,14 +146,49 @@ int Actuator::homing_sequence(){
 
 void Actuator::control_function(){
     control_function_count++;
+    if(millis()-last_control_execution > cycle_period_millis){
 
-    //Calculate Gear tooth speed on engine
-    int currentrpm = calc_engine_rpm();
-    if (m_printToSerial){
+        //Calculate Engine Speed
+        float dt = millis()-last_control_execution;
+        //currentrpm_eg = calc_engine_rpm(dt);
+        currentrpm_eg = analogRead(A2)*4;
+        last_control_execution = millis();
+
+        //Print Engine Speed
+        if (m_printToSerial){
         Serial.print("Current rpm: ");
-        Serial.println(currentrpm);
-        Serial.print("GearToothCount");
-        Serial.println(egTooth_Count);
+        Serial.println(currentrpm_eg);
+        // Serial.print("GearToothCount");
+        // Serial.println(egTooth_Count);
+        }
+
+        //Compute error
+        int error = currentrpm_eg - 2700;
+
+        //If error will over or under actuate actuator then set error to 0.
+        if(digitalReadFast(m_hall_outbound) == 0 || get_encoder_pos() >= m_encoder_outbound){
+            if(error > 0) error = 0;
+            Serial.println("hi");
+        } 
+        else if (digitalReadFast(m_hall_inbound) == 0 || get_encoder_pos()<= m_encoder_inbound){
+            if(error < 0) error = 0;
+            Serial.println("hey");
+        }
+
+        //Multiply by gain and set new motor velocity. 
+        int motor_velocity = proportionalGain*error;
+        if (m_printToSerial){
+        Serial.print("Current motor_velocity: ");
+        Serial.println(motor_velocity);
+        }
+
+        if(motor_velocity == 0){
+            run_state(motor_number, 1, false, 0);
+        } else{
+            set_velocity(motor_velocity);
+            run_state(motor_number, 8, false, 0);
+        }
+        
     }
 }
 
@@ -160,9 +197,10 @@ void Actuator::count_egTooth(){
     egTooth_Count++;
 }
 
-int Actuator::calc_engine_rpm(){
+double Actuator::calc_engine_rpm(float dt){
     noInterrupts();
-    float rpm = (egTooth_Count - egTooth_Count_last)*cycle_frequency_minutes/egTeethPerRotation;
+    double freqInminutes = 1000*60/dt;
+    float rpm = (float(egTooth_Count - egTooth_Count_last)/egTeethPerRotation)*freqInminutes;
     egTooth_Count_last = egTooth_Count;
     interrupts();
     return rpm;

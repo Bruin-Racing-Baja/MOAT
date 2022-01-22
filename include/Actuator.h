@@ -8,15 +8,25 @@
 #define enc_PPR 2048
 #define motor_number 0  //Odrive axis
 #define homing_timeout 50000 //NOTE: In ms
-#define cycle_period 10e6 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
+#define cycle_period 10e4 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
 #define linearDistancePerRotation .125 //inches per rotation
 #define linearShiftLength 2.75 //inches
 const int32_t encoderCountShiftLength = (linearShiftLength/linearDistancePerRotation)*4*2048;
 const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period just in minutes
+const int cycle_period_millis = cycle_period/10e3;
 const int cycle_frequency_minutes = 1/cycle_period_minutes; 
 
 #define egTeethPerRotation 2048
 
+// reference signals from tyler
+// ***** ENGINE ***** //
+const unsigned int EG_IDLE = 1750;
+const unsigned int EG_ENGAGE = 2100;
+const unsigned int EG_LAUNCH = 2600;
+const int EG_TORQUE = 2700; //<--- Going for this one 
+const unsigned int EG_POWER = 3400; 
+
+const float proportionalGain = .01; // gain of the p controller
 
 class Actuator{
     public:
@@ -63,8 +73,9 @@ class Actuator{
     float read_float();
 
     //Functions that help calculate rpm
+    unsigned long last_control_execution;
     void (*m_external_count_egTooth)();
-    int calc_engine_rpm();
+    double calc_engine_rpm(float dt);
 
     // Const 
     bool m_printToSerial;
@@ -86,6 +97,7 @@ class Actuator{
     //running gear tooth sensor counts
     unsigned long egTooth_Count;
     unsigned long egTooth_Count_last;
+    int currentrpm_eg;
 };
 
 #endif /*ACTUATOR_H*/

@@ -37,7 +37,7 @@ General code to oversee all functions of the Teensy
   //PINS
   #define enc_A 20
   #define enc_B 21
-  #define hall_inbound 10
+  #define hall_inbound 12
   #define hall_outbound 11
   #define gearTooth_engine 15 //rn just attached to encoder B haha
   //CREATE OBJECT
@@ -140,6 +140,7 @@ void setup() {
 }
 
 void loop() {
+    actuator.control_function();
 /*---------------------------[Overall Init]---------------------------*/
   // Report report; //Generates a new report object
 
