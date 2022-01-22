@@ -18,7 +18,8 @@ Actuator::Actuator(HardwareSerial& serial,
     void (*external_interrupt_handler)(), 
     void (*external_count_egTooth)(),
     bool printToSerial)
-    :OdriveSerial(serial), encoder(enc_A, enc_B){
+    :OdriveSerial(serial),
+    encoder(enc_A, enc_B){
 
     //Save pin values
     m_egTooth = egTooth;
@@ -78,6 +79,7 @@ int Actuator::init(){
     Basically: CS VooDoo magic words make things way harder than they should be
     */
     Timer3.attachInterrupt(m_external_interrupt_handler);
+    Timer3.setPeriod(cycle_period);
 
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
     return status;
@@ -89,7 +91,7 @@ int Actuator::homing_sequence(){
     delay(1000);
     //Home outbound
     int start = millis();
-    set_velocity(1);
+    set_velocity(3);
     while (digitalReadFast(m_hall_outbound) == 1) {
         m_encoder_outbound = get_encoder_pos();
         if (millis() - start > homing_timeout) {
@@ -98,6 +100,8 @@ int Actuator::homing_sequence(){
             return status;
         }
     }
+    set_velocity(0); //Stop spinning after homing
+    run_state(motor_number, 1, false, 0); //Idle state
 
     m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
 
@@ -111,18 +115,18 @@ int Actuator::homing_sequence(){
 
     
 
-    //Testing encoder reading by shifting all the way back to the inbound
-    delay(500);
-    run_state(motor_number, 8, false, 0);
-    set_velocity(-2);
-    while(get_encoder_pos() > m_encoder_inbound){
-        Serial.print("encoder inbound: ");
-        Serial.println(m_encoder_inbound);
-        Serial.print("current encoder position");
-        Serial.println(get_encoder_pos());
-    }
-    set_velocity(0); //Stop spinning after homing
-    run_state(motor_number, 1, false, 0); //Idle state
+    // //Testing encoder reading by shifting all the way back to the inbound
+    // delay(500);
+    // run_state(motor_number, 8, false, 0);
+    // set_velocity(-3);
+    // while(get_encoder_pos() > m_encoder_inbound){
+    //     Serial.print("encoder inbound: ");
+    //     Serial.println(m_encoder_inbound);
+    //     Serial.print("current encoder position");
+    //     Serial.println(get_encoder_pos());
+    // }
+    // set_velocity(0); //Stop spinning after homing
+    // run_state(motor_number, 1, false, 0); //Idle state
 
     if(m_printToSerial){
         Serial.println("--------------------------");
@@ -142,7 +146,13 @@ void Actuator::control_function(){
     control_function_count++;
 
     //Calculate Gear tooth speed on engine
-    
+    int currentrpm = calc_engine_rpm();
+    if (m_printToSerial){
+        Serial.print("Current rpm: ");
+        Serial.println(currentrpm);
+        Serial.print("GearToothCount");
+        Serial.println(egTooth_Count);
+    }
 }
 
 //----------------Geartooth Functions----------------//

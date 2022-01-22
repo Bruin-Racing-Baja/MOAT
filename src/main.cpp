@@ -140,9 +140,6 @@ void setup() {
 }
 
 void loop() {
-    Serial.print(" encoder position: ");
-    Serial.println(actuator.get_encoder_pos());
-    delay(100);
 /*---------------------------[Overall Init]---------------------------*/
   // Report report; //Generates a new report object
 

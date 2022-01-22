@@ -8,14 +8,14 @@
 #define enc_PPR 2048
 #define motor_number 0  //Odrive axis
 #define homing_timeout 50000 //NOTE: In ms
-#define cycle_period 500000 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
+#define cycle_period 10e6 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
 #define linearDistancePerRotation .125 //inches per rotation
 #define linearShiftLength 2.75 //inches
 const int32_t encoderCountShiftLength = (linearShiftLength/linearDistancePerRotation)*4*2048;
 const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period just in minutes
 const int cycle_frequency_minutes = 1/cycle_period_minutes; 
 
-#define egTeethPerRotation 80
+#define egTeethPerRotation 2048
 
 
 class Actuator{
@@ -84,8 +84,8 @@ class Actuator{
     bool hasRun;
 
     //running gear tooth sensor counts
-    long egTooth_Count;
-    long egTooth_Count_last;
+    unsigned long egTooth_Count;
+    unsigned long egTooth_Count_last;
 };
 
 #endif /*ACTUATOR_H*/
