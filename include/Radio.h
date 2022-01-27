@@ -1,5 +1,7 @@
 #include <RH_RF95.h>
 
+#include <string>
+
 class Radio {
     //PINS
     int CS_PIN;
@@ -15,11 +17,12 @@ class Radio {
     
     RH_RF95 radio; //Radio object for use with library
     
+    int encode(String in);
+    
     public:
         Radio(int CS, int RST, int INT, double freq);
         int init(); //Initializes vital stuffs
         int getStatus();
         bool checkConnection();
-        int send(const char* data, int len);
-        int wait_reply_send(const char* data, int len, int timeout);
+        int send(String in, int timeout = 0);
 };

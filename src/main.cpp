@@ -10,6 +10,7 @@ General code to oversee all functions of the Teensy
 #include <SPI.h>
 #include <RH_RF95.h>
 #include <SoftwareSerial.h>
+#include <string>
 
 //Classes
 #include <Actuator.h>

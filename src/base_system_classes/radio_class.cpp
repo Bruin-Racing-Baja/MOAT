@@ -2,6 +2,8 @@
 #include <RH_RF95.h>
 #include <Radio.h>
 
+#include <string>
+
 Radio::Radio(int CS, int RST, int INT, double freq): radio(CS, INT){
     //Status meanings:
 
@@ -18,7 +20,6 @@ int Radio::getStatus(){
 }
 
 int Radio::init() {
-    //Return 0 for nominal, 1 if radio init fails, 2 if setFrequency fails
 
     //Manual reset
     digitalWrite(RST_PIN, LOW);
@@ -28,13 +29,11 @@ int Radio::init() {
 
     //Test connection
     while (!radio.init()) {
-        Serial.println("LoRa radio init failed");
         status = 1001;
         return status;
     }
     delay(500);
     if (!radio.setFrequency(frequency)) {
-        Serial.println("setFrequency failed");
         status = 1002;
         return status;
     }
@@ -51,8 +50,9 @@ bool Radio::checkConnection() {
     Returns a boolean value.
 
     */
-    char radiopacket[12] = "Hello There!";
-    radio.send((uint8_t*)radiopacket, 3);
+    std::string sending = "Hello There!";
+    std::string confirmation = "Gerneral Kenobi";
+    radio.send((uint8_t*)sending, sending.length());
     radio.waitPacketSent();
     
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
@@ -61,7 +61,7 @@ bool Radio::checkConnection() {
     delay(10);
     if (radio.waitAvailableTimeout(1000)) {
         if (radio.recv(buf, &len)) {
-            if ((char*)buf == "General Kenboi") {
+            if ((char*)buf == confirmation) {
                 return true;
             }
             else {
@@ -73,15 +73,57 @@ bool Radio::checkConnection() {
 
 }
 
-int Radio::send(const char* data, int len) {
+int Radio::send(String in, int timeout = 0) {
+    /*
+    This method takes a string and sends it over the radio module
+    By default it will not wait or look for any response from the module
+    If passed a timeout value, it will wait for a response from the module
+    Please note however that this method will not return the response from the module, and only return a status code
+    With no timeout the method will take little time, with a timeout it can take the length of the timeout in addition to any delays that occur
+    */
 
-    if (radio.send((uint8_t *)data, len)) {
-        status = 0;
-        return status;
+    if (!timeout) {
+        if (radio.send((uint8_t *)in, in.length())) {
+            status = 0;
+            return status;
+        }
+        else {
+            status = 1021;
+            return status;
+        }
     }
     else {
-        status = 1021;
-        return status;
+        //Sends message over radio and blocks until a reply is recieved or timeout
+        if (radio.send((uint8_t *)in, in.length())) {
+            radio.waitPacketSent();
+
+            //Initialize input buffer
+            uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+            uint8_t len = sizeof(buf);
+
+            delay(10);
+            if(radio.waitAvailableTimeout(timeout)) {
+                //Means we have a reply
+                if (radio.recv(buf, &len)) {
+                    //Figuring this out, but (char*)buf has the message back
+                    RSSI = radio.lastRssi();
+                }
+                else {
+                    //Recieve failed ¯\_(ツ)_/¯
+                    status = 1031;
+                    return status;
+                }
+            }
+            else {
+                //No reply detected, so timeout
+                status = 1032;
+                return status;
+            }
+        }
+        else {
+            status = 1021;
+            return status;
+        }
     }
 
     // radio.waitPacketSent(); // Wait for the transmission to complete
@@ -119,35 +161,5 @@ int Radio::send(const char* data, int len) {
 }
 
 int Radio::wait_reply_send(const char* data, int len, int timeout) {
-    //Sends message over radio and blocks until a reply is recieved or timeout
-    if (radio.send((uint8_t *)data, len)) {
-        radio.waitPacketSent();
-
-        //Initialize input buffer
-        uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-        uint8_t len = sizeof(buf);
-
-        delay(10);
-        if(radio.waitAvailableTimeout(timeout)) {
-            //Means we have a reply
-            if (radio.recv(buf, &len)) {
-                //Figuring this out, but (char*)buf has the message back
-                RSSI = radio.lastRssi();
-            }
-            else {
-                //Recieve failed ¯\_(ツ)_/¯
-                status = 1031;
-                return status;
-            }
-        }
-        else {
-            //No reply detected, so timeout
-            status = 1032;
-            return status;
-        }
-    }
-    else {
-        status = 1021;
-        return status;
-    }
+    
 }
