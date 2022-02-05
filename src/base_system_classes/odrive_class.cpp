@@ -6,10 +6,11 @@ template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(a
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
 ODrive::ODrive(
-    HardwareSerial& serial
+    HardwareSerial& serial,
+    bool debug_i
 )
 :OdriveSerial(serial){
-
+    debug = debug;
 }
 
 int ODrive::init(int timeout = 1000){
@@ -44,6 +45,10 @@ bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float 
 
     return timeout_ctr > 0;
 };
+
+void ODrive::set_velocity(int motor_number, float velocity) {
+    OdriveSerial << "v " << motor_number  << " " << velocity << " " << "0.0f" << "\n";;
+}
 
 //-----------------ODrive Getters--------------//
 float ODrive::get_vel(int motor_number) {

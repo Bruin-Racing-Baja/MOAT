@@ -31,14 +31,12 @@ const float proportionalGain = .01; // gain of the p controller
 class Actuator{
     public:
     Actuator(
-        HardwareSerial& serial, 
         const int enc_A, 
         const int enc_B, 
         const int egTooth, 
         const int gbTooth, 
         const int hall_inbound, 
-        const int hall_outbound,  
-        void (*external_interrupt_handler)(), 
+        const int hall_outbound,
         void (*external_count_egTooth)(),
         bool printToSerial);
     int init(); 
@@ -54,23 +52,10 @@ class Actuator{
     int status;
     HardwareSerial& OdriveSerial;
     Encoder encoder;
-    void (*m_external_interrupt_handler)();
     
-    
-
-
-    // Functions that command ODrive
-    bool run_state(int axis, int requested_state, bool wait_for_idle, float timeout);
-    void set_velocity(float velocity);
 
     // Functions that get information from Odrive
-    float get_vel();
     int get_encoder_count();
-    float get_voltage();
-    int32_t read_int();
-    String read_string();
-    String dump_errors();
-    float read_float();
 
     //Functions that help calculate rpm
     unsigned long last_control_execution;

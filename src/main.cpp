@@ -14,6 +14,7 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
+#include <ODrive.h>
 #include <Radio.h>
 
 //GENERAL SETTINGS
@@ -37,6 +38,45 @@ General code to oversee all functions of the Teensy
   #define req_radio 1
   #define req_actuator 1
 
+
+//<--><--><--><-->< Base Systems ><--><--><--><--><-->
+
+//BATTERY SETTINGS
+  //Add like req ports, 
+
+  //PINS
+  #define battery_pin_1 3
+  //CONSTANTS
+  #define enc_PPR 2048
+  #define enc_index 22
+  #define motor_number 1
+  #define homing_timeout 30000 //NOTE: In ms
+  #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
+  
+  //CREATE OBJECT
+  //Battery battery(battery_pin_1);
+
+//ODRIVE SETTINGS
+  //PINS
+
+  //CREATE OBJECT
+  ODrive odrive(Serial1, DEBUG_MODE);
+
+//RADIO SETTINGS
+  //Pin numbers
+  #define RADIO_CS 4
+  #define RADIO_RST 2
+  #define RADIO_INT 3
+
+  //CONSTANTS
+  #define RADIO_FREQ 915.0
+
+  //CREATE OBJECT
+  Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
+
+
+
+//<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
 //ACTUATOR SETTINGS
   //PINS TEST BED
   // #define enc_A 20
@@ -60,31 +100,12 @@ General code to oversee all functions of the Teensy
 //RM external int handler
   Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound,  &external_interrupt_handler, &external_count_egTooth, PRINTTOSERIAL);
 
-  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
-  static void external_interrupt_handler() {
-    actuator.control_function();
-  }
-
   static void external_count_egTooth(){
-    Serial.println("hi");
     actuator.count_egTooth();
   }
   
 
-//BATTERY SETTINGS
-  //Add like req ports, 
 
-  //PINS
-  #define battery_pin_1 3
-  //CONSTANTS
-  #define enc_PPR 2048
-  #define enc_index 22
-  #define motor_number 1
-  #define homing_timeout 30000 //NOTE: In ms
-  #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
-  
-  //CREATE OBJECT
-  //Battery battery(battery_pin_1);
 
   Actuator actuator(
     Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
@@ -108,17 +129,6 @@ General code to oversee all functions of the Teensy
 
 
 
-//RADIO SETTINGS
-  //Pin numbers
-  #define RADIO_CS 4
-  #define RADIO_RST 2
-  #define RADIO_INT 3
-
-  //CONSTANTS
-  #define RADIO_FREQ 915.0
-
-  //CREATE OBJECT
-  Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
 
 //FREE FUNCTIONS
 
