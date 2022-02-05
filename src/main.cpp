@@ -70,43 +70,9 @@ General code to oversee all functions of the Teensy
     actuator.count_egTooth();
   }
   
+//COOLER SETTINGS
 
 //BATTERY SETTINGS
-  //Add like req ports, 
-
-  //PINS
-  #define battery_pin_1 3
-  //CONSTANTS
-  #define enc_PPR 2048
-  #define enc_index 22
-  #define motor_number 1
-  #define homing_timeout 30000 //NOTE: In ms
-  #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
-  
-  //CREATE OBJECT
-  //Battery battery(battery_pin_1);
-
-  Actuator actuator(
-    Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
-    motor_number, homing_timeout, cycle_period, &external_interrupt_handler);
-
-  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
-  static void external_interrupt_handler() {
-    actuator.control_function();
-  }  
-
-//COOLER SETTINGS
-  //Add like req ports, 
-
-  //PINS
-  #define THERMO_PIN 8
-
-  //CONSTANTS
-
-  //CREATE OBJECT
-  //Cooler cooler(THERMO_PIN);
-
-
 
 //RADIO SETTINGS
   //Pin numbers
@@ -130,13 +96,6 @@ void debugMessage(String message) {
     int result = radio.send(message, sizeof(message));
   }
 }
-
-//PAY NO MIND TO THE MAN BEHIND THE CURTAIN
-//But actually this is creation of the timer object
-//This allows us to mount functions to run at precise times, allowing for more precise calculaitons in the controls code
-
-
-Encoder encoder(2, 3);
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
