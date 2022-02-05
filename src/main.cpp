@@ -10,28 +10,32 @@ General code to oversee all functions of the Teensy
 #include <SPI.h>
 #include <RH_RF95.h>
 #include <SoftwareSerial.h>
+#include <string>
 
 //Classes
 #include <Actuator.h>
-//#include <Battery.h>
-//#include <Cooler.h>
-//#include <Radio.h>
-//#include <Report.h>
-#include <Encoder.h>
+#include <Radio.h>
 
 //GENERAL SETTINGS
   #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
   #define PRINTTOSERIAL 1 //Set to 1 if connected to the serial moniter 0 if not
 
+  #define RADIO_DEBUG_MESSAGES 0 //Sends debugMessages over radio as well as Serial (no confirmation that signal is recieved)
+  //NOTE: This makes no guarantees that the messages are actually sent or recieved
+
   #define WAIT_FOR_RADIO 0 //Waits for a radio connection before continuing
   //Useful for debugging issues with startup report
+  
+  #define HOME_ON_STARTUP 0 //Homes actuator immediately after homing
+  
+  //Enabled systems will initialize and run, while disbaled systems will not
+  #define enable_actuator 1
+  #define enable_radio 1
 
-  #define req_battery 1 //Halts program if battery allocation fails
-  #define req_radio 1 //Halts program if radio allocation fails
-  #define req_actuator 1 //Halts program if actuator allocation fails
-  #define req_cooler 1 //Halts program if cooler allocation fails
 
-
+  //Halts program if the initializtion of the system fails
+  #define req_radio 1
+  #define req_actuator 1
 
 //ACTUATOR SETTINGS
   //PINS TEST BED
@@ -53,7 +57,7 @@ General code to oversee all functions of the Teensy
   //CREATE OBJECT
   static void external_interrupt_handler();
   static void external_count_egTooth();
-
+//RM external int handler
   Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound,  &external_interrupt_handler, &external_count_egTooth, PRINTTOSERIAL);
 
   //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
@@ -73,11 +77,23 @@ General code to oversee all functions of the Teensy
   //PINS
   #define battery_pin_1 3
   //CONSTANTS
-
+  #define enc_PPR 2048
+  #define enc_index 22
+  #define motor_number 1
+  #define homing_timeout 30000 //NOTE: In ms
+  #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
+  
   //CREATE OBJECT
   //Battery battery(battery_pin_1);
 
+  Actuator actuator(
+    Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
+    motor_number, homing_timeout, cycle_period, &external_interrupt_handler);
 
+  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
+  static void external_interrupt_handler() {
+    actuator.control_function();
+  }  
 
 //COOLER SETTINGS
   //Add like req ports, 
@@ -102,77 +118,118 @@ General code to oversee all functions of the Teensy
   #define RADIO_FREQ 915.0
 
   //CREATE OBJECT
-  //Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
+  Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
+
+//FREE FUNCTIONS
+
+void debugMessage(String message) {
+  if (DEBUG_MODE) {
+    Serial.println(message);
+  }
+  if (RADIO_DEBUG_MESSAGES) {
+    int result = radio.send(message, sizeof(message));
+  }
+}
+
+//PAY NO MIND TO THE MAN BEHIND THE CURTAIN
+//But actually this is creation of the timer object
+//This allows us to mount functions to run at precise times, allowing for more precise calculaitons in the controls code
+
 
 Encoder encoder(2, 3);
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
-  // if (DEBUG_MODE) {
-  //   Serial.begin(9600);
-  //   while (!Serial) {
-  //     ; //Wait for serial to be ready
-  //   }
-  //   Serial.println("[DEBUG MODE]");
-  // }
-  bool goodboy = true;
-  
-  Serial.begin(115200);
-  while (!Serial) ; // wait for Arduino Serial Monitor to open
-  Serial.println("Getty is cool");
-  actuator.init();
-  //Serial.print(actuator.communication_speed());
-  
-  // if (actuator.init() != 0 && req_actuator){
-  //   debugMessage("[ERROR] Actuator failed to initialize");
-  //   while(1);
-  // }
-  // error_tracker[2] = cooler.init();
-  // if (error_tracker[2] != 0 && req_cooler){
-  //   debugMessage("[ERROR] Cooler failed to initialize");
-  //   while(1);
-  // }
-  // error_tracker[3] = radio.init();
-  // if (error_tracker[3] != 0 && req_radio){
-  //   debugMessage("[ERROR] Radio failed to initialize");
-  //   while(1);
-  // }
+  int return_code;
 
-  // debugMessage("All systems initialized successfully");
-  // if (WAIT_FOR_RADIO) {
-  //   while (true) {
-  //     int response = radio.checkConnection();
-  //     if (response) {
-  //       break;
-  //     }
-  //     delay(200);
-  //   }
-  // }
+  if (DEBUG_MODE) {
+    Serial.begin(9600);
+    while (!Serial) ; //Wait for serial to be ready
+    Serial.println("[DEBUG MODE]");
+  }
+
+/*---------------------------[Radio Init]---------------------------*/
+  if (enable_radio) {
+    return_code = radio.init();
+    if (return_code != 0) {
+      debugMessage("[ERROR] Radio init failed with error code");
+      debugMessage("0" + return_code);
+      if (req_radio) {
+        while (1) ;  //Halt if radio connection is required
+      }
+    }
+
+    if (WAIT_FOR_RADIO) { //Wait for radio connection and reciprocation
+      debugMessage("Waiting for radio connection");
+      while (!radio.checkConnection()) ;
+      debugMessage("Radio connection success");
+    }
+  }
+
+/*---------------------------[Actuator Init]---------------------------*/
+  
+
+  if (enable_actuator) {
+    return_code = actuator.init();
+    if (return_code != 0) {
+      debugMessage("[ERROR] Actuator init failed with error code");
+      debugMessage("0" + return_code);
+      if (req_actuator) {
+        while (1) ;
+      }
+    }
+    if (HOME_ON_STARTUP) {
+      if (return_code = actuator.homing_sequence() != 0) {
+        debugMessage("[ERROR] Actuator init failed with error code");
+        debugMessage("0" + return_code);
+      }
+    }
+  }
+
+  debugMessage("All systems initialized successfully");
 }
 
 void loop() {
-    actuator.control_function();
-    
-/*---------------------------[Overall Init]---------------------------*/
-  // Report report; //Generates a new report object
-
-  // report.battery(battery.measureVoltage()); //Measures battery voltage and adds to the report
-
-  // report.cooler_temp()
-
-  // report.a_odometry(actuator.odometry());
-
-  // report.a_action(actuator.action());
-
-  // actuator.action();
-
-  // char* generated_report = report.getReport();
-
-  // radio.send(generated_report, sizeof(generated_report)); //Sends the report to the radio
+//"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
+//                               __...------------._
+//                          ,-'                   `-.
+//                       ,-'                         `.
+//                     ,'                            ,-`.
+//                    ;                              `-' `.
+//                   ;                                 .-. \
+//                  ;                           .-.    `-'  \
+//                 ;                            `-'          \
+//                ;                                          `.
+//                ;                                           :
+//               ;                                            |
+//              ;                                             ;
+//             ;                            ___              ;
+//            ;                        ,-;-','.`.__          |
+//        _..;                      ,-' ;`,'.`,'.--`.        |
+//       ///;           ,-'   `. ,-'   ;` ;`,','_.--=:      /
+//      |'':          ,'        :     ;` ;,;,,-'_.-._`.   ,'
+//      '  :         ;_.-.      `.    :' ;;;'.ee.    \|  /
+//       \.'    _..-'/8o. `.     :    :! ' ':8888)   || /
+//        ||`-''    \\88o\ :     :    :! :  :`""'    ;;/
+//        ||         \"88o\;     `.    \ `. `.      ;,'
+//        /)   ___    `."'/(--.._ `.    `.`.  `-..-' ;--.
+//        \(.="""""==.. `'-'     `.|      `-`-..__.-' `. `.
+//         |          `"==.__      )                    )  ;
+//         |   ||           `"=== '                   .'  .'
+//         /\,,||||  | |           \                .'   .'
+//         | |||'|' |'|'           \|             .'   _.' \
+//         | |\' |  |           || ||           .'    .'    \
+//         ' | \ ' |'  .   ``-- `| ||         .'    .'       \
+//           '  |  ' |  .    ``-.._ |  ;    .'    .'          `.
+//        _.--,;`.       .  --  ...._,'   .'    .'              `.__
+//      ,'  ,';   `.     .   --..__..--'.'    .'                __/_\
+//    ,'   ; ;     |    .   --..__.._.'     .'                ,'     `.
+//   /    ; :     ;     .    -.. _.'     _.'                 /         `
+//  /     :  `-._ |    .    _.--'     _.'                   |
+// /       `.    `--....--''       _.'                      |
+//           `._              _..-'                         |
+//              `-..____...-''                              |
+//                                                          |
+//                                mGk                       |
 }
 
-void debugMessage(const char* message) {
-  if (DEBUG_MODE) {
-    Serial.println(message);
-  }
-}
