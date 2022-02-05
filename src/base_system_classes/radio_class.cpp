@@ -48,11 +48,10 @@ bool Radio::checkConnection() {
     NOTE: This method stops the control loop and is not meant to be fast.
     In actuality we will use the assess method to recieve data back from the radio.
     Returns a boolean value.
-
     */
     std::string sending = "Hello There!";
     std::string confirmation = "Gerneral Kenobi";
-    radio.send((uint8_t*)sending, sending.length());
+    radio.send((uint8_t*)sending.c_str(), sending.length());
     radio.waitPacketSent();
     
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
@@ -83,7 +82,7 @@ int Radio::send(String in, int timeout = 0) {
     */
 
     if (!timeout) {
-        if (radio.send((uint8_t *)in, in.length())) {
+        if (radio.send((uint8_t *)in.c_str(), in.length())) {
             status = 0;
             return status;
         }
@@ -94,7 +93,7 @@ int Radio::send(String in, int timeout = 0) {
     }
     else {
         //Sends message over radio and blocks until a reply is recieved or timeout
-        if (radio.send((uint8_t *)in, in.length())) {
+        if (radio.send((uint8_t *)in.c_str(), in.length())) {
             radio.waitPacketSent();
 
             //Initialize input buffer
@@ -160,6 +159,8 @@ int Radio::send(String in, int timeout = 0) {
     // }
 }
 
-int Radio::wait_reply_send(const char* data, int len, int timeout) {
-    
+int Radio::waitReplySend(String in, String &out, int timeout = 0) {
+    /*
+    Similar to the send method, but this method will wait for a reply from the radio module and update the out variable with the reply
+    */
 }

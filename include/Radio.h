@@ -25,4 +25,5 @@ class Radio {
         int getStatus();
         bool checkConnection();
         int send(String in, int timeout = 0);
+        int waitReplySend(String in, String &out, int timeout = 0);
 };

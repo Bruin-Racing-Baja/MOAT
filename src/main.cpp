@@ -14,11 +14,7 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
-//#include <Battery.h>
-//#include <Cooler.h>
 #include <Radio.h>
-//#include <Report.h>
-
 
 //GENERAL SETTINGS
   #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
@@ -29,17 +25,16 @@ General code to oversee all functions of the Teensy
   #define WAIT_FOR_RADIO 0 //Waits for a radio connection before continuing
   //Useful for debugging issues with startup report
   
-  #define HOME_ON_STARTUP 1 //Homes actuator immediately after homing
+  #define HOME_ON_STARTUP 0 //Homes actuator immediately after homing
+  
   //Enabled systems will initialize and run, while disbaled systems will not
   #define enable_actuator 1
   #define enable_radio 1
 
 
   //Halts program if the initializtion of the system fails
-  #define req_battery 1
   #define req_radio 1
   #define req_actuator 1
-  #define req_cooler 1
 
 //ACTUATOR SETTINGS
   //PINS
@@ -66,18 +61,6 @@ General code to oversee all functions of the Teensy
   static void external_interrupt_handler() {
     actuator.control_function();
   }  
-
-//BATTERY SETTINGS
-  //Add like req ports, 
-
-  //PINS
-  #define battery_pin_1 3
-  //CONSTANTS
-
-  //CREATE OBJECT
-  //Battery battery(battery_pin_1);
-
-
 
 //COOLER SETTINGS
   //Add like req ports, 
@@ -106,7 +89,7 @@ General code to oversee all functions of the Teensy
 
 //FREE FUNCTIONS
 
-void debugMessage(const char* message) {
+void debugMessage(String message) {
   if (DEBUG_MODE) {
     Serial.println(message);
   }
@@ -114,6 +97,12 @@ void debugMessage(const char* message) {
     int result = radio.send(message, sizeof(message));
   }
 }
+
+//PAY NO MIND TO THE MAN BEHIND THE CURTAIN
+//But actually this is creation of the timer object
+//This allows us to mount functions to run at precise times, allowing for more precise calculaitons in the controls code
+
+
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
@@ -131,9 +120,12 @@ void setup() {
     if (return_code != 0) {
       debugMessage("[ERROR] Radio init failed with error code");
       debugMessage("0" + return_code);
+      if (req_radio) {
+        while (1) ;  //Halt if radio connection is required
+      }
     }
 
-    if (WAIT_FOR_RADIO) {
+    if (WAIT_FOR_RADIO) { //Wait for radio connection and reciprocation
       debugMessage("Waiting for radio connection");
       while (!radio.checkConnection()) ;
       debugMessage("Radio connection success");
@@ -152,33 +144,58 @@ void setup() {
         while (1) ;
       }
     }
-    // if (HOME_ON_STARTUP) {
-    //   if (return_code = actuator.homing_sequence() != 0) {
-    //     debugMessage("[ERROR] Actuator init failed with error code");
-    //     debugMessage("0" + return_code);
-    //   }
-    // }
+    if (HOME_ON_STARTUP) {
+      if (return_code = actuator.homing_sequence() != 0) {
+        debugMessage("[ERROR] Actuator init failed with error code");
+        debugMessage("0" + return_code);
+      }
+    }
   }
 
-  bool goodboy = true;
-  actuator.init();
-  Serial.begin(115200);
-  while (!Serial) ; // wait for Arduino Serial Monitor to open
-  Serial.print(actuator.communication_speed());
-
-  // debugMessage("All systems initialized successfully");
-  // if (WAIT_FOR_RADIO) {
-  //   while (true) {
-  //     int response = radio.checkConnection();
-  //     if (response) {
-  //       break;
-  //     }
-  //     delay(200);
-  //   }
-  // }
+  debugMessage("All systems initialized successfully");
 }
 
 void loop() {
-  
+//"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
+//                               __...------------._
+//                          ,-'                   `-.
+//                       ,-'                         `.
+//                     ,'                            ,-`.
+//                    ;                              `-' `.
+//                   ;                                 .-. \
+//                  ;                           .-.    `-'  \
+//                 ;                            `-'          \
+//                ;                                          `.
+//                ;                                           :
+//               ;                                            |
+//              ;                                             ;
+//             ;                            ___              ;
+//            ;                        ,-;-','.`.__          |
+//        _..;                      ,-' ;`,'.`,'.--`.        |
+//       ///;           ,-'   `. ,-'   ;` ;`,','_.--=:      /
+//      |'':          ,'        :     ;` ;,;,,-'_.-._`.   ,'
+//      '  :         ;_.-.      `.    :' ;;;'.ee.    \|  /
+//       \.'    _..-'/8o. `.     :    :! ' ':8888)   || /
+//        ||`-''    \\88o\ :     :    :! :  :`""'    ;;/
+//        ||         \"88o\;     `.    \ `. `.      ;,'
+//        /)   ___    `."'/(--.._ `.    `.`.  `-..-' ;--.
+//        \(.="""""==.. `'-'     `.|      `-`-..__.-' `. `.
+//         |          `"==.__      )                    )  ;
+//         |   ||           `"=== '                   .'  .'
+//         /\,,||||  | |           \                .'   .'
+//         | |||'|' |'|'           \|             .'   _.' \
+//         | |\' |  |           || ||           .'    .'    \
+//         ' | \ ' |'  .   ``-- `| ||         .'    .'       \
+//           '  |  ' |  .    ``-.._ |  ;    .'    .'          `.
+//        _.--,;`.       .  --  ...._,'   .'    .'              `.__
+//      ,'  ,';   `.     .   --..__..--'.'    .'                __/_\
+//    ,'   ; ;     |    .   --..__.._.'     .'                ,'     `.
+//   /    ; :     ;     .    -.. _.'     _.'                 /         `
+//  /     :  `-._ |    .    _.--'     _.'                   |
+// /       `.    `--....--''       _.'                      |
+//           `._              _..-'                         |
+//              `-..____...-''                              |
+//                                                          |
+//                                mGk                       |
 }
 
