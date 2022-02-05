@@ -49,28 +49,24 @@ int Actuator::init(){
 
     if(m_printToSerial) Serial.println("Connecting to Odrive");
 
-    OdriveSerial.begin(115200); //This is connection to ODrive
+    // OdriveSerial.begin(115200); //This is connection to ODrive
 
 
-    long start = millis();
-    while(get_voltage() <= 1){
-        if(millis() - start > homing_timeout){
-            status = 0051;
-            if(m_printToSerial) Serial.println("Connection Failed");
-            return -status;
-        }
-    } //Wait for Teensy <--> Odrive connection (Uses same timeout as homing)
+    // long start = millis();
+    // while(get_voltage() <= 1){
+    //     if(millis() - start > homing_timeout){
+    //         status = 0051;
+    //         if(m_printToSerial) Serial.println("Connection Failed");
+    //         return -status;
+    //     }
+    // } //Wait for Teensy <--> Odrive connection (Uses same timeout as homing)
 
-    if(m_printToSerial) Serial.println("Connected");
+    // if(m_printToSerial) Serial.println("Connected");
 
-    run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE 
-    status = homing_sequence();
-    if(status != 0) return status;
+    // run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE 
+    // status = homing_sequence();
+    // if(status != 0) return status;
 
-    //test_voltage(); //voltage testing code
-
-    //Starts interrupt timer and attaches method to interrupt
-    interrupts(); //allows interupts
     //Timer3.initialize(cycle_period);
     /*
     Let me tell you kids a story about a burning dorm and 3 hours to spare.
@@ -83,6 +79,7 @@ int Actuator::init(){
     //Timer3.attachInterrupt(m_external_interrupt_handler);
     //Timer3.setPeriod(cycle_period);
 
+    interrupts(); //allows interupts
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
     return status;
 }
@@ -150,44 +147,44 @@ void Actuator::control_function(){
 
         //Calculate Engine Speed
         float dt = millis()-last_control_execution;
-        //currentrpm_eg = calc_engine_rpm(dt);
-        currentrpm_eg = analogRead(A2)*4;
+        currentrpm_eg = calc_engine_rpm(dt);
+        //currentrpm_eg = analogRead(A2)*4;
         last_control_execution = millis();
 
         //Print Engine Speed
         if (m_printToSerial){
         Serial.print("Current rpm: ");
         Serial.println(currentrpm_eg);
-        // Serial.print("GearToothCount");
-        // Serial.println(egTooth_Count);
+        Serial.print("GearToothCount: ");
+        Serial.println(egTooth_Count);
         }
 
-        //Compute error
-        int error = currentrpm_eg - 2700;
+        // //Compute error
+        // int error = currentrpm_eg - 2700;
 
-        //If error will over or under actuate actuator then set error to 0.
-        if(digitalReadFast(m_hall_outbound) == 0 || get_encoder_pos() >= m_encoder_outbound){
-            if(error > 0) error = 0;
-            Serial.println("hi");
-        } 
-        else if (digitalReadFast(m_hall_inbound) == 0 || get_encoder_pos()<= m_encoder_inbound){
-            if(error < 0) error = 0;
-            Serial.println("hey");
-        }
+        // //If error will over or under actuate actuator then set error to 0.
+        // if(digitalReadFast(m_hall_outbound) == 0 || get_encoder_pos() >= m_encoder_outbound){
+        //     if(error > 0) error = 0;
+        //     Serial.println("hi");
+        // } 
+        // else if (digitalReadFast(m_hall_inbound) == 0 || get_encoder_pos()<= m_encoder_inbound){
+        //     if(error < 0) error = 0;
+        //     Serial.println("hey");
+        // }
 
-        //Multiply by gain and set new motor velocity. 
-        int motor_velocity = proportionalGain*error;
-        if (m_printToSerial){
-        Serial.print("Current motor_velocity: ");
-        Serial.println(motor_velocity);
-        }
+        // //Multiply by gain and set new motor velocity. 
+        // int motor_velocity = proportionalGain*error;
+        // if (m_printToSerial){
+        // Serial.print("Current motor_velocity: ");
+        // Serial.println(motor_velocity);
+        // }
 
-        if(motor_velocity == 0){
-            run_state(motor_number, 1, false, 0);
-        } else{
-            set_velocity(motor_velocity);
-            run_state(motor_number, 8, false, 0);
-        }
+        // if(motor_velocity == 0){
+        //     run_state(motor_number, 1, false, 0);
+        // } else{
+        //     set_velocity(motor_velocity);
+        //     run_state(motor_number, 8, false, 0);
+        // }
         
     }
 }

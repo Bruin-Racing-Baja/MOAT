@@ -17,7 +17,7 @@ General code to oversee all functions of the Teensy
 //#include <Cooler.h>
 //#include <Radio.h>
 //#include <Report.h>
-
+#include <Encoder.h>
 
 //GENERAL SETTINGS
   #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
@@ -34,12 +34,22 @@ General code to oversee all functions of the Teensy
 
 
 //ACTUATOR SETTINGS
-  //PINS
-  #define enc_A 20
-  #define enc_B 21
-  #define hall_inbound 12
-  #define hall_outbound 11
-  #define gearTooth_engine 15 //rn just attached to encoder B haha
+  //PINS TEST BED
+  // #define enc_A 20
+  // #define enc_B 21
+  // #define hall_inbound 12
+  // #define hall_outbound 11
+  // #define gearTooth_engine 15 //rn just attached to encoder B haha
+
+  //PINS CAR
+  #define enc_A 2
+  #define enc_B 3
+  #define hall_inbound 23
+  #define hall_outbound 33
+  #define gearTooth_engine 41
+  #define gearTooth_gearbox 40
+
+
   //CREATE OBJECT
   static void external_interrupt_handler();
   static void external_count_egTooth();
@@ -52,6 +62,7 @@ General code to oversee all functions of the Teensy
   }
 
   static void external_count_egTooth(){
+    Serial.println("hi");
     actuator.count_egTooth();
   }
   
@@ -93,7 +104,7 @@ General code to oversee all functions of the Teensy
   //CREATE OBJECT
   //Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
 
-
+Encoder encoder(2, 3);
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
@@ -141,6 +152,7 @@ void setup() {
 
 void loop() {
     actuator.control_function();
+    
 /*---------------------------[Overall Init]---------------------------*/
   // Report report; //Generates a new report object
 

@@ -95,7 +95,7 @@ class Actuator{
     bool hasRun;
 
     //running gear tooth sensor counts
-    unsigned long egTooth_Count;
+    volatile unsigned long egTooth_Count;
     unsigned long egTooth_Count_last;
     int currentrpm_eg;
 };
