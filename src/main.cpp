@@ -18,6 +18,7 @@ General code to oversee all functions of the Teensy
 
 //GENERAL SETTINGS
   #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
+  #define PRINTTOSERIAL 1 //Set to 1 if connected to the serial moniter 0 if not
 
   #define RADIO_DEBUG_MESSAGES 0 //Sends debugMessages over radio as well as Serial (no confirmation that signal is recieved)
   //NOTE: This makes no guarantees that the messages are actually sent or recieved
@@ -37,12 +38,44 @@ General code to oversee all functions of the Teensy
   #define req_actuator 1
 
 //ACTUATOR SETTINGS
-  //PINS
-  #define enc_A 20
-  #define enc_B 21
-  #define hall_inbound 10
-  #define hall_outbound 11
+  //PINS TEST BED
+  // #define enc_A 20
+  // #define enc_B 21
+  // #define hall_inbound 12
+  // #define hall_outbound 11
+  // #define gearTooth_engine 15 //rn just attached to encoder B haha
 
+  //PINS CAR
+  #define enc_A 2
+  #define enc_B 3
+  #define hall_inbound 23
+  #define hall_outbound 33
+  #define gearTooth_engine 41
+  #define gearTooth_gearbox 40
+
+
+  //CREATE OBJECT
+  static void external_interrupt_handler();
+  static void external_count_egTooth();
+//RM external int handler
+  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound,  &external_interrupt_handler, &external_count_egTooth, PRINTTOSERIAL);
+
+  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
+  static void external_interrupt_handler() {
+    actuator.control_function();
+  }
+
+  static void external_count_egTooth(){
+    Serial.println("hi");
+    actuator.count_egTooth();
+  }
+  
+
+//BATTERY SETTINGS
+  //Add like req ports, 
+
+  //PINS
+  #define battery_pin_1 3
   //CONSTANTS
   #define enc_PPR 2048
   #define enc_index 22
@@ -51,7 +84,7 @@ General code to oversee all functions of the Teensy
   #define cycle_period 5000 //If u wanna use freq instead : 1/x=T
   
   //CREATE OBJECT
-  static void external_interrupt_handler();
+  //Battery battery(battery_pin_1);
 
   Actuator actuator(
     Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
@@ -103,6 +136,7 @@ void debugMessage(String message) {
 //This allows us to mount functions to run at precise times, allowing for more precise calculaitons in the controls code
 
 
+Encoder encoder(2, 3);
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
