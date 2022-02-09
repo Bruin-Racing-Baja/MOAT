@@ -100,23 +100,12 @@ General code to oversee all functions of the Teensy
   static void external_interrupt_handler();
   static void external_count_egTooth();
 //RM external int handler
-  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound,  &external_interrupt_handler, &external_count_egTooth, PRINTTOSERIAL);
+  Actuator actuator(&odrive, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
 
   static void external_count_egTooth(){
     actuator.count_egTooth();
   }
   
-
-
-
-  Actuator actuator(
-    Serial1, enc_A, enc_B, 0, 0, hall_inbound, hall_outbound, 
-    motor_number, homing_timeout, cycle_period, &external_interrupt_handler);
-
-  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
-  static void external_interrupt_handler() {
-    actuator.control_function();
-  }  
 
 //COOLER SETTINGS
   //Add like req ports, 
@@ -130,8 +119,6 @@ General code to oversee all functions of the Teensy
   //Cooler cooler(THERMO_PIN);
 
 
-
-
 //FREE FUNCTIONS
 
 void debugMessage(String message) {
@@ -142,11 +129,6 @@ void debugMessage(String message) {
     int result = radio.send(message, sizeof(message));
   }
 }
-
-//PAY NO MIND TO THE MAN BEHIND THE CURTAIN
-//But actually this is creation of the timer object
-//This allows us to mount functions to run at precise times, allowing for more precise calculaitons in the controls code
-
 
 Encoder encoder(2, 3);
 
@@ -181,24 +163,24 @@ void setup() {
 /*---------------------------[Actuator Init]---------------------------*/
   
 
-  if (enable_actuator) {
-    return_code = actuator.init();
-    if (return_code != 0) {
-      debugMessage("[ERROR] Actuator init failed with error code");
-      debugMessage("0" + return_code);
-      if (req_actuator) {
-        while (1) ;
-      }
-    }
-    if (HOME_ON_STARTUP) {
-      if (return_code = actuator.homing_sequence() != 0) {
-        debugMessage("[ERROR] Actuator init failed with error code");
-        debugMessage("0" + return_code);
-      }
-    }
-  }
+//   if (enable_actuator) {
+//     return_code = actuator.init();
+//     if (return_code != 0) {
+//       debugMessage("[ERROR] Actuator init failed with error code");
+//       debugMessage("0" + return_code);
+//       if (req_actuator) {
+//         while (1) ;
+//       }
+//     }
+//     if (HOME_ON_STARTUP) {
+//       if (return_code = actuator.homing_sequence() != 0) {
+//         debugMessage("[ERROR] Actuator init failed with error code");
+//         debugMessage("0" + return_code);
+//       }
+//     }
+//   }
 
-  debugMessage("All systems initialized successfully");
+//   debugMessage("All systems initialized successfully");
 }
 
 void loop() {
