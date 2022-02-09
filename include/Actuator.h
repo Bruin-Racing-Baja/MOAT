@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <Encoder.h>
+#include <ODrive.h>
 
 //CONSTANTS
 #define enc_PPR 2048
@@ -16,7 +17,7 @@ const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period
 const int cycle_period_millis = cycle_period/10e3;
 const int cycle_frequency_minutes = 1/cycle_period_minutes; 
 
-#define egTeethPerRotation 2048
+#define egTeethPerRotation 66
 
 // reference signals from tyler
 // ***** ENGINE ***** //
@@ -31,6 +32,7 @@ const float proportionalGain = .01; // gain of the p controller
 class Actuator{
     public:
     Actuator(
+        ODrive *odrive_i,
         const int enc_A, 
         const int enc_B, 
         const int egTooth, 
@@ -50,9 +52,8 @@ class Actuator{
     int homing_sequence();
     void test_voltage();
     int status;
-    HardwareSerial& OdriveSerial;
     Encoder encoder;
-    
+    ODrive *odrive;
 
     // Functions that get information from Odrive
     int get_encoder_count();

@@ -57,6 +57,8 @@ General code to oversee all functions of the Teensy
   //Battery battery(battery_pin_1);
 
 //ODRIVE SETTINGS
+  #define starting_timeout 1000 //NOTE: In ms
+
   //PINS
 
   //CREATE OBJECT

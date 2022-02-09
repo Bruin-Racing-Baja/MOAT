@@ -22,6 +22,4 @@ class ODrive{
     int status;
     HardwareSerial& OdriveSerial;
     bool debug;
-
-    float get_voltage();
 };
