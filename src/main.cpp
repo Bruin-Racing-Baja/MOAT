@@ -106,18 +106,21 @@ General code to oversee all functions of the Teensy
     actuator.count_egTooth();
   }
   
-
 //COOLER SETTINGS
-  //Add like req ports, 
 
-  //PINS
-  #define THERMO_PIN 8
+//BATTERY SETTINGS
+
+//RADIO SETTINGS
+  //Pin numbers
+  #define RADIO_CS 4
+  #define RADIO_RST 2
+  #define RADIO_INT 3
 
   //CONSTANTS
+  #define RADIO_FREQ 915.0
 
   //CREATE OBJECT
-  //Cooler cooler(THERMO_PIN);
-
+  Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
 
 //FREE FUNCTIONS
 
@@ -129,8 +132,6 @@ void debugMessage(String message) {
     int result = radio.send(message, sizeof(message));
   }
 }
-
-Encoder encoder(2, 3);
 
 void setup() {
 /*---------------------------[Overall Init]---------------------------*/
