@@ -34,7 +34,6 @@ class Actuator{
     public:
     Actuator(
         ODrive *odrive_i,
-        Logging *log_i,
         const int enc_A, 
         const int enc_B, 
         const int egTooth, 
@@ -49,7 +48,7 @@ class Actuator{
     int get_encoder_pos();
     float communication_speed();
     void count_egTooth();
-    void diagnostic();
+    String diagnostic(bool);
 
     private:
     int homing_sequence();
@@ -57,7 +56,6 @@ class Actuator{
     int status;
     Encoder encoder;
     ODrive *odrive;
-    Logging *log;
 
     // Functions that get information from Odrive
     int get_encoder_count();

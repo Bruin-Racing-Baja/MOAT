@@ -4,7 +4,6 @@
 #include <SoftwareSerial.h>
 #include <Encoder.h>
 #include <TimerThree.h>
-#include <ArduinoLog.h>
 
 // Print with stream operator
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
@@ -12,7 +11,6 @@ template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(a
 
 Actuator::Actuator(
     ODrive *odrive_i,
-    Logging *log_i,
     const int enc_A, 
     const int enc_B, 
     const int egTooth, 
@@ -25,9 +23,6 @@ Actuator::Actuator(
 
     //Save odrive Object
     ODrive *odrive = odrive_i;
-
-    //Save Logging Object
-    Logging *log = log_i;
 
     //Save pin values
     m_egTooth = egTooth;
@@ -76,7 +71,6 @@ int Actuator::init(){
 
     interrupts(); //allows interupts
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
-    log->notice("Actuator init complete, code: %d", status);
     return status;
 }
 
@@ -92,14 +86,15 @@ int Actuator::homing_sequence(){
         if (millis() - start > homing_timeout) {
             status = 0041;
             odrive->run_state(motor_number, 0, false, 0);
-            log->error("Homing outbound failed, code: %d", status);
+            //log.error("Homing outbound failed, code: %d", status);
             return status;
         }
     }
     odrive->set_velocity(motor_number, 0); //Stop spinning after homing
     odrive->run_state(motor_number, 1, false, 0); //Idle state
 
-    log->notice("Homed outbound successfully, code: %d", status);
+    //NOTE: All these commented logs show where we should be able to get data and useful readouts
+    //log.notice("Homed outbound successfully, code: %d", status);
 
     m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
 
@@ -134,7 +129,7 @@ int Actuator::homing_sequence(){
         Serial.println(m_encoder_inbound);
         Serial.print("current encoder position");
     }
-    log->notice("Encoder inbound: %u Encoder outbound: %u", m_encoder_inbound, m_encoder_outbound);
+    //log.notice("Encoder inbound: %u Encoder outbound: %u", m_encoder_inbound, m_encoder_outbound);
 
     return 0;
 }
@@ -159,7 +154,7 @@ void Actuator::control_function(){
         Serial.println(egTooth_Count);
         }
 
-        log->notice("Current rpm, Gear Tooth Count: %f, %u", currentrpm_eg, egTooth_Count);
+        //log.notice("Current rpm, Gear Tooth Count: %f, %u", currentrpm_eg, egTooth_Count);
 
         // //Compute error
         // int error = currentrpm_eg - 2700;
@@ -193,14 +188,9 @@ void Actuator::control_function(){
 
 
 //------Diagnostic Function to print Sensors---------//
-void Actuator::diagnostic(){
+String Actuator::diagnostic(bool printSerial = true){
 
-    //Log implementation should achieve the same result
-    log->notice("Current time: %u \n ODrive Voltage: %u \n Odrive current speed: %u  \n Encoder Count: %d \n Outbound Limit: %d \n Inbound Limit: %d \n Inbound Hall: %d \n Outbound Hall: %d \n Engine Gear Tooth Count: %d \n Engine rpm: %d", 
-    millis(), odrive->get_voltage(), odrive->get_vel(motor_number), get_encoder_pos(), m_encoder_outbound, m_encoder_inbound, digitalReadFast(m_hall_inbound), digitalReadFast(m_hall_outbound), egTooth_Count, currentrpm_eg);
-    
-    
-    if(m_printToSerial){
+    if(m_printToSerial && printSerial){
         Serial.println("-----------------------------");
         Serial.print("Current time: ");
         Serial.println(millis());
@@ -231,8 +221,22 @@ void Actuator::diagnostic(){
         //current Engine Speed
         Serial.print("Engine rpm: ");
         Serial.println(currentrpm_eg);
-        delay(1000);
     }
+
+    String output = "";
+    output += "-----------------------------\n";
+    output += "Time: " +String(millis())+"\n";
+    output += "Odrive voltage: " +String(odrive->get_voltage())+"\n";
+    output += "Odrive speed: " +String(odrive->get_vel(motor_number))+"\n";
+    output += "Encoder count: " +String(get_encoder_pos())+"\n";
+    output += "Outbound limit: " +String(m_encoder_outbound)+"\n";
+    output += "Inbound limit: " +String(m_encoder_inbound)+"\n";
+    output += "Outbound reading: " +String(digitalReadFast(m_hall_outbound))+"\n";
+    output += "Inbound reading: " +String(digitalReadFast(m_hall_inbound))+"\n";
+    output += "Engine Gear Tooth Count: " +String(egTooth_Count)+"\n";
+    output += "Current rpm: " +String(currentrpm_eg)+"\n";
+
+    return output;
 }
 
 //----------------Geartooth Functions----------------//
@@ -286,7 +290,7 @@ float Actuator::communication_speed(){
     odrive->set_velocity(motor_number, 0); //Stop spinning after homing
     odrive->run_state(motor_number, 1, false, 0);
 
-    log->notice("Communication speed: %f", (float(com_total - com_bench)/float(data_points)));
+    //log.notice("Communication speed: %f", (float(com_total - com_bench)/float(data_points)));
     return float(com_total-com_bench)/float(data_points);
 }
 

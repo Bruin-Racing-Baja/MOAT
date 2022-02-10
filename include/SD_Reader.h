@@ -9,7 +9,7 @@
 
 class Sd{
     public:
-    Sd();
+    Sd(File* log_i);
     int init();
     int write(String);
     int save();
@@ -18,7 +18,7 @@ class Sd{
     private:
     int status;
     bool exposed_stream = false;
-    File dataFile;
+    File logFile;
 
 };
 

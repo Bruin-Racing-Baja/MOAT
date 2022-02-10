@@ -12,19 +12,25 @@ General code to oversee all functions of the Teensy
 #include <SoftwareSerial.h>
 #include <string>
 #include <ArduinoLog.h>
-#include <fstream>
-#include <iostream>
 #include <SD.h>
 
 //Classes
 #include <Actuator.h>
 #include <ODrive.h>
 #include <Radio.h>
-#include <SD_Reader.h>
 
 using namespace std;
 
 //General Settings
+  //Mode
+  #define OPERATING 0
+
+  //Startup
+  #define WAIT_SERIAL_STARTUP 1
+  #define RUN_DIAGNOSTIC_STARTUP 0
+
+  #define DIAGNOSTIC_MODE 0
+
   //Log
   #define LOG_LEVEL LOG_LEVEL_VERBOSE
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
@@ -40,8 +46,8 @@ using namespace std;
   ODrive odrive(Serial1, true);
 
 //LOGGING AND SD SETTINGS
-  //Create SD object (contains the file stream)
-  Sd sd;
+  //Create file to log to
+  File logFile;
   //Cannot create logging object until init
 
 
@@ -69,7 +75,7 @@ using namespace std;
 
   static void external_count_egTooth();
 
-  Actuator actuator(&odrive, &Log, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
+  Actuator actuator(&odrive, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
 
   static void external_count_egTooth(){
     actuator.count_egTooth();
@@ -77,25 +83,46 @@ using namespace std;
   
 //FREE FUNCTIONS
 
+// void save_log() {
+//   logFile.close();
+//   logFile = SD.open("log.txt", FILE_WRITE);
+// }
+
 void setup() {
-  // ofstream ofile;
-  // ofile.open("huh.dat");
-  sd.init();
-  File coolGuy = SD.open("coolio.txt", FILE_WRITE);
-  //Create log object given the SD card object
-  // File logFile;
-  Log.begin(LOG_LEVEL, &coolGuy);
-  // int actuator_init = actuator.init();
-  // if (!actuator_init) {
-  //   Log.fatal("Failed to initialize Actuator, error code: %d", actuator_init);
-  // }
-  Log.notice("testing 1 2 3 4 5 6");
-  //sd.write("testing 1 2 3");
-  // sd.save();
-  coolGuy.close();
+  //-------------Wait for serial-----------------
+  if(WAIT_SERIAL_STARTUP) {
+    while (!Serial) {
+      ; // wait for serial port to connect. Needed for native USB port only
+    }
+  }
+  //-------------Logging and SD Card-----------------
+  SD.begin(BUILTIN_SDCARD);
+  logFile = SD.open("log.txt", FILE_WRITE);
+  Log.begin(LOG_LEVEL_VERBOSE, &logFile, false);
+  Log.verbose("Logging Started");
+  /*
+  The log file will only actually save when the file is closed, so here
+  is an interrupt to save the file every 30 seconds and then re-open it
+  */
+  
+  //-------------Actuator-----------------
+  Serial.println("Starting Actuator");
+  int actuator_init = actuator.init();
+  if (actuator_init != 0) {
+    Log.error("Actuator init failed code: %d" CR, actuator_init);
+  }
+  else {
+    Log.verbose("Actuator init successful" CR);
+  }
+
+
+  logFile.close();
+  Serial.println("Running diagnostic");
 }
 
 void loop() {
+  Log.notice((actuator.diagnostic(false)).c_str());
+  delay(1000);
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
 //                               __...------------._

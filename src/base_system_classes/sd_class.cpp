@@ -4,8 +4,8 @@
 #include <SD.h>
 
 
-Sd::Sd() {
-    File dataFile;
+Sd::Sd(File* log_i) {
+    logFile = *log_i;
 }
 
 int Sd::init() {
@@ -17,28 +17,12 @@ int Sd::init() {
         status = 0;
         return status;
     }
-    dataFile = SD.open("data.txt", FILE_WRITE);
+    logFile = SD.open("data.txt", FILE_WRITE);
 }
 
 int Sd::write(String i) {
     //Takes in a string and writes it to SD card
-    if (dataFile) {
-        dataFile.println(i);
+    if (logFile) {
+        logFile.println(i);
     }
-}
-
-File* Sd::getFileStream() {
-    /*
-    MAKE SURE YOU CLOSE THE FILE OR IT WONT SAVE
-    Sd.save will close this file stream and save it
-    This should only be used if you know what you are doing
-
-    */
-    exposed_stream = true;
-    return &dataFile;
-}
-
-int Sd::save() {
-    //Saves the file to the sd card
-    dataFile.close();
 }
