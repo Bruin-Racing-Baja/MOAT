@@ -3,8 +3,11 @@
 
 #include <Arduino.h>
 
+#include <ODrive.h>
+
 #define AREF 3.3
 #define ADC_RESOLUTION 10
+#define motor_number 1  //ODrive axis
 
 class Cooling
 {
@@ -15,7 +18,7 @@ class Cooling
     static const int m_cycle_period_millis = 10;
 
 public:
-    Cooling();
+    Cooling(ODrive*);
 
     void init();
     void control_function();
@@ -28,6 +31,7 @@ private:
     bool m_fan_enabled;
     unsigned long m_last_control_execution;
     unsigned long m_control_execution_count;
+    ODrive *odrive;
 };
 
 #endif //! COOLING_H

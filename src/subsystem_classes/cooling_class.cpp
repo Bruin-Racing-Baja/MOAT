@@ -1,19 +1,22 @@
 #include <Arduino.h>
 #include <Cooling.h>
+#include <ODrive.h>
 
-Cooling::Cooling()
+Cooling::Cooling(ODrive *odrive_i)
 {
+    ODrive *odrive = odrive_i;
     m_fan_enabled = false;
 }
 
 void Cooling::stop_fan()
 {
-    //Odrive Function Needed
+    odrive->set_velocity(motor_number, 0);
 }
 
 void Cooling::set_fan_speed(int rpm)
+//NOTE: Dont know how rpm -> velocity works, so should look into that
 {
-    //Odrive Function Needed
+    odrive->set_velocity(motor_number, rpm);
 }
 
 float Cooling::thermo_check()
