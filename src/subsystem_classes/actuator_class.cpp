@@ -50,18 +50,10 @@ Actuator::Actuator(
 }
 
 int Actuator::init(){
-    status = 0;
-
-    // long start = millis();
-    // while(get_voltage() <= 1){
-    //     if(millis() - start > homing_timeout){
-    //         status = 0051;
-    //         if(m_printToSerial) Serial.println("Connection Failed");
-    //         return -status;
-    //     }
-    // } //Wait for Teensy <--> Odrive connection (Uses same timeout as homing)
-
-    // if(m_printToSerial) Serial.println("Connected");
+    if (!odrive->get_is_connected()){
+        status = 1;  //ODrive not connected
+        return status;
+    }
 
     // run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE 
     // status = homing_sequence();
@@ -71,6 +63,7 @@ int Actuator::init(){
 
     interrupts(); //allows interupts
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
+    status = 0;
     return status;
 }
 
@@ -195,14 +188,14 @@ String Actuator::diagnostic(bool printSerial = true){
         Serial.print("Current time: ");
         Serial.println(millis());
         //Odrive voltage
-        Serial.print("Odrive Voltage: ");
-        Serial.println( odrive->get_voltage());
-        //Odrive speed
-        Serial.print("Odrive's current Speed: ");
-        Serial.println(odrive->get_vel(motor_number));
-        //Encoder Count
-        Serial.print("Current Encoder Count:");
-        Serial.print(get_encoder_pos());
+        // Serial.print("Odrive Voltage: ");
+        // Serial.println( odrive->get_voltage());
+        // //Odrive speed
+        // Serial.print("Odrive's current Speed: ");
+        // Serial.println(odrive->get_vel(motor_number));
+        // //Encoder Count
+        // Serial.print("Current Encoder Count:");
+        // Serial.print(get_encoder_pos());
         //outbound encoder reading
         Serial.print("Outbound Limit: ");
         Serial.println(m_encoder_outbound);
@@ -226,9 +219,9 @@ String Actuator::diagnostic(bool printSerial = true){
     String output = "";
     output += "-----------------------------\n";
     output += "Time: " +String(millis())+"\n";
-    output += "Odrive voltage: " +String(odrive->get_voltage())+"\n";
-    output += "Odrive speed: " +String(odrive->get_vel(motor_number))+"\n";
-    output += "Encoder count: " +String(get_encoder_pos())+"\n";
+    //output += "Odrive voltage: " +String(odrive->get_voltage())+"\n";
+    //output += "Odrive speed: " +String(odrive->get_vel(motor_number))+"\n";
+    //output += "Encoder count: " +String(get_encoder_pos())+"\n";
     output += "Outbound limit: " +String(m_encoder_outbound)+"\n";
     output += "Inbound limit: " +String(m_encoder_inbound)+"\n";
     output += "Outbound reading: " +String(digitalReadFast(m_hall_outbound))+"\n";

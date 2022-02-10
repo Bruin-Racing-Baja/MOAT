@@ -10,6 +10,7 @@ General code to oversee all functions of the Teensy
 #include <SPI.h>
 #include <RH_RF95.h>
 #include <SoftwareSerial.h>
+#include <HardwareSerial.h>
 #include <string>
 #include <ArduinoLog.h>
 #include <SD.h>
@@ -24,16 +25,18 @@ using namespace std;
 //General Settings
   //Mode
   #define OPERATING 0
+  #define DIAGNOSTIC 0
 
   //Startup
   #define WAIT_SERIAL_STARTUP 1
   #define RUN_DIAGNOSTIC_STARTUP 0
 
-  #define DIAGNOSTIC_MODE 0
-
   //Log
   #define LOG_LEVEL LOG_LEVEL_VERBOSE
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
+
+  //Actuator
+  #define HOME_ON_STARTUP 0
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 
@@ -43,7 +46,7 @@ using namespace std;
   //PINS
 
   //CREATE OBJECT
-  ODrive odrive(Serial1, true);
+  ODrive odrive(Serial1);
 
 //LOGGING AND SD SETTINGS
   //Create file to log to
@@ -65,10 +68,10 @@ using namespace std;
   //PINS CAR
   #define enc_A 2
   #define enc_B 3
-  #define hall_inbound 23
-  #define hall_outbound 33
-  #define gearTooth_engine 41
-  #define gearTooth_gearbox 40
+  #define hall_inbound 22
+  #define hall_outbound 23
+  #define gearTooth_engine 40
+  #define gearTooth_gearbox 41
 
 
   //CREATE OBJECT
@@ -99,20 +102,33 @@ void setup() {
   SD.begin(BUILTIN_SDCARD);
   logFile = SD.open("log.txt", FILE_WRITE);
   Log.begin(LOG_LEVEL_VERBOSE, &logFile, false);
-  Log.verbose("Logging Started");
+  Log.verbose("Logging Started" CR);
   /*
   The log file will only actually save when the file is closed, so here
   is an interrupt to save the file every 30 seconds and then re-open it
   */
-  
+  //------------------Odrive------------------
+  int odrive_init = odrive.init(10000);
+  if (odrive_init) {
+    Log.error("ODrive Init Failed code: %d" CR, odrive_init);
+  }
+  else {
+    Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
+  }
+  Serial.println("ODrive init: " + String(odrive_init));
+  for (int i = 0; i < 20; i++) {
+    Serial.println(odrive.get_voltage());
+  }
+
+
   //-------------Actuator-----------------
   Serial.println("Starting Actuator");
   int actuator_init = actuator.init();
-  if (actuator_init != 0) {
+  if (actuator_init) {
     Log.error("Actuator init failed code: %d" CR, actuator_init);
   }
   else {
-    Log.verbose("Actuator init successful" CR);
+    Log.verbose("Actuator init successful code: %d" CR, actuator_init);
   }
 
 
@@ -121,8 +137,17 @@ void setup() {
 }
 
 void loop() {
-  Log.notice((actuator.diagnostic(false)).c_str());
-  delay(1000);
+  exit(0);
+  Serial.println("Mah whyfe");
+  for (int i = 0; i < 100; i++) {
+    //Serial.println(actuator.diagnostic(false));
+    Log.notice("%d", i);
+    Log.notice((actuator.diagnostic(true)).c_str());
+    Serial.println("Looped");
+    delay(100);
+  }
+  logFile.close();
+  exit(0);
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
 //                               __...------------._
