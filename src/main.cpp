@@ -14,31 +14,26 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
+#include <ODrive.h>
 #include <Radio.h>
 
 //GENERAL SETTINGS
-  #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
-  #define PRINTTOSERIAL 1 //Set to 1 if connected to the serial moniter 0 if not
-
-  #define RADIO_DEBUG_MESSAGES 0 //Sends debugMessages over radio as well as Serial (no confirmation that signal is recieved)
-  //NOTE: This makes no guarantees that the messages are actually sent or recieved
-
-  #define WAIT_FOR_RADIO 0 //Waits for a radio connection before continuing
-  //Useful for debugging issues with startup report
-  
-  #define HOME_ON_STARTUP 0 //Homes actuator immediately after homing
-  
-  //Enabled systems will initialize and run, while disbaled systems will not
-  #define enable_actuator 1
-  #define enable_radio 1
 
 
-  //Halts program if the initializtion of the system fails
-  #define req_radio 1
-  #define req_actuator 1
+//<--><--><--><-->< Base Systems ><--><--><--><--><-->
 
+//ODRIVE SETTINGS
+  #define starting_timeout 1000 //NOTE: In ms
+
+  //PINS
+
+  //CREATE OBJECT
+  ODrive odrive(Serial1, true);
+
+//<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
 //ACTUATOR SETTINGS
   //PINS TEST BED
+  #define PRINTTOSERIAL false
   // #define enc_A 20
   // #define enc_B 21
   // #define hall_inbound 12
@@ -55,54 +50,24 @@ General code to oversee all functions of the Teensy
 
 
   //CREATE OBJECT
-  static void external_interrupt_handler();
-  static void external_count_egTooth();
-//RM external int handler
-  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound,  &external_interrupt_handler, &external_count_egTooth, PRINTTOSERIAL);
 
-  //CREATE GODFRSAKEN FUNCTION (NO QUESTIONS)
-  static void external_interrupt_handler() {
-    actuator.control_function();
-  }
+  static void external_count_egTooth();
+
+  Actuator actuator(&odrive, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
 
   static void external_count_egTooth(){
-    Serial.println("hi");
     actuator.count_egTooth();
   }
   
-//COOLER SETTINGS
-
-//BATTERY SETTINGS
-
-//RADIO SETTINGS
-  //Pin numbers
-  #define RADIO_CS 4
-  #define RADIO_RST 2
-  #define RADIO_INT 3
-
-  //CONSTANTS
-  #define RADIO_FREQ 915.0
-
-  //CREATE OBJECT
-  Radio radio(RADIO_CS, RADIO_RST, RADIO_INT, RADIO_FREQ);
-
 //FREE FUNCTIONS
 
-void debugMessage(String message) {
-  if (DEBUG_MODE) {
-    Serial.println(message);
-  }
-  if (RADIO_DEBUG_MESSAGES) {
-    int result = radio.send(message, sizeof(message));
-  }
-}
 
 void setup() {
   actuator.init();
-  debugMessage("All systems initialized successfully");
 }
 
 void loop() {
+/*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
 //                               __...------------._
 //                          ,-'                   `-.
@@ -144,5 +109,6 @@ void loop() {
 //              `-..____...-''                              |
 //                                                          |
 //                                mGk                       |
+*/
 }
 

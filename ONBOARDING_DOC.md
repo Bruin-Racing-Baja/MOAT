@@ -51,3 +51,19 @@ CURRENT PROJECTS:
     Radio communication //  Getty
     Control code timing //  Getty
     Actuator class      //  Drew
+
+FUTURE IDEAS:
+    Shift to bitwise operation to increase speed
+
+RECORD:
+    ENGINE DATA
+    Wheel speed
+    current position / gear ratio (can calc from position)
+    Times should line up (Sample at same point)
+    Compare between runs (may be able to see just by jumps in the time)
+    Current, torque, power (of actuator motor)
+    Collect a lot of data to compare against actual model
+
+
+SD CARD:
+    R
