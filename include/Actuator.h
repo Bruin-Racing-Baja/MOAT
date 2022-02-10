@@ -33,6 +33,7 @@ class Actuator{
     public:
     Actuator(
         ODrive *odrive_i,
+        Logging *log_i,
         const int enc_A, 
         const int enc_B, 
         const int egTooth, 
@@ -55,6 +56,7 @@ class Actuator{
     int status;
     Encoder encoder;
     ODrive *odrive;
+    Logging *log;
 
     // Functions that get information from Odrive
     int get_encoder_count();

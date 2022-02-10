@@ -19,20 +19,14 @@ General code to oversee all functions of the Teensy
 #include <Radio.h>
 #include <SD_Reader.h>
 
-//GENERAL SETTINGS
+//General Settings
+  //Log
   #define LOG_LEVEL LOG_LEVEL_VERBOSE
-  
-  #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
-  #define PRINTTOSERIAL 1 //Set to 1 if connected to the serial moniter 0 if not
-
-
-
-  #define RADIO_DEBUG_MESSAGES 0 //Sends debugMessages over radio as well as Serial (no confirmation that signal is recieved)
-  //NOTE: This makes no guarantees that the messages are actually sent or recieved
+  //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 
-//ODRIVE SETTINGS
+//ODrive Settings
   #define starting_timeout 1000 //NOTE: In ms
 
   //PINS
@@ -43,7 +37,8 @@ General code to oversee all functions of the Teensy
 //LOGGING AND SD SETTINGS
   //Create SD object (contains the file stream)
   Sd sd;
-  //Create logging object
+  //Cannot create logging object until init
+
 
 
 //<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
@@ -69,7 +64,7 @@ General code to oversee all functions of the Teensy
 
   static void external_count_egTooth();
 
-  Actuator actuator(&odrive, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
+  Actuator actuator(&odrive, &Log, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
 
   static void external_count_egTooth(){
     actuator.count_egTooth();
@@ -79,7 +74,13 @@ General code to oversee all functions of the Teensy
 
 
 void setup() {
-  actuator.init();
+  sd.init();
+  //Create log object given the SD card object
+  Log.begin(LOG_LEVEL, &sd.getFileStream());
+  int actuator_init = actuator.init();
+  if (!actuator_init) {
+    Log.fatal("Failed to initialize Actuator, error code: %d", actuator_init);
+  }
 }
 
 void loop() {

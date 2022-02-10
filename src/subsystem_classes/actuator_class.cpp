@@ -4,6 +4,7 @@
 #include <SoftwareSerial.h>
 #include <Encoder.h>
 #include <TimerThree.h>
+#include <ArduinoLog.h>
 
 // Print with stream operator
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
@@ -11,6 +12,7 @@ template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(a
 
 Actuator::Actuator(
     ODrive *odrive_i,
+    Logging *log_i,
     const int enc_A, 
     const int enc_B, 
     const int egTooth, 
@@ -23,6 +25,9 @@ Actuator::Actuator(
 
     //Save odrive Object
     ODrive *odrive = odrive_i;
+
+    //Save Logging Object
+    Logging *log = log_i;
 
     //Save pin values
     m_egTooth = egTooth;
@@ -51,12 +56,6 @@ Actuator::Actuator(
 
 int Actuator::init(){
     status = 0;
-    control_function_count = 0; //Testing var
-
-    if(m_printToSerial) Serial.println("Connecting to Odrive");
-
-    // OdriveSerial.begin(115200); //This is connection to ODrive
-
 
     // long start = millis();
     // while(get_voltage() <= 1){
@@ -77,6 +76,7 @@ int Actuator::init(){
 
     interrupts(); //allows interupts
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
+    log->notice("Actuator init complete, code: %d", status);
     return status;
 }
 
@@ -92,11 +92,14 @@ int Actuator::homing_sequence(){
         if (millis() - start > homing_timeout) {
             status = 0041;
             odrive->run_state(motor_number, 0, false, 0);
+            log->error("Homing outbound failed, code: %d", status);
             return status;
         }
     }
     odrive->set_velocity(motor_number, 0); //Stop spinning after homing
     odrive->run_state(motor_number, 1, false, 0); //Idle state
+
+    log->notice("Homed outbound successfully, code: %d", status);
 
     m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
 
@@ -131,6 +134,7 @@ int Actuator::homing_sequence(){
         Serial.println(m_encoder_inbound);
         Serial.print("current encoder position");
     }
+    log->notice("Encoder inbound: %u Encoder outbound: %u", m_encoder_inbound, m_encoder_outbound);
 
     return 0;
 }
@@ -154,6 +158,8 @@ void Actuator::control_function(){
         Serial.print("GearToothCount: ");
         Serial.println(egTooth_Count);
         }
+
+        log->notice("Current rpm, Gear Tooth Count: %f, %u", currentrpm_eg, egTooth_Count);
 
         // //Compute error
         // int error = currentrpm_eg - 2700;
@@ -188,6 +194,12 @@ void Actuator::control_function(){
 
 //------Diagnostic Function to print Sensors---------//
 void Actuator::diagnostic(){
+
+    //Log implementation should achieve the same result
+    log->notice("Current time: %u \n ODrive Voltage: %u \n Odrive current speed: %u  \n Encoder Count: %d \n Outbound Limit: %d \n Inbound Limit: %d \n Inbound Hall: %d \n Outbound Hall: %d \n Engine Gear Tooth Count: %d \n Engine rpm: %d", 
+    millis(), odrive->get_voltage(), odrive->get_vel(motor_number), get_encoder_pos(), m_encoder_outbound, m_encoder_inbound, digitalReadFast(m_hall_inbound), digitalReadFast(m_hall_outbound), egTooth_Count, currentrpm_eg);
+    
+    
     if(m_printToSerial){
         Serial.println("-----------------------------");
         Serial.print("Current time: ");
@@ -211,8 +223,8 @@ void Actuator::diagnostic(){
         Serial.print("Inbound Hall reading: ");
         Serial.println(digitalReadFast(m_hall_inbound));
         //if outbound hall on
-        Serial.print("Inbound Hall reading: ");
-        Serial.println(digitalReadFast(m_hall_inbound));
+        Serial.print("outbound Hall reading: ");
+        Serial.println(digitalReadFast(m_hall_outbound));
         //current Gear Tooth count
         Serial.print("Engine Gear Tooth Count: ");
         Serial.println(egTooth_Count);
@@ -257,6 +269,7 @@ float Actuator::communication_speed(){
         com_end = millis();
         com_bench += com_end-com_start;
     }
+    
     Serial.println(com_bench);
 
     //With command to odrive
@@ -273,6 +286,7 @@ float Actuator::communication_speed(){
     odrive->set_velocity(motor_number, 0); //Stop spinning after homing
     odrive->run_state(motor_number, 1, false, 0);
 
+    log->notice("Communication speed: %f", (float(com_total - com_bench)/float(data_points)));
     return float(com_total-com_bench)/float(data_points);
 }
 
