@@ -82,7 +82,7 @@ int Actuator::homing_sequence(){
     delay(1000);
     //Home outbound
     int start = millis();
-    odrive->set_velocity(3);
+    odrive->set_velocity(motor_number, 3);
     while (digitalReadFast(m_hall_outbound) == 1) {
         m_encoder_outbound = get_encoder_pos();
         if (millis() - start > homing_timeout) {
@@ -91,7 +91,7 @@ int Actuator::homing_sequence(){
             return status;
         }
     }
-    odrive->set_velocity(0); //Stop spinning after homing
+    odrive->set_velocity(motor_number, 0); //Stop spinning after homing
     odrive->run_state(motor_number, 1, false, 0); //Idle state
 
     m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
@@ -206,7 +206,7 @@ float Actuator::communication_speed(){
     int com_bench = 0;
     float test = 0;
     odrive->run_state(motor_number, 8, false, 0);
-    odrive->set_velocity(.5); 
+    odrive->set_velocity(motor_number, .5); 
     delay(1000);
 
     //Benchmark
@@ -228,7 +228,7 @@ float Actuator::communication_speed(){
         com_total += com_end-com_start;
     }
     Serial.println(com_total);
-    odrive->set_velocity(0); //Stop spinning after homing
+    odrive->set_velocity(motor_number, 0); //Stop spinning after homing
     odrive->run_state(motor_number, 1, false, 0);
 
     return float(com_total-com_bench)/float(data_points);
@@ -243,13 +243,13 @@ void Actuator::test_voltage(){
     delay(1000);
     Serial.println("Reading Voltage");
     odrive->run_state(motor_number, 8, false, 0); //Tells Odrive to rotate motor
-    odrive->set_velocity(-1); 
+    odrive->set_velocity(motor_number, -1); 
     for(int i; i < 250; i++){
         Serial.println(odrive->get_voltage()); //Show bus voltage on serial moniter
         delay(10);
     }
     odrive->run_state(motor_number, 1, false, 0); //Tell Odrive to stop rotating
-    odrive->set_velocity(0); 
+    odrive->set_velocity(motor_number, 0); 
 }
 
 //-----------------ODrive Getters--------------//

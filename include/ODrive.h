@@ -1,3 +1,6 @@
+#ifndef odrive_h
+#define odrive_h
+
 #include <Arduino.h>
 #include <Encoder.h>
 
@@ -23,3 +26,5 @@ class ODrive{
     HardwareSerial& OdriveSerial;
     bool debug;
 };
+
+#endif
