@@ -11,14 +11,20 @@ General code to oversee all functions of the Teensy
 #include <RH_RF95.h>
 #include <SoftwareSerial.h>
 #include <string>
+#include <ArduinoLog.h>
 
 //Classes
 #include <Actuator.h>
 #include <Radio.h>
+#include <SD_Reader.h>
 
 //GENERAL SETTINGS
+  #define LOG_LEVEL LOG_LEVEL_VERBOSE
+  
   #define DEBUG_MODE 0 //Starts with Serial output(like to the computer), waits for connection
   #define PRINTTOSERIAL 1 //Set to 1 if connected to the serial moniter 0 if not
+
+
 
   #define RADIO_DEBUG_MESSAGES 0 //Sends debugMessages over radio as well as Serial (no confirmation that signal is recieved)
   //NOTE: This makes no guarantees that the messages are actually sent or recieved
@@ -36,6 +42,12 @@ General code to oversee all functions of the Teensy
   //Halts program if the initializtion of the system fails
   #define req_radio 1
   #define req_actuator 1
+
+//LOGGING AND SD SETTINGS
+  //Create SD object (contains the file stream)
+  Sd sd;
+  //Create logging object
+
 
 //ACTUATOR SETTINGS
   //PINS TEST BED
@@ -137,12 +149,12 @@ void setup() {
         while (1) ;
       }
     }
-    if (HOME_ON_STARTUP) {
-      if (return_code = actuator.homing_sequence() != 0) {
-        debugMessage("[ERROR] Actuator init failed with error code");
-        debugMessage("0" + return_code);
-      }
-    }
+    // if (HOME_ON_STARTUP) {
+    //   if (return_code = actuator.homing_sequence() != 0) {
+    //     debugMessage("[ERROR] Actuator init failed with error code");
+    //     debugMessage("0" + return_code);
+    //   }
+    // }
   }
 
   debugMessage("All systems initialized successfully");

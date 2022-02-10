@@ -1,14 +1,11 @@
-This is a collection of what each error code for each system means. When sending an error code, it should be incl
+Each class has its own set of error codes, explained below. Error code groupings are technically arbitrary, but I would recommend following the general ideas as laid out in the actuator codes below. Basically, grouping the errors to a family of things that can go wrong, then going specifically into what went wrong
 
-Firslty, there is the status code for each class which is explained by this.
-STATUS CODE
-    0: Nominal, after odometry -> action cycle, redy to report
-    1: Error, look at error code
-    2: Not initialized
-    3: Odometry complete, no action
-    4: Performing action
+NOTE: For the impending drive day some errors may be mapped from 0-255 so i dont have to figure out a protocol yet, but we will see
 
-Then, each class has its own set of error codes, explained below. Error code groupings are technically arbitrary, but I would recommend following the general ideas as laid out in the actuator codes below. Basically, grouping the errors to a family of things that can go wrong, then going specifically into what went wrong
+--------------[ SD Card ]---------------
+    4001 - SD Card not found / Failed to open
+    4002 - SD Card unable to write to file
+    4003 - SD Card unable to save file
 
 ---------------[ Radio ]---------------
 INITIALIZATION ERROR
