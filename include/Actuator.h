@@ -47,6 +47,7 @@ class Actuator{
     int get_encoder_pos();
     float communication_speed();
     void count_egTooth();
+    void diagnostic();
 
     private:
     int homing_sequence();
