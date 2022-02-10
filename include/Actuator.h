@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <Encoder.h>
+#include <ODrive.h>
 
 //CONSTANTS
 #define enc_PPR 2048
@@ -16,7 +17,7 @@ const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period
 const int cycle_period_millis = cycle_period/10e3;
 const int cycle_frequency_minutes = 1/cycle_period_minutes; 
 
-#define egTeethPerRotation 2048
+#define egTeethPerRotation 66
 
 // reference signals from tyler
 // ***** ENGINE ***** //
@@ -31,14 +32,13 @@ const float proportionalGain = .01; // gain of the p controller
 class Actuator{
     public:
     Actuator(
-        HardwareSerial& serial, 
+        ODrive *odrive_i,
         const int enc_A, 
         const int enc_B, 
         const int egTooth, 
         const int gbTooth, 
         const int hall_inbound, 
-        const int hall_outbound,  
-        void (*external_interrupt_handler)(), 
+        const int hall_outbound,
         void (*external_count_egTooth)(),
         bool printToSerial);
     int init(); 
@@ -47,30 +47,17 @@ class Actuator{
     int get_encoder_pos();
     float communication_speed();
     void count_egTooth();
+    void diagnostic();
 
     private:
     int homing_sequence();
     void test_voltage();
     int status;
-    HardwareSerial& OdriveSerial;
     Encoder encoder;
-    void (*m_external_interrupt_handler)();
-    
-    
-
-
-    // Functions that command ODrive
-    bool run_state(int axis, int requested_state, bool wait_for_idle, float timeout);
-    void set_velocity(float velocity);
+    ODrive *odrive;
 
     // Functions that get information from Odrive
-    float get_vel();
     int get_encoder_count();
-    float get_voltage();
-    int32_t read_int();
-    String read_string();
-    String dump_errors();
-    float read_float();
 
     //Functions that help calculate rpm
     unsigned long last_control_execution;

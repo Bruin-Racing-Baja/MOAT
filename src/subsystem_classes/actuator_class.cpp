@@ -1,4 +1,5 @@
 #include <Actuator.h>
+#include <ODrive.h>
 #include <HardwareSerial.h>
 #include <SoftwareSerial.h>
 #include <Encoder.h>
@@ -8,18 +9,20 @@
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
-Actuator::Actuator(HardwareSerial& serial,
+Actuator::Actuator(
+    ODrive *odrive_i,
     const int enc_A, 
     const int enc_B, 
     const int egTooth, 
     const int gbTooth, 
     const int hall_inbound, 
-    const int hall_outbound, 
-    void (*external_interrupt_handler)(), 
+    const int hall_outbound,
     void (*external_count_egTooth)(),
     bool printToSerial)
-    :OdriveSerial(serial),
-    encoder(enc_A, enc_B){
+    :encoder(enc_A, enc_B){
+
+    //Save odrive Object
+    ODrive *odrive = odrive_i;
 
     //Save pin values
     m_egTooth = egTooth;
@@ -36,11 +39,14 @@ Actuator::Actuator(HardwareSerial& serial,
     currentrpm_eg = 0;
 
     //Functions to support interrupt
-    m_external_interrupt_handler = external_interrupt_handler;
     m_external_count_egTooth = external_count_egTooth;
 
     //Test variable
     hasRun = false;
+
+    //limit variables
+    m_encoder_outbound = -666;
+    m_encoder_inbound = -666;
 }
 
 int Actuator::init(){
@@ -68,16 +74,6 @@ int Actuator::init(){
     // if(status != 0) return status;
 
     //Timer3.initialize(cycle_period);
-    /*
-    Let me tell you kids a story about a burning dorm and 3 hours to spare.
-    All jokes aside, basically we are unable to attach the actuator control function method
-    directly to the interupt as it wouldn't know which object to execute the method on.
-    As we only will have one object, we always know which object to execute the method on,
-    thus this function calls the method on the object we make.
-    Basically: CS VooDoo magic words make things way harder than they should be
-    */
-    //Timer3.attachInterrupt(m_external_interrupt_handler);
-    //Timer3.setPeriod(cycle_period);
 
     interrupts(); //allows interupts
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
@@ -85,22 +81,22 @@ int Actuator::init(){
 }
 
 int Actuator::homing_sequence(){
-    run_state(motor_number, 8, false, 0); //Enter velocity control mode
+    odrive->run_state(motor_number, 8, false, 0); //Enter velocity control mode
     //TODO: Enums for IDLE, VELOCITY_CONTROL
     delay(1000);
     //Home outbound
     int start = millis();
-    set_velocity(3);
+    odrive->set_velocity(motor_number, 3);
     while (digitalReadFast(m_hall_outbound) == 1) {
         m_encoder_outbound = get_encoder_pos();
         if (millis() - start > homing_timeout) {
             status = 0041;
-            run_state(motor_number, 0, false, 0);
+            odrive->run_state(motor_number, 0, false, 0);
             return status;
         }
     }
-    set_velocity(0); //Stop spinning after homing
-    run_state(motor_number, 1, false, 0); //Idle state
+    odrive->set_velocity(motor_number, 0); //Stop spinning after homing
+    odrive->run_state(motor_number, 1, false, 0); //Idle state
 
     m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
 
@@ -110,7 +106,7 @@ int Actuator::homing_sequence(){
     //     m_encoder_inbound = encoder.read();
     // }
 
-    Serial.print(dump_errors());
+    Serial.print(odrive->dump_errors());
 
     
 
@@ -189,6 +185,44 @@ void Actuator::control_function(){
     }
 }
 
+
+//------Diagnostic Function to print Sensors---------//
+void Actuator::diagnostic(){
+    if(m_printToSerial){
+        Serial.println("-----------------------------");
+        Serial.print("Current time: ");
+        Serial.println(millis());
+        //Odrive voltage
+        Serial.print("Odrive Voltage: ");
+        Serial.println( odrive->get_voltage());
+        //Odrive speed
+        Serial.print("Odrive's current Speed: ");
+        Serial.println(odrive->get_vel(motor_number));
+        //Encoder Count
+        Serial.print("Current Encoder Count:");
+        Serial.print(get_encoder_pos());
+        //outbound encoder reading
+        Serial.print("Outbound Limit: ");
+        Serial.println(m_encoder_outbound);
+        //inbound encoder reading
+        Serial.print("Inbound Limit: ");
+        Serial.println(m_encoder_inbound);
+        //If inbound hall on
+        Serial.print("Inbound Hall reading: ");
+        Serial.println(digitalReadFast(m_hall_inbound));
+        //if outbound hall on
+        Serial.print("Inbound Hall reading: ");
+        Serial.println(digitalReadFast(m_hall_inbound));
+        //current Gear Tooth count
+        Serial.print("Engine Gear Tooth Count: ");
+        Serial.println(egTooth_Count);
+        //current Engine Speed
+        Serial.print("Engine rpm: ");
+        Serial.println(currentrpm_eg);
+        delay(1000);
+    }
+}
+
 //----------------Geartooth Functions----------------//
 void Actuator::count_egTooth(){
     egTooth_Count++;
@@ -213,8 +247,8 @@ float Actuator::communication_speed(){
     int com_total = 0;
     int com_bench = 0;
     float test = 0;
-    run_state(motor_number, 8, false, 0);
-    set_velocity(.5); 
+    odrive->run_state(motor_number, 8, false, 0);
+    odrive->set_velocity(motor_number, .5); 
     delay(1000);
 
     //Benchmark
@@ -230,14 +264,14 @@ float Actuator::communication_speed(){
         com_start = millis();
 
         //command to odrive
-        test = get_vel();
+        test = odrive->get_vel(motor_number);
 
         com_end = millis();
         com_total += com_end-com_start;
     }
     Serial.println(com_total);
-    set_velocity(0); //Stop spinning after homing
-    run_state(motor_number, 1, false, 0);
+    odrive->set_velocity(motor_number, 0); //Stop spinning after homing
+    odrive->run_state(motor_number, 1, false, 0);
 
     return float(com_total-com_bench)/float(data_points);
 }
@@ -250,117 +284,21 @@ float Actuator::communication_speed(){
 void Actuator::test_voltage(){
     delay(1000);
     Serial.println("Reading Voltage");
-    run_state(motor_number, 8, false, 0); //Tells Odrive to rotate motor
-    set_velocity(-1); 
+    odrive->run_state(motor_number, 8, false, 0); //Tells Odrive to rotate motor
+    odrive->set_velocity(motor_number, -1); 
     for(int i; i < 250; i++){
-        Serial.println(get_voltage()); //Show bus voltage on serial moniter
+        Serial.println(odrive->get_voltage()); //Show bus voltage on serial moniter
         delay(10);
     }
-    run_state(motor_number, 1, false, 0); //Tell Odrive to stop rotating
-    set_velocity(0); 
+    odrive->run_state(motor_number, 1, false, 0); //Tell Odrive to stop rotating
+    odrive->set_velocity(motor_number, 0); 
 }
-
-
-
-
-
-//-----------------ODrive Setters--------------//
-bool Actuator::run_state(int axis, int requested_state, bool wait_for_idle, float timeout) {
-    int timeout_ctr = (int)(timeout * 10.0f);
-    OdriveSerial << "w axis" << axis << ".requested_state " << requested_state << '\n';
-    if (wait_for_idle) {
-        do {
-            delay(100);
-            OdriveSerial << "r axis" << axis << ".current_state\n";
-        } while (read_int() != 1 && --timeout_ctr > 0);
-    }
-
-    return timeout_ctr > 0;
-}
-
-void Actuator::set_velocity(float velocity) {
-    OdriveSerial << "v " << motor_number  << " " << velocity << " " << "0.0f" << "\n";;
-}
-
-
 
 //-----------------ODrive Getters--------------//
-float Actuator::get_vel() {
-	OdriveSerial<< "r axis" << motor_number << ".encoder.vel_estimate\n";
-	return Actuator::read_float();
-}
-
-int Actuator::get_encoder_count(){
-    OdriveSerial<< "r axis" << motor_number << ".encoder.shadow_count\n";
-    return Actuator::read_int();
-}
-
-float Actuator::get_voltage() {
-    OdriveSerial<< "r vbus_voltage\n";
-    return Actuator::read_float();
-}
-
-String Actuator::dump_errors(){
-    String output= "";
-    output += "system: ";
-
-    OdriveSerial<< "r error\n";
-    output += Actuator::read_string();
-    for (int axis = 0; axis < 2; ++axis){
-        output += "\naxis";
-        output += axis;
-
-        output += "\n  axis: ";
-        OdriveSerial<< "r axis"<<axis<<".error\n";
-        output += Actuator::read_string();
-
-        output += "\n  motor: ";
-        OdriveSerial<< "r axis"<<axis<<".motor.error\n";
-        output += Actuator::read_string();
-
-        output += "\n  sensorless_estimator: ";
-        OdriveSerial<< "r axis"<<axis<<".sensorless_estimator.error\n";
-        output += Actuator::read_string();
-
-        output += "\n  encoder: ";
-        OdriveSerial<< "r axis"<<axis<<".encoder.error\n";
-        output += Actuator::read_string();
-
-        output += "\n  controller: ";
-        OdriveSerial<< "r axis"<<axis<<".controller.error\n";
-        output += Actuator::read_string();
-    }
-    return output;
-}
-
-
-String Actuator::read_string() {
-    String str = "";
-    static const unsigned long timeout = 1000;
-    unsigned long timeout_start = millis();
-    for (;;) {
-        while (!OdriveSerial.available()) {
-            if (millis() - timeout_start >= timeout) {
-                return str;
-            }
-        }
-        char c = OdriveSerial.read();
-        if (c == '\n')
-            break;
-        str += c;
-    }
-    return str;
-}
-
-float Actuator::read_float() {
-    return read_string().toFloat();
-}
-
-int32_t Actuator::read_int() {
-    return read_string().toInt();
-}
-
-
+// int Actuator::get_encoder_count(){
+//     OdriveSerial<< "r axis" << motor_number << ".encoder.shadow_count\n";
+//     return odrive->read_int();
+// }
 
 //Function for when the encoder is plugged into teensy probably will be removed
 int Actuator::get_encoder_pos(){
