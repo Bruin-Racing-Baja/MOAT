@@ -5,18 +5,12 @@
 #include <string>
 
 Radio::Radio(int CS, int RST, int INT, double freq): radio(CS, INT){
-    //Status meanings:
-
     CS_PIN = CS;
     RST_PIN = RST;
     INT_PIN = INT;
     frequency = freq;
     status = 1003;
     dropped = 0;
-}
-
-int Radio::getStatus(){
-    return status;
 }
 
 int Radio::init() {
@@ -46,7 +40,6 @@ int Radio::init() {
 bool Radio::checkConnection() {
     /*
     NOTE: This method stops the control loop and is not meant to be fast.
-    In actuality we will use the assess method to recieve data back from the radio.
     Returns a boolean value.
     */
     std::string sending = "Hello There!";
@@ -60,7 +53,7 @@ bool Radio::checkConnection() {
     delay(10);
     if (radio.waitAvailableTimeout(1000)) {
         if (radio.recv(buf, &len)) {
-            if ((char*)buf == confirmation) {
+            if ((char*)buf == confirmation.c_str()) {
                 return true;
             }
             else {
@@ -163,4 +156,9 @@ int Radio::waitReplySend(String in, String &out, int timeout = 0) {
     /*
     Similar to the send method, but this method will wait for a reply from the radio module and update the out variable with the reply
     */
+}
+
+//-----------------Radio Getters--------------//
+int Radio::getStatus(){
+    return status;
 }

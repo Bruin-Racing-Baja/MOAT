@@ -7,6 +7,11 @@ NOTE: For the impending drive day some errors may be mapped from 0-255 so i dont
     4002 - SD Card unable to write to file
     4003 - SD Card unable to save file
 
+Then, each class has its own set of error codes, explained below. Error code groupings are technically arbitrary, but I would recommend following the general ideas as laid out in the actuator codes below. Basically, grouping the errors to a family of things that can go wrong, then going specifically into what went wrong
+<--><--><--><-->< Base Systems ><--><--><--><--><-->
+---------------[ Odrive ]---------------
+INITIALIZATION ERROR
+    0001 - Odrive <--> Teensy connection timeout
 ---------------[ Radio ]---------------
 INITIALIZATION ERROR
     1001 - LoRa radio init failed (Teensy -/-> radio module)
@@ -24,6 +29,7 @@ WAIT FOR REPLY SENDING FAILURE
     1031 - Recieve detected but failed (idk)
     1032 - Timeout
 
+<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
 ---------------[ Actuator ]---------------
 POSITION OUT OF BOUNDS
     2001 - Encoder reported a position outside of bounds
