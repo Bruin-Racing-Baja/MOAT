@@ -41,6 +41,10 @@ Actuator::Actuator(HardwareSerial& serial,
 
     //Test variable
     hasRun = false;
+
+    //limit variables
+    m_encoder_outbound = -666;
+    m_encoder_inbound = -666;
 }
 
 int Actuator::init(){
@@ -186,6 +190,44 @@ void Actuator::control_function(){
         //     run_state(motor_number, 8, false, 0);
         // }
         
+    }
+}
+
+
+//------Diagnostic Function to print Sensors---------//
+void Actuator::diagnostic(){
+    if(m_printToSerial){
+        Serial.println("-----------------------------");
+        Serial.print("Current time: ");
+        Serial.println(millis());
+        //Odrive voltage
+        Serial.print("Odrive Voltage: ");
+        Serial.println( get_voltage());
+        //Odrive speed
+        Serial.print("Odrive's current Speed: ");
+        Serial.println(get_vel());
+        //Encoder Count
+        Serial.print("Current Encoder Count:");
+        Serial.print(get_encoder_pos());
+        //outbound encoder reading
+        Serial.print("Outbound Limit: ");
+        Serial.println(m_encoder_outbound);
+        //inbound encoder reading
+        Serial.print("Inbound Limit: ");
+        Serial.println(m_encoder_inbound);
+        //If inbound hall on
+        Serial.print("Inbound Hall reading: ");
+        Serial.println(digitalReadFast(m_hall_inbound));
+        //if outbound hall on
+        Serial.print("Inbound Hall reading: ");
+        Serial.println(digitalReadFast(m_hall_inbound));
+        //current Gear Tooth count
+        Serial.print("Engine Gear Tooth Count: ");
+        Serial.println(egTooth_Count);
+        //current Engine Speed
+        Serial.print("Engine rpm: ");
+        Serial.println(currentrpm_eg);
+        delay(1000);
     }
 }
 

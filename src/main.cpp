@@ -98,53 +98,7 @@ void debugMessage(String message) {
 }
 
 void setup() {
-/*---------------------------[Overall Init]---------------------------*/
-  int return_code;
-
-  if (DEBUG_MODE) {
-    Serial.begin(9600);
-    while (!Serial) ; //Wait for serial to be ready
-    Serial.println("[DEBUG MODE]");
-  }
-
-/*---------------------------[Radio Init]---------------------------*/
-  if (enable_radio) {
-    return_code = radio.init();
-    if (return_code != 0) {
-      debugMessage("[ERROR] Radio init failed with error code");
-      debugMessage("0" + return_code);
-      if (req_radio) {
-        while (1) ;  //Halt if radio connection is required
-      }
-    }
-
-    if (WAIT_FOR_RADIO) { //Wait for radio connection and reciprocation
-      debugMessage("Waiting for radio connection");
-      while (!radio.checkConnection()) ;
-      debugMessage("Radio connection success");
-    }
-  }
-
-/*---------------------------[Actuator Init]---------------------------*/
-  
-
-  if (enable_actuator) {
-    return_code = actuator.init();
-    if (return_code != 0) {
-      debugMessage("[ERROR] Actuator init failed with error code");
-      debugMessage("0" + return_code);
-      if (req_actuator) {
-        while (1) ;
-      }
-    }
-    if (HOME_ON_STARTUP) {
-      if (return_code = actuator.homing_sequence() != 0) {
-        debugMessage("[ERROR] Actuator init failed with error code");
-        debugMessage("0" + return_code);
-      }
-    }
-  }
-
+  actuator.init();
   debugMessage("All systems initialized successfully");
 }
 
