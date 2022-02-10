@@ -12,12 +12,17 @@ General code to oversee all functions of the Teensy
 #include <SoftwareSerial.h>
 #include <string>
 #include <ArduinoLog.h>
+#include <fstream>
+#include <iostream>
+#include <SD.h>
 
 //Classes
 #include <Actuator.h>
 #include <ODrive.h>
 #include <Radio.h>
 #include <SD_Reader.h>
+
+using namespace std;
 
 //General Settings
   //Log
@@ -72,15 +77,22 @@ General code to oversee all functions of the Teensy
   
 //FREE FUNCTIONS
 
-
 void setup() {
+  // ofstream ofile;
+  // ofile.open("huh.dat");
   sd.init();
+  File coolGuy = SD.open("coolio.txt", FILE_WRITE);
   //Create log object given the SD card object
-  Log.begin(LOG_LEVEL, &sd.getFileStream());
-  int actuator_init = actuator.init();
-  if (!actuator_init) {
-    Log.fatal("Failed to initialize Actuator, error code: %d", actuator_init);
-  }
+  // File logFile;
+  Log.begin(LOG_LEVEL, &coolGuy);
+  // int actuator_init = actuator.init();
+  // if (!actuator_init) {
+  //   Log.fatal("Failed to initialize Actuator, error code: %d", actuator_init);
+  // }
+  Log.notice("testing 1 2 3 4 5 6");
+  //sd.write("testing 1 2 3");
+  // sd.save();
+  coolGuy.close();
 }
 
 void loop() {

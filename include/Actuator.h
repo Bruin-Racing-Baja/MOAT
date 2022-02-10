@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Encoder.h>
 #include <ODrive.h>
+#include <ArduinoLog.h>
 
 //CONSTANTS
 #define enc_PPR 2048

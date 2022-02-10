@@ -13,7 +13,7 @@ class Sd{
     int init();
     int write(String);
     int save();
-    File getFileStream();
+    File* getFileStream();
 
     private:
     int status;
