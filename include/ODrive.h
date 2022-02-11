@@ -2,6 +2,7 @@
 #define odrive_h
 
 #include <Arduino.h>
+#include <ODrive.h>
 #include <SoftwareSerial.h>
 #include <HardwareSerial.h>
 
@@ -16,7 +17,6 @@ class ODrive{
 
     float get_vel(int motor_number);
     float get_voltage();
-    bool get_is_connected();
     int32_t read_int();
     String read_string();
     String dump_errors();
@@ -24,8 +24,8 @@ class ODrive{
 
     private:
     int status;
-    bool is_connected = false;
     HardwareSerial& OdriveSerial;
+    float get_voltage_private();
 };
 
 #endif

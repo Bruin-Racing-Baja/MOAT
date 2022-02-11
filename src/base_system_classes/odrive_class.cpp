@@ -26,7 +26,6 @@ int ODrive::init(int timeout = 1000){
             return status;
         }
     }
-    bool is_connected = true;
     status = 0;
     return status;
 };
@@ -50,17 +49,15 @@ void ODrive::set_velocity(int motor_number, float velocity) {
 }
 
 //-----------------ODrive Getters--------------//
-bool ODrive::get_is_connected(){
-    return is_connected;
-};
-
 float ODrive::get_vel(int motor_number) {
 	OdriveSerial<< "r axis" << motor_number << ".encoder.vel_estimate\n";
 	return ODrive::read_float();
 }
 
 float ODrive::get_voltage() {
-    OdriveSerial<< "r vbus_voltage\n";
+    Serial.println("1");
+    OdriveSerial << "r vbus_voltage\n";
+    Serial.println("2");
     return ODrive::read_float();
 }
 

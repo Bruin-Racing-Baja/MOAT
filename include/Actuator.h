@@ -33,7 +33,7 @@ const float proportionalGain = .01; // gain of the p controller
 class Actuator{
     public:
     Actuator(
-        ODrive *odrive_i,
+        HardwareSerial& serial,
         const int enc_A, 
         const int enc_B, 
         const int egTooth, 
@@ -55,7 +55,7 @@ class Actuator{
     void test_voltage();
     int status;
     Encoder encoder;
-    ODrive *odrive;
+    ODrive odrive;
 
     // Functions that get information from Odrive
     int get_encoder_count();

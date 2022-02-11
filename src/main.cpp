@@ -28,7 +28,7 @@ using namespace std;
   #define DIAGNOSTIC 0
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 1
+  #define WAIT_SERIAL_STARTUP 0
   #define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
@@ -46,7 +46,7 @@ using namespace std;
   //PINS
 
   //CREATE OBJECT
-  ODrive odrive(Serial1);
+  // ODrive odrive(Serial1);
 
 //LOGGING AND SD SETTINGS
   //Create file to log to
@@ -78,7 +78,7 @@ using namespace std;
 
   static void external_count_egTooth();
 
-  Actuator actuator(&odrive, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
+  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
 
   static void external_count_egTooth(){
     actuator.count_egTooth();
@@ -103,41 +103,51 @@ void setup() {
   logFile = SD.open("log.txt", FILE_WRITE);
   Log.begin(LOG_LEVEL_VERBOSE, &logFile, false);
   Log.verbose("Logging Started" CR);
+  Log.verbose("Time: %d" CR, millis());
+  logFile.close();
+  logFile = SD.open("log.txt", FILE_WRITE);
+  Log.verbose("Logging closed and reopened" CR);
+
   /*
   The log file will only actually save when the file is closed, so here
   is an interrupt to save the file every 30 seconds and then re-open it
   */
   //------------------Odrive------------------
-  int odrive_init = odrive.init(10000);
-  if (odrive_init) {
-    Log.error("ODrive Init Failed code: %d" CR, odrive_init);
-  }
-  else {
-    Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
-  }
-  Serial.println("ODrive init: " + String(odrive_init));
-  for (int i = 0; i < 20; i++) {
-    Serial.println(odrive.get_voltage());
-  }
-
+  // int odrive_init = actuator.odrive.init(1000);
+  // if (odrive_init) {
+  //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
+  // }
+  // else {
+  //   Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
+  // }
+  // Serial.println("ODrive init: " + String(odrive_init));
+  // for (int i = 0; i < 20; i++) {
+  //   Serial.println(odrive.get_voltage());
+  // }
+  // logFile.close();
+  // logFile = SD.open("log.txt", FILE_WRITE);
 
   //-------------Actuator-----------------
-  Serial.println("Starting Actuator");
+  //Serial.println("Odrive voltage" + String(odrive.get_voltage()));
   int actuator_init = actuator.init();
+  Serial.println("After init" + String(actuator_init));
   if (actuator_init) {
     Log.error("Actuator init failed code: %d" CR, actuator_init);
+    Serial.println("Actuator status" + String(actuator_init));
   }
   else {
     Log.verbose("Actuator init successful code: %d" CR, actuator_init);
+    Serial.println("Actuator status" + String(actuator_init));
   }
 
-
   logFile.close();
+  logFile = SD.open("log.txt", FILE_WRITE);
   Serial.println("Running diagnostic");
 }
 
 void loop() {
-  exit(0);
+  Log.notice("Loop Started" CR);
+  // logFile.close();
   Serial.println("Mah whyfe");
   for (int i = 0; i < 100; i++) {
     //Serial.println(actuator.diagnostic(false));
@@ -147,6 +157,7 @@ void loop() {
     delay(100);
   }
   logFile.close();
+  Serial.println("Exiting loop");
   exit(0);
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
