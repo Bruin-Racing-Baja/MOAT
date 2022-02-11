@@ -12,6 +12,10 @@
 #define homing_timeout 50000 //NOTE: In ms
 #define min_rpm 1000
 #define cycle_period 10e4 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
+#define rpm_allowance 30
+#define desired_rpm 2700
+
+
 #define linearDistancePerRotation .125 //inches per rotation
 #define linearShiftLength 2.75 //inches
 const int32_t encoderCountShiftLength = (linearShiftLength/linearDistancePerRotation)*4*2048;
@@ -43,14 +47,19 @@ class Actuator{
         const int hall_outbound,
         void (*external_count_egTooth)(),
         bool printToSerial);
+
     int init(int odrive_timeout); 
+
     int* control_function();
+    int* homing_sequence();
+
+
     int get_status_code();
     int get_encoder_pos();
+    float get_p_value();
     float communication_speed();
     void count_egTooth();
-
-    int* homing_sequence();
+    
     String diagnostic(bool);
 
     private:

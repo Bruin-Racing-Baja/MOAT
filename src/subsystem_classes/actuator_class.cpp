@@ -76,7 +76,7 @@ int* Actuator::homing_sequence(){
     while (digitalReadFast(m_hall_outbound) == 1) {
         m_encoder_outbound = get_encoder_pos();
         if (millis() - start > homing_timeout) {
-            status = 0041;
+            status = 2;
             odrive.run_state(motor_number, 0, false, 0);
             //log.error("Homing outbound failed, code: %d", status);
             int out[3] = {status, -1, -1};
@@ -116,6 +116,7 @@ int* Actuator::homing_sequence(){
         Serial.print("current encoder position");
     }
 
+    status = 0;
     int out[3] = {status, m_encoder_inbound, m_encoder_outbound};
     return out;
 }
@@ -124,7 +125,7 @@ int* Actuator::homing_sequence(){
 
 int* Actuator::control_function(){
     //Returns an array ints in format
-    //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
+    //<status, rpm, error, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
     int start_time = millis();
     control_function_count++;
     if(millis()-last_control_execution > cycle_period_millis){
@@ -136,49 +137,59 @@ int* Actuator::control_function(){
         last_control_execution = millis();
 
         //If motor is spinning too slow, then shift all the way out
-        if(currentrpm_eg < min_rpm){
-            odrive.set_velocity(motor_number, -3);
-            int end_time = millis();
-            int out[7] = {status, currentrpm_eg, -3, m_hall_inbound, m_hall_outbound, start_time, end_time};
-            return out;
+        if(currentrpm_eg < min_rpm) {
+            if((digitalReadFast(m_hall_outbound) == 0 || get_encoder_pos() >= m_encoder_outbound)){
+                //If below min rpm and shifted out all the way
+                odrive.run_state(motor_number, 1, false, 0); //SET IDLE
+                status = 4;
+                int out[7] = {status, currentrpm_eg, 0, m_hall_inbound, m_hall_outbound, start_time, millis()};
+                return out;
+            }
+            else {
+                //If below min rpm and not shifted out all the way
+                odrive.set_velocity(motor_number, 3); //Shift out
+                status = 5;
+                int out[7] = {status, currentrpm_eg, 3, m_hall_inbound, m_hall_outbound, start_time, millis()};
+                return out;
+            }
         }
 
-        //Print Engine Speed
-        if (m_printToSerial){
-        Serial.print("Current rpm: ");
-        Serial.println(currentrpm_eg);
-        Serial.print("GearToothCount: ");
-        Serial.println(egTooth_Count);
+        //Compute error
+
+        //If error is within a certain deviation from the desired value, do not shift
+        int error = currentrpm_eg - desired_rpm;
+        if (abs(error) <= rpm_allowance) {
+            error = 0;
         }
 
-        // //Compute error
-        // int error = currentrpm_eg - 2700;
+        //If error will over or under actuate actuator then set error to 0.
+        if(digitalReadFast(m_hall_outbound) == 0 || get_encoder_pos() >= m_encoder_outbound){
+            if(error > 0) error = 0;
+            status = 6;
+        } 
+        else if (digitalReadFast(m_hall_inbound) == 0 || get_encoder_pos()<= m_encoder_inbound){
+            if(error < 0) error = 0;
+            status = 7;
+        }
 
-        // //If error will over or under actuate actuator then set error to 0.
-        // if(digitalReadFast(m_hall_outbound) == 0 || get_encoder_pos() >= m_encoder_outbound){
-        //     if(error > 0) error = 0;
-        //     Serial.println("hi");
-        // } 
-        // else if (digitalReadFast(m_hall_inbound) == 0 || get_encoder_pos()<= m_encoder_inbound){
-        //     if(error < 0) error = 0;
-        //     Serial.println("hey");
-        // }
+        //Multiply by gain and set new motor velocity. 
+        int motor_velocity = proportionalGain*error;
 
-        // //Multiply by gain and set new motor velocity. 
-        // int motor_velocity = proportionalGain*error;
-        // if (m_printToSerial){
-        // Serial.print("Current motor_velocity: ");
-        // Serial.println(motor_velocity);
-        // }
-
-        // if(motor_velocity == 0){
-        //     run_state(motor_number, 1, false, 0);
-        // } else{
-        //     set_velocity(motor_velocity);
-        //     run_state(motor_number, 8, false, 0);
-        // }
+        if(motor_velocity == 0) {
+            odrive.run_state(motor_number, 1, false, 0);
+        }
+        else {
+            odrive.set_velocity(motor_number, motor_velocity);
+            odrive.run_state(motor_number, 8, false, 0);
+        }
+        
+        int out[7] = {status, currentrpm_eg, motor_velocity, digitalReadFast(m_hall_inbound), digitalReadFast(m_hall_outbound), start_time, millis()};
+        return out;
         
     }
+    status = 3;
+    int out[7] = {status, 0, 0, 0, 0, 0, 0};
+    return out;
 }
 
 
@@ -286,4 +297,8 @@ void Actuator::test_voltage(){
 //Function for when the encoder is plugged into teensy probably will be removed
 int Actuator::get_encoder_pos(){
     return encoder.read();
+}
+
+float Actuator::get_p_value() {
+    return proportionalGain;
 }

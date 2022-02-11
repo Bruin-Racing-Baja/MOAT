@@ -134,6 +134,7 @@ void setup() {
   }
   else {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
+    Log.notice("Proportional gain: %l" CR, actuator.get_p_value());
   }
 
   //Homing if enabled
@@ -144,7 +145,7 @@ void setup() {
     }
     else {
       Log.verbose("Homing Success code: %d" CR, o_homing);
-      Log.notice("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
+      Log.verbose("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
     }
   }
   Log.verbose("Initialization Complete" CR);
