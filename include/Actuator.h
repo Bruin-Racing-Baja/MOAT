@@ -50,8 +50,8 @@ class Actuator{
 
     int init(int odrive_timeout); 
 
-    int* control_function();
-    int* homing_sequence();
+    int* control_function(int* out);
+    int* homing_sequence(int* out);
 
 
     int get_status_code();

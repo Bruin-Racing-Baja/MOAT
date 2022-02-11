@@ -146,7 +146,8 @@ void setup() {
 
   //Homing if enabled
   if (HOME_ON_STARTUP) {
-    int* o_homing = actuator.homing_sequence();
+    int o_homing[3];
+    actuator.homing_sequence(o_homing);
     if (o_homing[0]) {
       Log.error("Homing Failed code: %d" CR, o_homing);
     }
@@ -163,11 +164,11 @@ void setup() {
 //OPERATING MODE
 #if MODE == 0
 
-int* o_control;
+int o_control[7];
 int save_count = 0;
 void loop() {
   //Main control loop, with actuator
-  o_control = actuator.control_function();
+  actuator.control_function(o_control);
   //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
 
   //Report output with log

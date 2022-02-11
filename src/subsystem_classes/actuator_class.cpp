@@ -65,8 +65,9 @@ int Actuator::init(int odrive_timeout){
 }
 
 
-int* Actuator::homing_sequence(){
+int* Actuator::homing_sequence(int* out){
     //Returns an array of ints in format <status, inbound, outbound>
+    out[0] = 0;
 
     odrive.run_state(motor_number, 8, false, 0); //Enter velocity control mode
     //TODO: Enums for IDLE, VELOCITY_CONTROL
@@ -78,9 +79,9 @@ int* Actuator::homing_sequence(){
     while (digitalReadFast(m_hall_outbound) == 1) {
         m_encoder_outbound = encoder.read();
         if (millis() - start > homing_timeout) {
-            status = 2;
+            out[0] = 2;
             odrive.run_state(motor_number, 0, false, 0);
-            int out[3] = {status, -1, -1};
+            out[1], out[2] = -1;
             return out;
         }
     }
@@ -108,23 +109,27 @@ int* Actuator::homing_sequence(){
     // set_velocity(0); //Stop spinning after homing
     // run_state(motor_number, 1, false, 0); //Idle state
 
-    status = 0;
-    int out[3] = {status, m_encoder_inbound, m_encoder_outbound};
+    out[1] = m_encoder_inbound;
+    out[2] = m_encoder_outbound;
     return out;
 }
 
 
 
-int* Actuator::control_function(){
-    //Returns an array ints in format
-    //<status, rpm, error, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
-    int start_time = millis();
+int* Actuator::control_function(int* out){
+    //Returns an array of ints in format
+    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished>
+    out[5] = millis();
     control_function_count++;
     if(millis()-last_control_execution > cycle_period_millis){
+        out[0] = 0;
+        out[3] = 0;
+        out[4] = 0;
 
         //Calculate Engine Speed
         float dt = millis()-last_control_execution;
         currentrpm_eg = calc_engine_rpm(dt);
+        out[1] = currentrpm_eg;
         //currentrpm_eg = analogRead(A2)*4;
         last_control_execution = millis();
 
@@ -133,15 +138,18 @@ int* Actuator::control_function(){
             if((digitalReadFast(m_hall_outbound) == 0 || encoder.read() >= m_encoder_outbound)){
                 //If below min rpm and shifted out all the way
                 odrive.run_state(motor_number, 1, false, 0); //SET IDLE
-                status = 4;
-                int out[7] = {status, currentrpm_eg, 0, m_hall_inbound, m_hall_outbound, start_time, millis()};
+                out[0] = 4; //Report status
+                out[2] = 0; //Report velocity
+                out[4] = 1;
+                out[6] = millis();
                 return out;
             }
             else {
                 //If below min rpm and not shifted out all the way
                 odrive.set_velocity(motor_number, 3); //Shift out
-                status = 5;
-                int out[7] = {status, currentrpm_eg, 3, m_hall_inbound, m_hall_outbound, start_time, millis()};
+                out[0] = 5;
+                out[2] = 3;
+                out[6] = millis();
                 return out;
             }
         }
@@ -156,16 +164,21 @@ int* Actuator::control_function(){
 
         //If error will over or under actuate actuator then set error to 0.
         if(digitalReadFast(m_hall_outbound) == 0 || encoder.read() >= m_encoder_outbound){
+            //Shifted out completely
             if(error > 0) error = 0;
-            status = 6;
+            out[0] = 6;
+            out[4] = 1;
         } 
         else if (digitalReadFast(m_hall_inbound) == 0 || encoder.read()<= m_encoder_inbound){
+            //Shifted in completely
             if(error < 0) error = 0;
-            status = 7;
+            out[0] = 7;
+            out[3] = 1;
         }
 
         //Multiply by gain and set new motor velocity. 
         int motor_velocity = proportionalGain*error;
+        out[2] = motor_velocity;
 
         if(motor_velocity == 0) {
             odrive.run_state(motor_number, 1, false, 0);
@@ -174,15 +187,13 @@ int* Actuator::control_function(){
             odrive.set_velocity(motor_number, motor_velocity);
             odrive.run_state(motor_number, 8, false, 0);
         }
-        
-        int out[7] = {status, currentrpm_eg, motor_velocity, digitalReadFast(m_hall_inbound), digitalReadFast(m_hall_outbound), start_time, millis()};
+        out[6] = millis();
         return out;
-        
     }
 
-    //Return status if attemp to run the control function too soon
-    status = 3;
-    int out[7] = {status, 0, 0, 0, 0, 0, 0};
+    //Return status if attempt to run the control function too soon
+    out[0] = 3;
+    out[6] = millis();
     return out;
 }
 

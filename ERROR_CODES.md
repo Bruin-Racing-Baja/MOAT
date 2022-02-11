@@ -36,8 +36,13 @@ Startup
     0002 - Homing timeout
 
 Control Function
+    NOTE: Because of the way this is, some values may be nonsensical as they are not set or ever initialized
+    These values will be marked by an X below
     0003 - Control function timing not correct
+        <0XXXX00>
     0004 - Motor spinning too low, already shifted out
+        <000XXX00>
     0005 - Motor spinning too low, shifting out
+        <000XXX00>
     0006 - Error set to 0 as shifted all the way out
  ** 0007 - Error set to 0 as shifted all the way in
