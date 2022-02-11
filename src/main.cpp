@@ -101,15 +101,13 @@ void setup() {
   //-------------Logging and SD Card-----------------
   SD.begin(BUILTIN_SDCARD);
   logFile = SD.open("log.txt", FILE_WRITE);
+
   Log.begin(LOG_LEVEL_VERBOSE, &logFile, false);
   Log.verbose("Initialization Started" CR);
   Log.verbose("Time: %d" CR, millis());
+
   save_log();
 
-  /*
-  The log file will only actually save when the file is closed, so here
-  is an interrupt to save the file every 30 seconds and then re-open it
-  */
   //------------------Odrive------------------
 
   //At this time the following code is depricated, but until we make final decisions about the odrive class, we will leave it in
@@ -129,6 +127,7 @@ void setup() {
   // logFile = SD.open("log.txt", FILE_WRITE);
 
   //-------------Actuator-----------------
+  //General Init
   int o_actuator_init = actuator.init(odrive_starting_timeout);
   if(o_actuator_init) {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -137,7 +136,7 @@ void setup() {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
   }
 
-  //Homing if enables
+  //Homing if enabled
   if (HOME_ON_STARTUP) {
     int* o_homing = actuator.homing_sequence();
     if (o_homing[0]) {
@@ -154,11 +153,12 @@ void setup() {
 }
 
 //OPERATING MODE
-// #if MODE == 0
+#if MODE == 0
 
 int* o_control;
 int save_count = 0;
 void loop() {
+  //Main control loop, with actuator
   o_control = actuator.control_function();
   //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
   Log.notice("Status: %d  RPM: %d, Act Vel: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
@@ -166,15 +166,16 @@ void loop() {
   
   //Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD) {
+    int save_start = millis();
     save_log();
     save_count = 0;
+    Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
-
 }
 
 //DIAGNOSTIC MODE
-// #elif MODE == 1
+#elif MODE == 1
 
 void loop() {
   Log.notice("DIAGNOSTIC MODE" CR);
@@ -192,12 +193,12 @@ void loop() {
   exit(0);
 }
 
-// #endif
+#endif
 
 
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
-//                               __...------------._
+//                             __...------------._
 //                          ,-'                   `-.
 //                       ,-'                         `.
 //                     ,'                            ,-`.

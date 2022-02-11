@@ -47,6 +47,7 @@ Actuator::Actuator(
 }
 
 int Actuator::init(int odrive_timeout){
+    //Initialize Odrive object
     int o_init = odrive.init(odrive_timeout);
     if(o_init != 0){
         status = o_init;
@@ -85,9 +86,6 @@ int* Actuator::homing_sequence(){
     odrive.set_velocity(motor_number, 0); //Stop spinning after homing
     odrive.run_state(motor_number, 1, false, 0); //Idle state
 
-    //NOTE: All these commented logs show where we should be able to get data and useful readouts
-    //log.notice("Homed outbound successfully, code: %d", status);
-
     m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
 
     //Home inbound - [IN PURGATORY]
@@ -95,10 +93,6 @@ int* Actuator::homing_sequence(){
     // while (digitalReadFast(m_hall_inbound) == 1) {
     //     m_encoder_inbound = encoder.read();
     // }
-
-    Serial.print(odrive.dump_errors());
-
-    
 
     // //Testing encoder reading by shifting all the way back to the inbound
     // delay(500);
@@ -121,7 +115,6 @@ int* Actuator::homing_sequence(){
         Serial.println(m_encoder_inbound);
         Serial.print("current encoder position");
     }
-    //log.notice("Encoder inbound: %u Encoder outbound: %u", m_encoder_inbound, m_encoder_outbound);
 
     int out[3] = {status, m_encoder_inbound, m_encoder_outbound};
     return out;
@@ -157,8 +150,6 @@ int* Actuator::control_function(){
         Serial.print("GearToothCount: ");
         Serial.println(egTooth_Count);
         }
-
-        //log.notice("Current rpm, Gear Tooth Count: %f, %u", currentrpm_eg, egTooth_Count);
 
         // //Compute error
         // int error = currentrpm_eg - 2700;
@@ -199,14 +190,14 @@ String Actuator::diagnostic(bool printSerial = true){
         Serial.print("Current time: ");
         Serial.println(millis());
         //Odrive voltage
-        // Serial.print("Odrive Voltage: ");
-        // Serial.println( odrive.get_voltage());
-        // //Odrive speed
-        // Serial.print("Odrive's current Speed: ");
-        // Serial.println(odrive.get_vel(motor_number));
-        // //Encoder Count
-        // Serial.print("Current Encoder Count:");
-        // Serial.print(get_encoder_pos());
+        Serial.print("Odrive Voltage: ");
+        Serial.println( odrive.get_voltage());
+        //Odrive speed
+        Serial.print("Odrive's current Speed: ");
+        Serial.println(odrive.get_vel(motor_number));
+        //Encoder Count
+        Serial.print("Current Encoder Count:");
+        Serial.print(get_encoder_pos());
         //outbound encoder reading
         Serial.print("Outbound Limit: ");
         Serial.println(m_encoder_outbound);

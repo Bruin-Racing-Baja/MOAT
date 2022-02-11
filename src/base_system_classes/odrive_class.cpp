@@ -22,7 +22,7 @@ int ODrive::init(int timeout = 1000){
     long start = millis();
     while(ODrive::get_voltage() <= 1){
         if(millis() - start > timeout){
-            status = 1;
+            status = 13;
             return status;
         }
     }
