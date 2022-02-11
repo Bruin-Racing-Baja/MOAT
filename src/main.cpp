@@ -8,7 +8,6 @@ General code to oversee all functions of the Teensy
 
 //Libraries
 #include <SPI.h>
-#include <RH_RF95.h>
 #include <SoftwareSerial.h>
 #include <HardwareSerial.h>
 #include <string>
@@ -17,10 +16,7 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
-#include <ODrive.h>
 #include <Radio.h>
-
-using namespace std;
 
 //General Settings
   //Mode
@@ -41,7 +37,7 @@ using namespace std;
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 
 //ODrive Settings
-  #define starting_timeout 1000 //NOTE: In ms
+  #define odrive_starting_timeout 1000 //NOTE: In ms
 
   //PINS
 
@@ -86,10 +82,11 @@ using namespace std;
   
 //FREE FUNCTIONS
 
-// void save_log() {
-//   logFile.close();
-//   logFile = SD.open("log.txt", FILE_WRITE);
-// }
+void save_log() {
+  //Closes and then opens the file stream
+  logFile.close();
+  logFile = SD.open("log.txt", FILE_WRITE);
+}
 
 void setup() {
   //-------------Wait for serial-----------------
@@ -102,17 +99,18 @@ void setup() {
   SD.begin(BUILTIN_SDCARD);
   logFile = SD.open("log.txt", FILE_WRITE);
   Log.begin(LOG_LEVEL_VERBOSE, &logFile, false);
-  Log.verbose("Logging Started" CR);
+  Log.verbose("Initialization Started" CR);
   Log.verbose("Time: %d" CR, millis());
-  logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
-  Log.verbose("Logging closed and reopened" CR);
+  save_log();
 
   /*
   The log file will only actually save when the file is closed, so here
   is an interrupt to save the file every 30 seconds and then re-open it
   */
   //------------------Odrive------------------
+
+  //At this time the following code is depricated, but until we make final decisions about the odrive class, we will leave it in
+
   // int odrive_init = actuator.odrive.init(1000);
   // if (odrive_init) {
   //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
@@ -128,36 +126,42 @@ void setup() {
   // logFile = SD.open("log.txt", FILE_WRITE);
 
   //-------------Actuator-----------------
-  //Serial.println("Odrive voltage" + String(odrive.get_voltage()));
-  int actuator_init = actuator.init();
-  Serial.println("After init" + String(actuator_init));
-  if (actuator_init) {
-    Log.error("Actuator init failed code: %d" CR, actuator_init);
-    Serial.println("Actuator status" + String(actuator_init));
+  int o_actuator_init = actuator.init(odrive_starting_timeout);
+  if(o_actuator_init) {
+    Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
   }
   else {
-    Log.verbose("Actuator init successful code: %d" CR, actuator_init);
-    Serial.println("Actuator status" + String(actuator_init));
+    Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
   }
 
-  logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
-  Serial.println("Running diagnostic");
+  //Homing if enables
+  if (HOME_ON_STARTUP) {
+    int* o_homing = actuator.homing_sequence();
+    if (o_homing[0]) {
+      Log.error("Homing Failed code: %d" CR, o_homing);
+    }
+    else {
+      Log.verbose("Homing Success code: %d" CR, o_homing);
+      Log.notice("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
+    }
+  }
+  Log.verbose("Initialization Complete" CR);
+  save_log();
 }
 
 void loop() {
-  Log.notice("Loop Started" CR);
-  // logFile.close();
-  Serial.println("Mah whyfe");
+  Log.verbose("Loop Started" CR);
+  Log.verbose("Running diagnostic function" CR);
+
   for (int i = 0; i < 100; i++) {
     //Serial.println(actuator.diagnostic(false));
     Log.notice("%d", i);
     Log.notice((actuator.diagnostic(true)).c_str());
-    Serial.println("Looped");
     delay(100);
   }
+
+  Log.verbose("End of diagnostic function" CR);
   logFile.close();
-  Serial.println("Exiting loop");
   exit(0);
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"

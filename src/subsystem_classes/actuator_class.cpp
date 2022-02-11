@@ -46,22 +46,26 @@ Actuator::Actuator(
     m_encoder_inbound = -666;
 }
 
-int Actuator::init(){
-    int o_init = odrive.init(10000);
+int Actuator::init(int odrive_timeout){
+    int o_init = odrive.init(odrive_timeout);
+    if(o_init != 0){
+        status = o_init;
+        return status;
+    }
     
-    return o_init;
-
-    // run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE 
-    // status = homing_sequence();
-    // if(status != 0) return status;
-
+    odrive.run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE 
+    
+    status = 0;
+    return status;
     //Timer3.initialize(cycle_period);
 
     // interrupts(); //allows interupts
     // attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
 }
 
-int Actuator::homing_sequence(){
+int* Actuator::homing_sequence(){
+    //Returns an array of ints in format <status, inbound, outbound>
+
     odrive.run_state(motor_number, 8, false, 0); //Enter velocity control mode
     //TODO: Enums for IDLE, VELOCITY_CONTROL
     delay(1000);
@@ -74,7 +78,8 @@ int Actuator::homing_sequence(){
             status = 0041;
             odrive.run_state(motor_number, 0, false, 0);
             //log.error("Homing outbound failed, code: %d", status);
-            return status;
+            int out[3] = {status, -1, -1};
+            return out;
         }
     }
     odrive.set_velocity(motor_number, 0); //Stop spinning after homing
@@ -118,7 +123,8 @@ int Actuator::homing_sequence(){
     }
     //log.notice("Encoder inbound: %u Encoder outbound: %u", m_encoder_inbound, m_encoder_outbound);
 
-    return 0;
+    int out[3] = {status, m_encoder_inbound, m_encoder_outbound};
+    return out;
 }
 
 

@@ -42,16 +42,18 @@ class Actuator{
         const int hall_outbound,
         void (*external_count_egTooth)(),
         bool printToSerial);
-    int init(); 
+    int init(int odrive_timeout); 
     void control_function();
     int get_status_code();
     int get_encoder_pos();
     float communication_speed();
     void count_egTooth();
+
+    int* homing_sequence();
     String diagnostic(bool);
 
     private:
-    int homing_sequence();
+    
     void test_voltage();
     int status;
     Encoder encoder;
