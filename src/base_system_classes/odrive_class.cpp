@@ -55,9 +55,7 @@ float ODrive::get_vel(int motor_number) {
 }
 
 float ODrive::get_voltage() {
-    Serial.println("1");
     OdriveSerial << "r vbus_voltage\n";
-    Serial.println("2");
     return ODrive::read_float();
 }
 

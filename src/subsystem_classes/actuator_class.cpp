@@ -47,6 +47,11 @@ Actuator::Actuator(
 }
 
 int Actuator::init(int odrive_timeout){
+
+    //Attaches geartooth sensor to interrupt
+    interrupts(); //allows interupts
+    attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
+
     //Initialize Odrive object
     int o_init = odrive.init(odrive_timeout);
     if(o_init != 0){
@@ -57,8 +62,7 @@ int Actuator::init(int odrive_timeout){
     odrive.run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE 
     
     
-    interrupts(); //allows interupts
-    attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
+    
 
     status = 0;
     return status;
@@ -213,15 +217,17 @@ double Actuator::calc_engine_rpm(float dt){
 
 //-----------------Diagnostic Functions--------------//
 
-String Actuator::diagnostic(bool printSerial = true){
+String Actuator::diagnostic(bool mainPower, bool printSerial = true){
     //General diagnostic tool to record sensor readings as well as some odrive info
 
     String output = "";
     output += "-----------------------------\n";
     output += "Time: " +String(millis())+"\n";
-    output += "Odrive voltage: " +String(odrive.get_voltage())+"\n";
-    output += "Odrive speed: " +String(odrive.get_vel(motor_number))+"\n";
-    output += "Encoder count: " +String(encoder.read())+"\n";
+    if (mainPower) {
+        output += "Odrive voltage: " +String(odrive.get_voltage())+"\n";
+        output += "Odrive speed: " +String(odrive.get_vel(motor_number))+"\n";
+        output += "Encoder count: " +String(encoder.read())+"\n";
+    }
     output += "Outbound limit: " +String(m_encoder_outbound)+"\n";
     output += "Inbound limit: " +String(m_encoder_inbound)+"\n";
     output += "Outbound reading: " +String(digitalReadFast(m_hall_outbound))+"\n";
@@ -229,7 +235,7 @@ String Actuator::diagnostic(bool printSerial = true){
     output += "Engine Gear Tooth Count: " +String(egTooth_Count)+"\n";
     output += "Current rpm: " +String(currentrpm_eg)+"\n";
 
-    if(m_printToSerial && printSerial){
+    if(printSerial && m_printToSerial){
         Serial.print(output);
     }
     return output;

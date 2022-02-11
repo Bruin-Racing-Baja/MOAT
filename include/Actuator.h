@@ -60,7 +60,7 @@ class Actuator{
     float communication_speed();
     void count_egTooth();
     
-    String diagnostic(bool);
+    String diagnostic(bool is_mainpower_on, bool serial_out);
 
     private:
     

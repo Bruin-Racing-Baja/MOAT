@@ -23,15 +23,22 @@ General code to oversee all functions of the Teensy
   /*
   Operating - 0 - For normal operation, initializes then runs main control fn in loop
     May disable logging object in its library config to free up memory, if relevant
-  Diagnostic - 1 - Runs diagnostic test 100 times, then stops, saves to sd
-  Headless Horseman - 2 - For operation where data is not recorded
+
+  Headless Diagnostic - 1 - Runs diagnostic test 100 times, then stops, saves to sd
+    DO NOT CONNECT TO TEENSY WHEN MAIN POWER IS ON OR IT COULD DAMAGE YOUR LAPTOP
+    This is used for testing in sitations where the main power is on, and data will be retrieved from sd
+
+  Serial Diagnostic - 2 - Runs diagnostic test continuously, prints to serial
+
+  Headless Horseman - 3 - For operation where data is not recorded
     This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up
     NOTE: Recommend disabling logging object in its include
+
   */
-  #define MODE 1
+  #define MODE 0
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 0
+  #define WAIT_SERIAL_STARTUP 1  //Set headless mode or not
   #define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
@@ -75,8 +82,8 @@ General code to oversee all functions of the Teensy
   #define enc_B 3
   #define hall_inbound 22
   #define hall_outbound 23
-  #define gearTooth_engine 40
-  #define gearTooth_gearbox 41
+  #define gearTooth_engine 41
+  #define gearTooth_gearbox 40
 
 
   //CREATE OBJECT
@@ -138,10 +145,12 @@ void setup() {
   int o_actuator_init = actuator.init(odrive_starting_timeout);
   if(o_actuator_init) {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
+    Serial.println("Actuator init failed code: " + String(o_actuator_init));
   }
   else {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
     Log.notice("Proportional gain: %l" CR, actuator.get_p_value());
+    Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
 
   //Homing if enabled
@@ -185,8 +194,9 @@ void loop() {
   save_count++;
 }
 
-//DIAGNOSTIC MODE
+//HEADLESS DIAGNOSTIC MODE
 #elif MODE == 1
+bool is_main_power = true;
 
 void loop() {
   Log.notice("DIAGNOSTIC MODE" CR);
@@ -195,13 +205,24 @@ void loop() {
   for (int i = 0; i < DIAGNOSTIC_MODE_SHOTS; i++) {
     //Serial.println(actuator.diagnostic(false));
     Log.notice("%d", i);
-    Log.notice((actuator.diagnostic(true)).c_str());
+    //Assumes main power is connected
+    Log.notice((actuator.diagnostic(is_main_power, false)).c_str());
     delay(100);
   }
 
   Log.verbose("End of diagnostic function" CR);
   logFile.close();
   exit(0);
+}
+
+//SERIAL DIAGNOSTIC MODE
+#elif MODE == 2
+bool is_main_power = false;
+
+void loop() {
+  //Assumes main power isnt connected as connected to serial
+  Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
+  delay(100);
 }
 
 #endif
