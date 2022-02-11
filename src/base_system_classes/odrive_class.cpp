@@ -6,11 +6,9 @@ template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(a
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
 ODrive::ODrive(
-    HardwareSerial& serial,
-    bool debug_i
+    HardwareSerial& serial
 )
 :OdriveSerial(serial){
-    debug = debug;
 }
 
 int ODrive::init(int timeout = 1000){
@@ -22,13 +20,13 @@ int ODrive::init(int timeout = 1000){
     OdriveSerial.begin(115200);
 
     long start = millis();
-    while(get_voltage() <= 1){
+    while(ODrive::get_voltage() <= 1){
         if(millis() - start > timeout){
-            status = 0001;
+            status = 1;
             return status;
         }
     }
-    status = 0000;
+    status = 0;
     return status;
 };
 
@@ -57,7 +55,9 @@ float ODrive::get_vel(int motor_number) {
 }
 
 float ODrive::get_voltage() {
-    OdriveSerial<< "r vbus_voltage\n";
+    Serial.println("1");
+    OdriveSerial << "r vbus_voltage\n";
+    Serial.println("2");
     return ODrive::read_float();
 }
 

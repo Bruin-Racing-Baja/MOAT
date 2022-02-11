@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Encoder.h>
 #include <ODrive.h>
+#include <ArduinoLog.h>
 
 //CONSTANTS
 #define enc_PPR 2048
@@ -32,7 +33,7 @@ const float proportionalGain = .01; // gain of the p controller
 class Actuator{
     public:
     Actuator(
-        ODrive *odrive_i,
+        HardwareSerial& serial,
         const int enc_A, 
         const int enc_B, 
         const int egTooth, 
@@ -47,14 +48,14 @@ class Actuator{
     int get_encoder_pos();
     float communication_speed();
     void count_egTooth();
-    void diagnostic();
+    String diagnostic(bool);
 
     private:
     int homing_sequence();
     void test_voltage();
     int status;
     Encoder encoder;
-    ODrive *odrive;
+    ODrive odrive;
 
     // Functions that get information from Odrive
     int get_encoder_count();
