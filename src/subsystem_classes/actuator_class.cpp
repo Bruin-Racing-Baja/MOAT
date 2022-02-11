@@ -129,7 +129,10 @@ int* Actuator::homing_sequence(){
 
 
 
-void Actuator::control_function(){
+int* Actuator::control_function(){
+    //Returns an array ints in format
+    //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
+    int start_time = millis();
     control_function_count++;
     if(millis()-last_control_execution > cycle_period_millis){
 
@@ -138,6 +141,14 @@ void Actuator::control_function(){
         currentrpm_eg = calc_engine_rpm(dt);
         //currentrpm_eg = analogRead(A2)*4;
         last_control_execution = millis();
+
+        //If motor is spinning too slow, then shift all the way out
+        if(currentrpm_eg < min_rpm){
+            odrive.set_velocity(motor_number, -3);
+            int end_time = millis();
+            int out[7] = {status, currentrpm_eg, -3, m_hall_inbound, m_hall_outbound, start_time, end_time};
+            return out;
+        }
 
         //Print Engine Speed
         if (m_printToSerial){

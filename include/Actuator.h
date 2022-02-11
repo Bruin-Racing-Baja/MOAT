@@ -10,6 +10,7 @@
 #define enc_PPR 2048
 #define motor_number 0  //Odrive axis
 #define homing_timeout 50000 //NOTE: In ms
+#define min_rpm 1000
 #define cycle_period 10e4 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
 #define linearDistancePerRotation .125 //inches per rotation
 #define linearShiftLength 2.75 //inches
@@ -43,7 +44,7 @@ class Actuator{
         void (*external_count_egTooth)(),
         bool printToSerial);
     int init(int odrive_timeout); 
-    void control_function();
+    int* control_function();
     int get_status_code();
     int get_encoder_pos();
     float communication_speed();

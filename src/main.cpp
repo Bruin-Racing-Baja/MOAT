@@ -20,8 +20,12 @@ General code to oversee all functions of the Teensy
 
 //General Settings
   //Mode
-  #define OPERATING 0
-  #define DIAGNOSTIC 0
+  /*
+  Operating 0 - For normal operation, initializes then runs main control fn in loop
+    May disable logging object in its library config to free up memory, if relevant
+  Diagnostic 1 - Runs diagnostic test 100 times, then stops, saves to sd
+  */
+  #define MODE 1
 
   //Startup
   #define WAIT_SERIAL_STARTUP 0
@@ -29,6 +33,7 @@ General code to oversee all functions of the Teensy
 
   //Log
   #define LOG_LEVEL LOG_LEVEL_VERBOSE
+  #define SAVE_THRESHOLD 100 //Sets how often the log object will save to sd
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
   //Actuator
@@ -48,8 +53,6 @@ General code to oversee all functions of the Teensy
   //Create file to log to
   File logFile;
   //Cannot create logging object until init
-
-
 
 //<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
 //ACTUATOR SETTINGS
@@ -146,11 +149,35 @@ void setup() {
     }
   }
   Log.verbose("Initialization Complete" CR);
+  Log.notice("Starting mode %d" CR, MODE);
   save_log();
 }
 
+//OPERATING MODE
+// #if MODE == 0
+
+int* o_control;
+int save_count = 0;
 void loop() {
-  Log.verbose("Loop Started" CR);
+  o_control = actuator.control_function();
+  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
+  Log.notice("Status: %d  RPM: %d, Act Vel: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
+    o_control[0], o_control[1], o_control[2], o_control[3], o_control[4], o_control[5], o_control[6]);
+  
+  //Save data to sd every SAVE_THRESHOLD
+  if (save_count > SAVE_THRESHOLD) {
+    save_log();
+    save_count = 0;
+  }
+  save_count++;
+
+}
+
+//DIAGNOSTIC MODE
+// #elif MODE == 1
+
+void loop() {
+  Log.notice("DIAGNOSTIC MODE" CR);
   Log.verbose("Running diagnostic function" CR);
 
   for (int i = 0; i < 100; i++) {
@@ -163,6 +190,11 @@ void loop() {
   Log.verbose("End of diagnostic function" CR);
   logFile.close();
   exit(0);
+}
+
+// #endif
+
+
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
 //                               __...------------._
@@ -206,5 +238,4 @@ void loop() {
 //                                                          |
 //                                mGk                       |
 */
-}
 
