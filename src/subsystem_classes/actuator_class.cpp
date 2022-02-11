@@ -56,12 +56,12 @@ int Actuator::init(int odrive_timeout){
     
     odrive.run_state(motor_number, 1, true, 0); //Sets ODrive to IDLE 
     
+    
+    interrupts(); //allows interupts
+    attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
+
     status = 0;
     return status;
-    //Timer3.initialize(cycle_period);
-
-    // interrupts(); //allows interupts
-    // attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
 }
 
 int* Actuator::homing_sequence(){
@@ -182,41 +182,8 @@ int* Actuator::control_function(){
 }
 
 
-//------Diagnostic Function to print Sensors---------//
 String Actuator::diagnostic(bool printSerial = true){
-
-    if(m_printToSerial && printSerial){
-        Serial.println("-----------------------------");
-        Serial.print("Current time: ");
-        Serial.println(millis());
-        //Odrive voltage
-        Serial.print("Odrive Voltage: ");
-        Serial.println( odrive.get_voltage());
-        //Odrive speed
-        Serial.print("Odrive's current Speed: ");
-        Serial.println(odrive.get_vel(motor_number));
-        //Encoder Count
-        Serial.print("Current Encoder Count:");
-        Serial.print(get_encoder_pos());
-        //outbound encoder reading
-        Serial.print("Outbound Limit: ");
-        Serial.println(m_encoder_outbound);
-        //inbound encoder reading
-        Serial.print("Inbound Limit: ");
-        Serial.println(m_encoder_inbound);
-        //If inbound hall on
-        Serial.print("Inbound Hall reading: ");
-        Serial.println(digitalReadFast(m_hall_inbound));
-        //if outbound hall on
-        Serial.print("outbound Hall reading: ");
-        Serial.println(digitalReadFast(m_hall_outbound));
-        //current Gear Tooth count
-        Serial.print("Engine Gear Tooth Count: ");
-        Serial.println(egTooth_Count);
-        //current Engine Speed
-        Serial.print("Engine rpm: ");
-        Serial.println(currentrpm_eg);
-    }
+    //Diagnosric tool to print out all of the sensor readings
 
     String output = "";
     output += "-----------------------------\n";
@@ -231,6 +198,9 @@ String Actuator::diagnostic(bool printSerial = true){
     output += "Engine Gear Tooth Count: " +String(egTooth_Count)+"\n";
     output += "Current rpm: " +String(currentrpm_eg)+"\n";
 
+    if(m_printToSerial && printSerial){
+        Serial.print(output);
+    }
     return output;
 }
 
