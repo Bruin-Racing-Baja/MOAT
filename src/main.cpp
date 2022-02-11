@@ -21,9 +21,12 @@ General code to oversee all functions of the Teensy
 //General Settings
   //Mode
   /*
-  Operating 0 - For normal operation, initializes then runs main control fn in loop
+  Operating - 0 - For normal operation, initializes then runs main control fn in loop
     May disable logging object in its library config to free up memory, if relevant
-  Diagnostic 1 - Runs diagnostic test 100 times, then stops, saves to sd
+  Diagnostic - 1 - Runs diagnostic test 100 times, then stops, saves to sd
+  Headless Horseman - 2 - For operation where data is not recorded
+    This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up
+    NOTE: Recommend disabling logging object in its include
   */
   #define MODE 1
 
@@ -33,11 +36,14 @@ General code to oversee all functions of the Teensy
 
   //Log
   #define LOG_LEVEL LOG_LEVEL_VERBOSE
-  #define SAVE_THRESHOLD 100 //Sets how often the log object will save to sd
+  #define SAVE_THRESHOLD 100 //Sets how often the log object will save to sd when in operating mode
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
   //Actuator
   #define HOME_ON_STARTUP 0
+
+  //Diagnostic Mode
+  #define DIAGNOSTIC_MODE_SHOTS 100  //Number of times diagnostic mode is run
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 
@@ -85,6 +91,7 @@ General code to oversee all functions of the Teensy
   
 //FREE FUNCTIONS
 
+//NOTE: May want to test expanding this function to take in a file object to save
 void save_log() {
   //Closes and then opens the file stream
   logFile.close();
@@ -162,6 +169,8 @@ void loop() {
   //Main control loop, with actuator
   o_control = actuator.control_function();
   //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
+
+  //Report output with log
   Log.notice("Status: %d  RPM: %d, Act Vel: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
     o_control[0], o_control[1], o_control[2], o_control[3], o_control[4], o_control[5], o_control[6]);
   
@@ -182,7 +191,7 @@ void loop() {
   Log.notice("DIAGNOSTIC MODE" CR);
   Log.verbose("Running diagnostic function" CR);
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < DIAGNOSTIC_MODE_SHOTS; i++) {
     //Serial.println(actuator.diagnostic(false));
     Log.notice("%d", i);
     Log.notice((actuator.diagnostic(true)).c_str());
