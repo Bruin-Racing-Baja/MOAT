@@ -1,12 +1,11 @@
-This is a collection of what each error code for each system means. When sending an error code, it should be incl
+Each class has its own set of error codes, explained below. Error code groupings are technically arbitrary, but I would recommend following the general ideas as laid out in the actuator codes below. Basically, grouping the errors to a family of things that can go wrong, then going specifically into what went wrong
 
-Firslty, there is the status code for each class which is explained by this.
-STATUS CODE
-    0: Nominal, after odometry -> action cycle, redy to report
-    1: Error, look at error code
-    2: Not initialized
-    3: Odometry complete, no action
-    4: Performing action
+NOTE: For the impending drive day some errors may be mapped from 0-255 so i dont have to figure out a protocol yet, but we will see
+
+--------------[ SD Card ]---------------
+    4001 - SD Card not found / Failed to open
+    4002 - SD Card unable to write to file
+    4003 - SD Card unable to save file
 
 Then, each class has its own set of error codes, explained below. Error code groupings are technically arbitrary, but I would recommend following the general ideas as laid out in the actuator codes below. Basically, grouping the errors to a family of things that can go wrong, then going specifically into what went wrong
 <--><--><--><-->< Base Systems ><--><--><--><--><-->
@@ -32,24 +31,18 @@ WAIT FOR REPLY SENDING FAILURE
 
 <--><--><--><-->< Sub-Systems ><--><--><--><--><-->
 ---------------[ Actuator ]---------------
-POSITION OUT OF BOUNDS
-    2001 - Encoder reported a position outside of bounds
-    2002 - Outer Limit switch depressed
-    2003 - Inner limit switch depressed
-UNABLE TO CHANGE POSITION
-    2011 - No change in encoder reading despite taking action
+Startup
+    0001 - Odrive communication timed out
+    0002 - Homing timeout
 
-UNABLE TO READ ENCODER VALUE
-    2021 - Unable to read value from encoder
-    2022 - Unable to read stored encoder value
-
-STORED ENCODER VALUE
-    2031 - Unable to locate a stored encoder value
-    2032 - Unable to store encoder value (perhaps out of storage?)
-
-HOMING
-    2041 - Homing Timeout
-
-STARTUP
-    2051 - Cannot initiate serial connection to ODRIVE
-    2052 - run_state(0, 1, true, 0) failed
+Control Function
+    NOTE: Because of the way this is, some values may be nonsensical as they are not set or ever initialized
+    These values will be marked by an X below
+    0003 - Control function timing not correct
+        <0XXXX00>
+    0004 - Motor spinning too low, already shifted out
+        <000XXX00>
+    0005 - Motor spinning too low, shifting out
+        <000XXX00>
+    0006 - Error set to 0 as shifted all the way out
+ ** 0007 - Error set to 0 as shifted all the way in
