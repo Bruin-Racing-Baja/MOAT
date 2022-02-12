@@ -22,7 +22,7 @@ int ODrive::init(int timeout = 1000){
     long start = millis();
     while(ODrive::get_voltage() <= 1){
         if(millis() - start > timeout){
-            status = 1;
+            status = 13;
             return status;
         }
     }
@@ -55,9 +55,7 @@ float ODrive::get_vel(int motor_number) {
 }
 
 float ODrive::get_voltage() {
-    Serial.println("1");
     OdriveSerial << "r vbus_voltage\n";
-    Serial.println("2");
     return ODrive::read_float();
 }
 

@@ -7,12 +7,17 @@
 #include <ArduinoLog.h>
 
 //CONSTANTS
-#define enc_PPR 2048
+#define enc_PPR 88
 #define motor_number 0  //Odrive axis
 #define homing_timeout 50000 //NOTE: In ms
+#define min_rpm 1000
 #define cycle_period 10e4 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
+#define rpm_allowance 30
+#define desired_rpm 2700
+
+
 #define linearDistancePerRotation .125 //inches per rotation
-#define linearShiftLength 2.75 //inches
+#define linearShiftLength 3.25 //inches
 const int32_t encoderCountShiftLength = (linearShiftLength/linearDistancePerRotation)*4*2048;
 const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period just in minutes
 const int cycle_period_millis = cycle_period/10e3;
@@ -42,16 +47,23 @@ class Actuator{
         const int hall_outbound,
         void (*external_count_egTooth)(),
         bool printToSerial);
-    int init(); 
-    void control_function();
+
+    int init(int odrive_timeout); 
+
+    int* control_function(int* out);
+    int* homing_sequence(int* out);
+
+
     int get_status_code();
     int get_encoder_pos();
+    float get_p_value();
     float communication_speed();
     void count_egTooth();
-    String diagnostic(bool);
+    
+    String diagnostic(bool is_mainpower_on, bool serial_out);
 
     private:
-    int homing_sequence();
+    
     void test_voltage();
     int status;
     Encoder encoder;
@@ -85,7 +97,7 @@ class Actuator{
     //running gear tooth sensor counts
     volatile unsigned long egTooth_Count;
     unsigned long egTooth_Count_last;
-    int currentrpm_eg;
+    int currentrpm_eg = 0;
 };
 
 #endif /*ACTUATOR_H*/

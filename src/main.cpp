@@ -8,7 +8,6 @@ General code to oversee all functions of the Teensy
 
 //Libraries
 #include <SPI.h>
-#include <RH_RF95.h>
 #include <SoftwareSerial.h>
 #include <HardwareSerial.h>
 #include <string>
@@ -17,31 +16,46 @@ General code to oversee all functions of the Teensy
 
 //Classes
 #include <Actuator.h>
-#include <ODrive.h>
 #include <Radio.h>
-
-using namespace std;
 
 //General Settings
   //Mode
-  #define OPERATING 0
-  #define DIAGNOSTIC 0
+  /*
+  Operating - 0 - For normal operation, initializes then runs main control fn in loop
+    May disable logging object in its library config to free up memory, if relevant
+
+  Headless Diagnostic - 1 - Runs diagnostic test 100 times, then stops, saves to sd
+    DO NOT CONNECT TO TEENSY WHEN MAIN POWER IS ON OR IT COULD DAMAGE YOUR LAPTOP
+    This is used for testing in sitations where the main power is on, and data will be retrieved from sd
+
+  Serial Diagnostic - 2 - Runs diagnostic test continuously, prints to serial
+
+  Headless Horseman - 3 - For operation where data is not recorded
+    This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up
+    NOTE: Recommend disabling logging object in its include
+
+  */
+  #define MODE 0
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 0
+  #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
   #define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
-  #define LOG_LEVEL LOG_LEVEL_VERBOSE
+  #define LOG_LEVEL LOG_LEVEL_NOTICE
+  #define SAVE_THRESHOLD 1000 //Sets how often the log object will save to sd when in operating mode
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
   //Actuator
-  #define HOME_ON_STARTUP 0
+  #define HOME_ON_STARTUP 1
+
+  //Diagnostic Mode
+  #define DIAGNOSTIC_MODE_SHOTS 100  //Number of times diagnostic mode is run
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 
 //ODrive Settings
-  #define starting_timeout 1000 //NOTE: In ms
+  #define odrive_starting_timeout 1000 //NOTE: In ms
 
   //PINS
 
@@ -52,8 +66,6 @@ using namespace std;
   //Create file to log to
   File logFile;
   //Cannot create logging object until init
-
-
 
 //<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
 //ACTUATOR SETTINGS
@@ -70,8 +82,8 @@ using namespace std;
   #define enc_B 3
   #define hall_inbound 22
   #define hall_outbound 23
-  #define gearTooth_engine 40
-  #define gearTooth_gearbox 41
+  #define gearTooth_engine 41
+  #define gearTooth_gearbox 40
 
 
   //CREATE OBJECT
@@ -86,10 +98,12 @@ using namespace std;
   
 //FREE FUNCTIONS
 
-// void save_log() {
-//   logFile.close();
-//   logFile = SD.open("log.txt", FILE_WRITE);
-// }
+//NOTE: May want to test expanding this function to take in a file object to save
+void save_log() {
+  //Closes and then opens the file stream
+  logFile.close();
+  logFile = SD.open("log.txt", FILE_WRITE);
+}
 
 void setup() {
   //-------------Wait for serial-----------------
@@ -101,18 +115,17 @@ void setup() {
   //-------------Logging and SD Card-----------------
   SD.begin(BUILTIN_SDCARD);
   logFile = SD.open("log.txt", FILE_WRITE);
-  Log.begin(LOG_LEVEL_VERBOSE, &logFile, false);
-  Log.verbose("Logging Started" CR);
-  Log.verbose("Time: %d" CR, millis());
-  logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
-  Log.verbose("Logging closed and reopened" CR);
 
-  /*
-  The log file will only actually save when the file is closed, so here
-  is an interrupt to save the file every 30 seconds and then re-open it
-  */
+  Log.begin(LOG_LEVEL, &logFile, false);
+  Log.notice("Initialization Started" CR);
+  Log.verbose("Time: %d" CR, millis());
+
+  save_log();
+
   //------------------Odrive------------------
+
+  //At this time the following code is depricated, but until we make final decisions about the odrive class, we will leave it in
+
   // int odrive_init = actuator.odrive.init(1000);
   // if (odrive_init) {
   //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
@@ -128,40 +141,110 @@ void setup() {
   // logFile = SD.open("log.txt", FILE_WRITE);
 
   //-------------Actuator-----------------
-  //Serial.println("Odrive voltage" + String(odrive.get_voltage()));
-  int actuator_init = actuator.init();
-  Serial.println("After init" + String(actuator_init));
-  if (actuator_init) {
-    Log.error("Actuator init failed code: %d" CR, actuator_init);
-    Serial.println("Actuator status" + String(actuator_init));
+  //General Init
+  int o_actuator_init = actuator.init(odrive_starting_timeout);
+  if(o_actuator_init) {
+    Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
+    Serial.println("Actuator init failed code: " + String(o_actuator_init));
   }
   else {
-    Log.verbose("Actuator init successful code: %d" CR, actuator_init);
-    Serial.println("Actuator status" + String(actuator_init));
+    Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
+    Log.notice("Proportional gain (x1000): %d" CR, 1000 * actuator.get_p_value());
+    Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
-
-  logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
-  Serial.println("Running diagnostic");
+  save_log();
+  //Homing if enabled
+  if (HOME_ON_STARTUP) {
+    int o_homing[3];
+    actuator.homing_sequence(o_homing);
+    if (o_homing[0]) {
+      Log.error("Homing Failed code: %d" CR, o_homing[0]);
+    }
+    else {
+      Log.verbose("Homing Success code: %d" CR, o_homing[0]);
+      Log.notice("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
+    }
+  }
+  Log.verbose("Initialization Complete" CR);
+  Log.notice("Starting mode %d" CR, MODE);
+  save_log();
 }
 
+//OPERATING MODE
+#if MODE == 0
+
+int o_control[8];
+int save_count = 0;
 void loop() {
-  Log.notice("Loop Started" CR);
-  // logFile.close();
-  Serial.println("Mah whyfe");
-  for (int i = 0; i < 100; i++) {
+  //Main control loop, with actuator
+  actuator.control_function(o_control);
+  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
+
+  //Report output with log
+  if (o_control[0] == 3){
+    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
+    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+  }
+  else {
+    Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
+      o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+  }
+  //Save data to sd every SAVE_THRESHOLD
+  if (save_count > SAVE_THRESHOLD) {
+    int save_start = millis();
+    save_log();
+    save_count = 0;
+    Log.verbose("Saved log in %d ms" CR, millis() - save_start);
+  }
+  save_count++;
+}
+
+//HEADLESS DIAGNOSTIC MODE
+#elif MODE == 1
+bool is_main_power = true;
+
+void loop() {
+  Log.notice("DIAGNOSTIC MODE" CR);
+  Log.verbose("Running diagnostic function" CR);
+
+  for (int i = 0; i < DIAGNOSTIC_MODE_SHOTS; i++) {
     //Serial.println(actuator.diagnostic(false));
     Log.notice("%d", i);
-    Log.notice((actuator.diagnostic(true)).c_str());
-    Serial.println("Looped");
+    //Assumes main power is connected
+    Log.notice((actuator.diagnostic(is_main_power, false)).c_str());
     delay(100);
   }
+
+  Log.verbose("End of diagnostic function" CR);
   logFile.close();
-  Serial.println("Exiting loop");
   exit(0);
+}
+
+//SERIAL DIAGNOSTIC MODE
+#elif MODE == 2
+bool is_main_power = false;
+
+void loop() {
+  //Assumes main power isnt connected as connected to serial
+  Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
+  delay(100);
+}
+
+//HEADLESS HORSEMAN MODE
+#elif MODE == 3
+void loop() {
+  digitalWrite(LED_BUILTIN, digitalRead(hall_inbound));
+  Serial.println(digitalRead(hall_inbound));
+  Serial.println("huh");
+  delay(1000);
+}
+
+#endif
+
+
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
-//                               __...------------._
+//                             __...------------._
 //                          ,-'                   `-.
 //                       ,-'                         `.
 //                     ,'                            ,-`.
@@ -202,5 +285,4 @@ void loop() {
 //                                                          |
 //                                mGk                       |
 */
-}
 
