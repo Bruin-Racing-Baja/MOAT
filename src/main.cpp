@@ -38,16 +38,16 @@ General code to oversee all functions of the Teensy
   #define MODE 0
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 1  //Set headless mode or not
+  #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
   #define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
-  #define LOG_LEVEL LOG_LEVEL_VERBOSE
-  #define SAVE_THRESHOLD 100 //Sets how often the log object will save to sd when in operating mode
+  #define LOG_LEVEL LOG_LEVEL_NOTICE
+  #define SAVE_THRESHOLD 1000 //Sets how often the log object will save to sd when in operating mode
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
   //Actuator
-  #define HOME_ON_STARTUP 0
+  #define HOME_ON_STARTUP 1
 
   //Diagnostic Mode
   #define DIAGNOSTIC_MODE_SHOTS 100  //Number of times diagnostic mode is run
@@ -116,8 +116,8 @@ void setup() {
   SD.begin(BUILTIN_SDCARD);
   logFile = SD.open("log.txt", FILE_WRITE);
 
-  Log.begin(LOG_LEVEL_VERBOSE, &logFile, false);
-  Log.verbose("Initialization Started" CR);
+  Log.begin(LOG_LEVEL, &logFile, false);
+  Log.notice("Initialization Started" CR);
   Log.verbose("Time: %d" CR, millis());
 
   save_log();
@@ -149,20 +149,20 @@ void setup() {
   }
   else {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
-    Log.notice("Proportional gain: %l" CR, actuator.get_p_value());
+    Log.notice("Proportional gain (x1000): %d" CR, 1000 * actuator.get_p_value());
     Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
-
+  save_log();
   //Homing if enabled
   if (HOME_ON_STARTUP) {
     int o_homing[3];
     actuator.homing_sequence(o_homing);
     if (o_homing[0]) {
-      Log.error("Homing Failed code: %d" CR, o_homing);
+      Log.error("Homing Failed code: %d" CR, o_homing[0]);
     }
     else {
-      Log.verbose("Homing Success code: %d" CR, o_homing);
-      Log.verbose("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
+      Log.verbose("Homing Success code: %d" CR, o_homing[0]);
+      Log.notice("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
     }
   }
   Log.verbose("Initialization Complete" CR);
@@ -173,17 +173,22 @@ void setup() {
 //OPERATING MODE
 #if MODE == 0
 
-int o_control[7];
+int o_control[8];
 int save_count = 0;
 void loop() {
   //Main control loop, with actuator
   actuator.control_function(o_control);
-  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished>
+  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
 
   //Report output with log
-  Log.notice("Status: %d  RPM: %d, Act Vel: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-    o_control[0], o_control[1], o_control[2], o_control[3], o_control[4], o_control[5], o_control[6]);
-  
+  if (o_control[0] == 3){
+    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
+    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+  }
+  else {
+    Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
+      o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+  }
   //Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD) {
     int save_start = millis();
@@ -223,6 +228,15 @@ void loop() {
   //Assumes main power isnt connected as connected to serial
   Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
   delay(100);
+}
+
+//HEADLESS HORSEMAN MODE
+#elif MODE == 3
+void loop() {
+  digitalWrite(LED_BUILTIN, digitalRead(hall_inbound));
+  Serial.println(digitalRead(hall_inbound));
+  Serial.println("huh");
+  delay(1000);
 }
 
 #endif

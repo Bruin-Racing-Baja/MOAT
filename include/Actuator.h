@@ -7,7 +7,7 @@
 #include <ArduinoLog.h>
 
 //CONSTANTS
-#define enc_PPR 2048
+#define enc_PPR 88
 #define motor_number 0  //Odrive axis
 #define homing_timeout 50000 //NOTE: In ms
 #define min_rpm 1000
@@ -17,7 +17,7 @@
 
 
 #define linearDistancePerRotation .125 //inches per rotation
-#define linearShiftLength 2.75 //inches
+#define linearShiftLength 3.25 //inches
 const int32_t encoderCountShiftLength = (linearShiftLength/linearDistancePerRotation)*4*2048;
 const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period just in minutes
 const int cycle_period_millis = cycle_period/10e3;
@@ -97,7 +97,7 @@ class Actuator{
     //running gear tooth sensor counts
     volatile unsigned long egTooth_Count;
     unsigned long egTooth_Count_last;
-    int currentrpm_eg;
+    int currentrpm_eg = 0;
 };
 
 #endif /*ACTUATOR_H*/

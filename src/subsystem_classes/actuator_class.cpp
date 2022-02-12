@@ -42,7 +42,7 @@ Actuator::Actuator(
     hasRun = false;
 
     //limit variables
-    m_encoder_outbound = -666;
+    m_encoder_outbound = encoder.read();
     m_encoder_inbound = -666;
 }
 
@@ -78,9 +78,16 @@ int* Actuator::homing_sequence(int* out){
     delay(1000);
 
     //Home outbound
+    digitalWrite(LED_BUILTIN, HIGH);
     int start = millis();
-    odrive.set_velocity(motor_number, 3);
+
+    odrive.set_velocity(motor_number, 2);
+
     while (digitalReadFast(m_hall_outbound) == 1) {
+        delay(10);
+        if (digitalReadFast(m_hall_outbound) == 0){
+            break;
+        }
         m_encoder_outbound = encoder.read();
         if (millis() - start > homing_timeout) {
             out[0] = 2;
@@ -91,6 +98,7 @@ int* Actuator::homing_sequence(int* out){
     }
     odrive.set_velocity(motor_number, 0); //Stop spinning after homing
     odrive.run_state(motor_number, 1, false, 0); //Idle state
+    digitalWrite(LED_BUILTIN, LOW);
 
     m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
 
@@ -102,16 +110,18 @@ int* Actuator::homing_sequence(int* out){
 
     // //Testing encoder reading by shifting all the way back to the inbound
     // delay(500);
-    // run_state(motor_number, 8, false, 0);
-    // set_velocity(-3);
+    // odrive.run_state(motor_number, 8, false, 0);
+    // odrive.set_velocity(motor_number, -2);
+    // digitalWrite(LED_BUILTIN, HIGH);
     // while(encoder.read() > m_encoder_inbound){
     //     Serial.print("encoder inbound: ");
     //     Serial.println(m_encoder_inbound);
     //     Serial.print("current encoder position");
     //     Serial.println(encoder.read());
     // }
-    // set_velocity(0); //Stop spinning after homing
-    // run_state(motor_number, 1, false, 0); //Idle state
+    // digitalWrite(LED_BUILTIN, LOW);
+    // odrive.set_velocity(motor_number, 0); //Stop spinning after homing
+    // odrive.run_state(motor_number, 1, false, 0); //Idle state
 
     out[1] = m_encoder_inbound;
     out[2] = m_encoder_outbound;
@@ -122,7 +132,7 @@ int* Actuator::homing_sequence(int* out){
 
 int* Actuator::control_function(int* out){
     //Returns an array of ints in format
-    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished>
+    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos>
     out[5] = millis();
     control_function_count++;
     if(millis()-last_control_execution > cycle_period_millis){
@@ -145,7 +155,8 @@ int* Actuator::control_function(int* out){
                 out[0] = 4; //Report status
                 out[2] = 0; //Report velocity
                 out[4] = 1;
-                out[6] = millis();
+                out[7] = encoder.read();
+                out[6] = millis();   
                 return out;
             }
             else {
@@ -153,6 +164,7 @@ int* Actuator::control_function(int* out){
                 odrive.set_velocity(motor_number, 3); //Shift out
                 out[0] = 5;
                 out[2] = 3;
+                out[7] = encoder.read();
                 out[6] = millis();
                 return out;
             }
@@ -162,26 +174,37 @@ int* Actuator::control_function(int* out){
 
         //If error is within a certain deviation from the desired value, do not shift
         int error = currentrpm_eg - desired_rpm;
-        if (abs(error) <= rpm_allowance) {
-            error = 0;
-        }
+        int motor_velocity = -1*proportionalGain*error;
+        // if (abs(error) <= rpm_allowance) {
+        //     error = 0;
+        // }
+
+        //TODO
+        //MIN/MAX instead of if else
+        //Check halls 0/1 when triggered ITS 0
+        //Change output from int array to array of pointers
+        //Attach to interrupt
+
+        //INWARDS IN NEGATIVE
+        //HALL TRIGGERED IS 0
+
 
         //If error will over or under actuate actuator then set error to 0.
         if(digitalReadFast(m_hall_outbound) == 0 || encoder.read() >= m_encoder_outbound){
             //Shifted out completely
-            if(error > 0) error = 0;
+            if(motor_velocity > 0) motor_velocity = 0;
             out[0] = 6;
             out[4] = 1;
         } 
         else if (digitalReadFast(m_hall_inbound) == 0 || encoder.read()<= m_encoder_inbound){
             //Shifted in completely
-            if(error < 0) error = 0;
+            if(motor_velocity < 0) motor_velocity = 0;
             out[0] = 7;
             out[3] = 1;
         }
 
         //Multiply by gain and set new motor velocity. 
-        int motor_velocity = proportionalGain*error;
+        
         out[2] = motor_velocity;
 
         if(motor_velocity == 0) {
@@ -191,12 +214,14 @@ int* Actuator::control_function(int* out){
             odrive.set_velocity(motor_number, motor_velocity);
             odrive.run_state(motor_number, 8, false, 0);
         }
+        out[7] = encoder.read();
         out[6] = millis();
         return out;
     }
 
     //Return status if attempt to run the control function too soon
     out[0] = 3;
+    out[7] = encoder.read();
     out[6] = millis();
     return out;
 }
