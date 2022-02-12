@@ -17,6 +17,7 @@ General code to oversee all functions of the Teensy
 //Classes
 #include <Actuator.h>
 #include <Radio.h>
+#include <Cooling.h>
 
 //General Settings
   //Mode
@@ -35,10 +36,10 @@ General code to oversee all functions of the Teensy
     NOTE: Recommend disabling logging object in its include
 
   */
-  #define MODE 0
+  #define MODE 3
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
+  #define WAIT_SERIAL_STARTUP 1  //Set headless mode or not
   #define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
@@ -47,7 +48,7 @@ General code to oversee all functions of the Teensy
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
   //Actuator
-  #define HOME_ON_STARTUP 1
+  #define HOME_ON_STARTUP 0
 
   //Diagnostic Mode
   #define DIAGNOSTIC_MODE_SHOTS 100  //Number of times diagnostic mode is run
@@ -68,6 +69,9 @@ General code to oversee all functions of the Teensy
   //Cannot create logging object until init
 
 //<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
+//COOLING SETTINGS
+  Cooling cooler_o;
+
 //ACTUATOR SETTINGS
   //PINS TEST BED
   #define PRINTTOSERIAL false
@@ -140,6 +144,9 @@ void setup() {
   // logFile.close();
   // logFile = SD.open("log.txt", FILE_WRITE);
 
+  //------------------Cooling------------------
+
+  cooler_o.init();
   //-------------Actuator-----------------
   //General Init
   int o_actuator_init = actuator.init(odrive_starting_timeout);
@@ -232,11 +239,17 @@ void loop() {
 
 //HEADLESS HORSEMAN MODE
 #elif MODE == 3
+int temp = 0;
+
 void loop() {
-  digitalWrite(LED_BUILTIN, digitalRead(hall_inbound));
-  Serial.println(digitalRead(hall_inbound));
-  Serial.println("huh");
-  delay(1000);
+  temp = cooler_o.thermo_check();
+  Serial.println(temp);
+  delay(100);
+
+  // digitalWrite(LED_BUILTIN, digitalRead(hall_inbound));
+  // Serial.println(digitalRead(hall_inbound));
+  // Serial.println("huh");
+  // delay(1000);
 }
 
 #endif
