@@ -182,6 +182,7 @@ void setup() {
 
 int o_control[10];
 int save_count = 0;
+int last_save = 0;
 void loop() {
   //Main control loop, with actuator
   actuator.control_function(o_control);
@@ -195,15 +196,17 @@ void loop() {
   else {
     Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
       o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
-    Log.notice("Temperature (*C): %d", cooler_o.thermo_check());
+    Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
   }
   
   //Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD) {
     int save_start = millis();
+    Log.notice("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    Log.verbose("Battery level ok? %d", o_control[8]);
+    Log.verbose("Battery level ok? %d", o_control[8] > 20);
+    digitalWrite(LED_BUILTIN, !(o_control[8] > 20)); //TURN LED ON IF BATTERY TOO LOW
     Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;

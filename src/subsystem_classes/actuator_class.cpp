@@ -156,6 +156,7 @@ int* Actuator::control_function(int* out){
                 out[2] = 0; //Report velocity
                 out[4] = 1;
                 out[8] = odrive.get_voltage();
+                out[9] = odrive.get_cur();
                 out[7] = encoder.read();
                 out[6] = millis();   
                 return out;
@@ -166,6 +167,7 @@ int* Actuator::control_function(int* out){
                 out[0] = 5;
                 out[2] = 3;
                 out[8] = odrive.get_voltage();
+                out[9] = odrive.get_cur();
                 out[7] = encoder.read();
                 out[6] = millis();
                 return out;
@@ -217,6 +219,7 @@ int* Actuator::control_function(int* out){
             odrive.run_state(motor_number, 8, false, 0);
         }
         out[8] = odrive.get_voltage();
+        out[9] = odrive.get_cur();
         out[7] = encoder.read();
         out[6] = millis();
         return out;
@@ -224,7 +227,6 @@ int* Actuator::control_function(int* out){
 
     //Return status if attempt to run the control function too soon
     out[0] = 3;
-    out[7] = encoder.read();
     out[6] = millis();
     return out;
 }
