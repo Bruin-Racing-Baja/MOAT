@@ -36,7 +36,7 @@ General code to oversee all functions of the Teensy
     NOTE: Recommend disabling logging object in its include
 
   */
-  #define MODE 3
+  #define MODE 0
 
   //Startup
   #define WAIT_SERIAL_STARTUP 1  //Set headless mode or not
@@ -180,7 +180,7 @@ void setup() {
 //OPERATING MODE
 #if MODE == 0
 
-int o_control[8];
+int o_control[10];
 int save_count = 0;
 void loop() {
   //Main control loop, with actuator
@@ -193,14 +193,17 @@ void loop() {
     o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
   }
   else {
-    Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-      o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+    Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
+      o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
+    Log.notice("Temperature (*C): %d", cooler_o.thermo_check());
   }
+  
   //Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD) {
     int save_start = millis();
     save_log();
     save_count = 0;
+    Log.verbose("Battery level ok? %d", o_control[8]);
     Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;

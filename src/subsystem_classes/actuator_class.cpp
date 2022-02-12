@@ -132,7 +132,7 @@ int* Actuator::homing_sequence(int* out){
 
 int* Actuator::control_function(int* out){
     //Returns an array of ints in format
-    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos>
+    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos, odrive_volt, odrive_current>
     out[5] = millis();
     control_function_count++;
     if(millis()-last_control_execution > cycle_period_millis){
@@ -155,6 +155,7 @@ int* Actuator::control_function(int* out){
                 out[0] = 4; //Report status
                 out[2] = 0; //Report velocity
                 out[4] = 1;
+                out[8] = odrive.get_voltage();
                 out[7] = encoder.read();
                 out[6] = millis();   
                 return out;
@@ -164,6 +165,7 @@ int* Actuator::control_function(int* out){
                 odrive.set_velocity(motor_number, 3); //Shift out
                 out[0] = 5;
                 out[2] = 3;
+                out[8] = odrive.get_voltage();
                 out[7] = encoder.read();
                 out[6] = millis();
                 return out;
@@ -214,6 +216,7 @@ int* Actuator::control_function(int* out){
             odrive.set_velocity(motor_number, motor_velocity);
             odrive.run_state(motor_number, 8, false, 0);
         }
+        out[8] = odrive.get_voltage();
         out[7] = encoder.read();
         out[6] = millis();
         return out;
