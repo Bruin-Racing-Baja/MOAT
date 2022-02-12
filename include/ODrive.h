@@ -21,6 +21,7 @@ class ODrive{
     String read_string();
     String dump_errors();
     float read_float();
+    float get_cur();
 
     private:
     int status;
