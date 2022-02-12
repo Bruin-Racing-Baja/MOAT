@@ -59,6 +59,11 @@ float ODrive::get_voltage() {
     return ODrive::read_float();
 }
 
+float ODrive::get_cur(){
+    OdriveSerial<< "r ibus\n";
+    return ODrive::read_float();
+}
+
 String ODrive::dump_errors(){
     String output= "";
     output += "system: ";
