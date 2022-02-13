@@ -13,17 +13,16 @@
 #define min_rpm 1000
 #define cycle_period 10e4 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
 #define rpm_allowance 30
-#define desired_rpm 2700
 
 
 #define linearDistancePerRotation .125 //inches per rotation
-#define linearShiftLength 3.25 //inches
+#define linearShiftLength 3.50 //inches
 const int32_t encoderCountShiftLength = (linearShiftLength/linearDistancePerRotation)*4*2048;
 const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period just in minutes
 const int cycle_period_millis = cycle_period/10e3;
 const int cycle_frequency_minutes = 1/cycle_period_minutes; 
 
-#define egTeethPerRotation 66
+#define egTeethPerRotation 88
 
 // reference signals from tyler
 // ***** ENGINE ***** //
@@ -32,8 +31,10 @@ const unsigned int EG_ENGAGE = 2100;
 const unsigned int EG_LAUNCH = 2600;
 const int EG_TORQUE = 2700; //<--- Going for this one 
 const unsigned int EG_POWER = 3400; 
+const unsigned int desired_rpm = 2250;
+const float RPM_TARGET_MULTIPLIER = 1.5;
 
-const float proportionalGain = .01; // gain of the p controller
+const float proportionalGain = .015; // gain of the p controller
 
 class Actuator{
     public:
@@ -59,11 +60,14 @@ class Actuator{
     float get_p_value();
     float communication_speed();
     void count_egTooth();
+    String odrive_errors();
     
+
     String diagnostic(bool is_mainpower_on, bool serial_out);
 
     private:
     
+    int target_rpm();
     void test_voltage();
     int status;
     Encoder encoder;

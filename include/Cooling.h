@@ -12,7 +12,7 @@
 class Cooling
 {
     static const double m_temp_threshold = 100; // C
-    static const int m_thermocouple_pin = 33;   // C
+    static const int m_thermocouple_pin = 38;   // C
     static const float m_voltage = 3.3;
     static const int m_cooling_rpm = 500;
     static const int m_cycle_period_millis = 10;

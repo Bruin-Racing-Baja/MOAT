@@ -245,6 +245,18 @@ double Actuator::calc_engine_rpm(float dt){
     return rpm;
 }
 
+int Actuator::target_rpm(){
+    // if (currentrpm_eg<EG_ENGAGE){
+    //     return EG_ENGAGE;
+    // }
+    // if (currentrpm_eg>EG_POWER){
+    //     return EG_POWER;
+    // }
+    // int target = RPM_TARGET_MULTIPLIER*(currentrpm_eg)+ EG_ENGAGE;
+    // if(target > EG_POWER) return EG_POWER;
+    // return target;
+    return 0;
+}
 //-----------------Diagnostic Functions--------------//
 
 String Actuator::diagnostic(bool mainPower, bool printSerial = true){
@@ -265,7 +277,7 @@ String Actuator::diagnostic(bool mainPower, bool printSerial = true){
     output += "Engine Gear Tooth Count: " +String(egTooth_Count)+"\n";
     output += "Current rpm: " +String(currentrpm_eg)+"\n";
 
-    if(printSerial && m_printToSerial){
+    if(printSerial){
         Serial.print(output);
     }
     return output;
@@ -326,4 +338,8 @@ void Actuator::test_voltage(){
 
 float Actuator::get_p_value() {
     return proportionalGain;
+}
+
+String Actuator::odrive_errors(){
+    return odrive.dump_errors();
 }

@@ -39,8 +39,9 @@ General code to oversee all functions of the Teensy
   #define MODE 0
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 1  //Set headless mode or not
-  #define RUN_DIAGNOSTIC_STARTUP 0
+  #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
+  #define HOME_ON_STARTUP 1
+  //#define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
   #define LOG_LEVEL LOG_LEVEL_NOTICE
@@ -48,7 +49,7 @@ General code to oversee all functions of the Teensy
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
   //Actuator
-  #define HOME_ON_STARTUP 0
+
 
   //Diagnostic Mode
   #define DIAGNOSTIC_MODE_SHOTS 100  //Number of times diagnostic mode is run
@@ -156,7 +157,7 @@ void setup() {
   }
   else {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
-    Log.notice("Proportional gain (x1000): %d" CR, 1000 * actuator.get_p_value());
+    Log.notice("Proportional gain (x1000): %d" CR, (1000.0 * actuator.get_p_value()));
     Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
   save_log();
@@ -194,15 +195,18 @@ void loop() {
     o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
   }
   else {
-    Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
-      o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
-    Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
+    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
+    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
+    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR,
+    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.thermo_check());
   }
   
   //Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD) {
     int save_start = millis();
-    Log.notice("Time since last save: %d" CR, save_start - last_save);
+    Log.notice(actuator.odrive_errors().c_str());
+    Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
     Log.verbose("Battery level ok? %d", o_control[8] > 20);
@@ -225,6 +229,7 @@ void loop() {
     Log.notice("%d", i);
     //Assumes main power is connected
     Log.notice((actuator.diagnostic(is_main_power, false)).c_str());
+    Log.notice("Thermocouple temp: %d", cooler_o.thermo_check());
     delay(100);
   }
 
@@ -240,6 +245,9 @@ bool is_main_power = false;
 void loop() {
   //Assumes main power isnt connected as connected to serial
   Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
+  Log.notice("Thermo temp: %d" CR, cooler_o.thermo_check());
+  Serial.println(cooler_o.thermo_check());
+  //Serial.println(analogRead(38));
   delay(100);
 }
 
