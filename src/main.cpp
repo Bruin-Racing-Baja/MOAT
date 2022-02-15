@@ -17,6 +17,7 @@ General code to oversee all functions of the Teensy
 //Classes
 #include <Actuator.h>
 #include <Radio.h>
+#include <Cooling.h>
 
 //General Settings
   //Mode
@@ -39,7 +40,8 @@ General code to oversee all functions of the Teensy
 
   //Startup
   #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
-  #define RUN_DIAGNOSTIC_STARTUP 0
+  #define HOME_ON_STARTUP 1
+  //#define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
   #define LOG_LEVEL LOG_LEVEL_NOTICE
@@ -47,7 +49,7 @@ General code to oversee all functions of the Teensy
   //Note: By default the log requires and outputs to the SD card, and can be changed in setup
 
   //Actuator
-  #define HOME_ON_STARTUP 1
+
 
   //Diagnostic Mode
   #define DIAGNOSTIC_MODE_SHOTS 100  //Number of times diagnostic mode is run
@@ -68,6 +70,9 @@ General code to oversee all functions of the Teensy
   //Cannot create logging object until init
 
 //<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
+//COOLING SETTINGS
+  Cooling cooler_o;
+
 //ACTUATOR SETTINGS
   //PINS TEST BED
   #define PRINTTOSERIAL false
@@ -140,6 +145,9 @@ void setup() {
   // logFile.close();
   // logFile = SD.open("log.txt", FILE_WRITE);
 
+  //------------------Cooling------------------
+
+  cooler_o.init();
   //-------------Actuator-----------------
   //General Init
   int o_actuator_init = actuator.init(odrive_starting_timeout);
@@ -149,7 +157,7 @@ void setup() {
   }
   else {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
-    Log.notice("Proportional gain (x1000): %d" CR, 1000 * actuator.get_p_value());
+    Log.notice("Proportional gain (x1000): %d" CR, (1000.0 * actuator.get_p_value()));
     Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
   save_log();
@@ -173,8 +181,9 @@ void setup() {
 //OPERATING MODE
 #if MODE == 0
 
-int o_control[8];
+int o_control[10];
 int save_count = 0;
+int last_save = 0;
 void loop() {
   //Main control loop, with actuator
   actuator.control_function(o_control);
@@ -186,14 +195,22 @@ void loop() {
     o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
   }
   else {
-    Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-      o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
+    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
+    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR,
+    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.thermo_check());
   }
+  
   //Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD) {
     int save_start = millis();
+    Log.notice(actuator.odrive_errors().c_str());
+    Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
+    Log.verbose("Battery level ok? %d", o_control[8] > 20);
+    digitalWrite(LED_BUILTIN, !(o_control[8] > 20)); //TURN LED ON IF BATTERY TOO LOW
     Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
@@ -212,6 +229,7 @@ void loop() {
     Log.notice("%d", i);
     //Assumes main power is connected
     Log.notice((actuator.diagnostic(is_main_power, false)).c_str());
+    Log.notice("Thermocouple temp: %d", cooler_o.thermo_check());
     delay(100);
   }
 
@@ -227,16 +245,25 @@ bool is_main_power = false;
 void loop() {
   //Assumes main power isnt connected as connected to serial
   Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
+  Log.notice("Thermo temp: %d" CR, cooler_o.thermo_check());
+  Serial.println(cooler_o.thermo_check());
+  //Serial.println(analogRead(38));
   delay(100);
 }
 
 //HEADLESS HORSEMAN MODE
 #elif MODE == 3
+int temp = 0;
+
 void loop() {
-  digitalWrite(LED_BUILTIN, digitalRead(hall_inbound));
-  Serial.println(digitalRead(hall_inbound));
-  Serial.println("huh");
-  delay(1000);
+  temp = cooler_o.thermo_check();
+  Serial.println(temp);
+  delay(100);
+
+  // digitalWrite(LED_BUILTIN, digitalRead(hall_inbound));
+  // Serial.println(digitalRead(hall_inbound));
+  // Serial.println("huh");
+  // delay(1000);
 }
 
 #endif
