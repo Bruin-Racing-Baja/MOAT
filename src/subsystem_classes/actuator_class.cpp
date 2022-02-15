@@ -132,7 +132,7 @@ int* Actuator::homing_sequence(int* out){
 
 int* Actuator::control_function(int* out){
     //Returns an array of ints in format
-    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos>
+    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos, odrive_volt, odrive_current>
     out[5] = millis();
     control_function_count++;
     if(millis()-last_control_execution > cycle_period_millis){
@@ -155,6 +155,8 @@ int* Actuator::control_function(int* out){
                 out[0] = 4; //Report status
                 out[2] = 0; //Report velocity
                 out[4] = 1;
+                out[8] = odrive.get_voltage();
+                out[9] = odrive.get_cur();
                 out[7] = encoder.read();
                 out[6] = millis();   
                 return out;
@@ -164,6 +166,8 @@ int* Actuator::control_function(int* out){
                 odrive.set_velocity(motor_number, 3); //Shift out
                 out[0] = 5;
                 out[2] = 3;
+                out[8] = odrive.get_voltage();
+                out[9] = odrive.get_cur();
                 out[7] = encoder.read();
                 out[6] = millis();
                 return out;
@@ -214,6 +218,8 @@ int* Actuator::control_function(int* out){
             odrive.set_velocity(motor_number, motor_velocity);
             odrive.run_state(motor_number, 8, false, 0);
         }
+        out[8] = odrive.get_voltage();
+        out[9] = odrive.get_cur();
         out[7] = encoder.read();
         out[6] = millis();
         return out;
@@ -221,7 +227,6 @@ int* Actuator::control_function(int* out){
 
     //Return status if attempt to run the control function too soon
     out[0] = 3;
-    out[7] = encoder.read();
     out[6] = millis();
     return out;
 }
@@ -240,6 +245,18 @@ double Actuator::calc_engine_rpm(float dt){
     return rpm;
 }
 
+int Actuator::target_rpm(){
+    // if (currentrpm_eg<EG_ENGAGE){
+    //     return EG_ENGAGE;
+    // }
+    // if (currentrpm_eg>EG_POWER){
+    //     return EG_POWER;
+    // }
+    // int target = RPM_TARGET_MULTIPLIER*(currentrpm_eg)+ EG_ENGAGE;
+    // if(target > EG_POWER) return EG_POWER;
+    // return target;
+    return 0;
+}
 //-----------------Diagnostic Functions--------------//
 
 String Actuator::diagnostic(bool mainPower, bool printSerial = true){
@@ -260,7 +277,7 @@ String Actuator::diagnostic(bool mainPower, bool printSerial = true){
     output += "Engine Gear Tooth Count: " +String(egTooth_Count)+"\n";
     output += "Current rpm: " +String(currentrpm_eg)+"\n";
 
-    if(printSerial && m_printToSerial){
+    if(printSerial){
         Serial.print(output);
     }
     return output;
@@ -321,4 +338,8 @@ void Actuator::test_voltage(){
 
 float Actuator::get_p_value() {
     return proportionalGain;
+}
+
+String Actuator::odrive_errors(){
+    return odrive.dump_errors();
 }
