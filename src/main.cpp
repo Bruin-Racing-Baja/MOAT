@@ -199,7 +199,7 @@ void loop() {
     //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
     Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR,
-    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.thermo_check());
+    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.get_temperature());
   }
   
   //Save data to sd every SAVE_THRESHOLD

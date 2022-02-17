@@ -8,7 +8,6 @@
 // }
 
 void Cooling::init() {
-    int huh = 4;
 }
 
 //NOTE: The current odrive implementation won't work due to reasons we do not understand
@@ -24,9 +23,9 @@ void Cooling::set_fan_speed(int rpm)
     //odrive->set_velocity(motor_number, rpm);
 }
 
-float Cooling::thermo_check()
+float Cooling::get_temperature()
 {
-    int raw = analogRead(m_thermocouple_pin);
+    int raw = analogRead(k_thermocouple_pin);
     float voltage = raw * (AREF / (pow(2, ADC_RESOLUTION) - 1));
     return (voltage - 1.25) / 0.005;
 }
@@ -34,13 +33,13 @@ float Cooling::thermo_check()
 void Cooling::control_function()
 {
     m_control_execution_count++;
-    if (millis() - m_last_control_execution > m_cycle_period_millis)
+    if (millis() - m_last_control_execution > k_cycle_period_millis)
     {
-        float temperature = thermo_check();
-        m_fan_enabled = thermo_check() > m_temp_threshold;
+        float temperature = get_temperature();
+        m_fan_enabled = temperature > k_temp_threshold;
         if (m_fan_enabled)
         {
-            set_fan_speed(m_cooling_rpm);
+            set_fan_speed(k_cooling_rpm);
         }
         else
         {
