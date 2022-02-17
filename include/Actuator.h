@@ -35,8 +35,8 @@ const unsigned int desired_rpm = 2250;
 const float RPM_TARGET_MULTIPLIER = 1.5;
 
 const float proportionalGain = .015; // gain of the p controller
-const float derivativeGain = .01;    
-const float integralGain = 0.001;
+const float derivativeGain   = .005;    
+const float integralGain     = .0001;
 const int EXP_FILTER_CONST = 0.5;   
 
 class Actuator{
@@ -106,6 +106,10 @@ class Actuator{
     unsigned long egTooth_Count_last;
     float currentrpm_eg = 0;
     float currentrpm_eg_accum = 0;
+
+    //running control terms
+    int error = 0;
+    int prev_error = 0;
 };
 
 #endif /*ACTUATOR_H*/

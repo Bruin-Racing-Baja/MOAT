@@ -185,8 +185,10 @@ int* Actuator::control_function(int* out){
         //Compute error
 
         //If error is within a certain deviation from the desired value, do not shift
-        int error = currentrpm_eg - desired_rpm;
-        int motor_velocity = -1*proportionalGain*error;
+        error = desired_rpm - currentrpm_eg;
+        int error_deriv = (prev_error - error) / dt;
+        int motor_velocity = proportionalGain*error + derivativeGain*error_deriv;
+        prev_error = error;
         // if (abs(error) <= rpm_allowance) {
         //     error = 0;
         // }
