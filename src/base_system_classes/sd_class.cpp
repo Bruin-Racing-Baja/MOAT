@@ -3,31 +3,30 @@
 #include <SD_Reader.h>
 #include <SPI.h>
 
-Sd::Sd(File *log_i)
+Sd::Sd(File *log_file): m_log_file(*log_file)
 {
-    logFile = *log_i;
 }
 
 int Sd::init()
 {
     if (!SD.begin(BUILTIN_SDCARD))
     {
-        status = 4001;
-        return status;
+        m_status = 4001;
+        return m_status;
     }
     else
     {
-        status = 0;
-        return status;
+        m_status = 0;
+        return m_status;
     }
-    logFile = SD.open("data.txt", FILE_WRITE);
+    m_log_file = SD.open("data.txt", FILE_WRITE);
 }
 
-int Sd::write(String i)
+int Sd::write(String data)
 {
     // Takes in a string and writes it to SD card
-    if (logFile)
+    if (m_log_file)
     {
-        logFile.println(i);
+        m_log_file.println(data);
     }
 }
