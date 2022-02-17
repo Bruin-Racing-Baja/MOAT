@@ -29,11 +29,12 @@ Actuator::Actuator(
 
     m_printToSerial = printToSerial;
 
-    //initialize count vairables
+    //initialize count variables
     egTooth_Count = 0;
     egTooth_Count_last = 0;
     last_control_execution = 0;
     currentrpm_eg = 0;
+    currentrpm_eg_accum = 0;
 
     //Functions to support interrupt
     m_external_count_egTooth = external_count_egTooth;
@@ -140,9 +141,16 @@ int* Actuator::control_function(int* out){
         out[3] = 0;
         out[4] = 0;
 
-        //Calculate Engine Speed
+        //Calculate Engine Speed + Filter Engine Speed
         float dt = millis()-last_control_execution;
         currentrpm_eg = calc_engine_rpm(dt);
+
+        currentrpm_eg = (EXP_FILTER_CONST*currentrpm_eg) + (1-EXP_FILTER_CONST)*currentrpm_eg_accum;
+        currentrpm_eg_accum = currentrpm_eg;    
+        //this is an exponential moving average
+        //"averages" the last 1/EXP_FILTER_CONST data points
+        //chosen because very simple to implement - use better filters in the future?
+
         out[1] = currentrpm_eg;
         //currentrpm_eg = analogRead(A2)*4;
         last_control_execution = millis();
