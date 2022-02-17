@@ -7,20 +7,21 @@
 //     m_fan_enabled = false;
 // }
 
-void Cooling::init() {
+void Cooling::init()
+{
 }
 
-//NOTE: The current odrive implementation won't work due to reasons we do not understand
-//This needs to be fixed before we can use this class to actually control the fan
+// NOTE: The current odrive implementation won't work due to reasons we do not understand
+// This needs to be fixed before we can use this class to actually control the fan
 void Cooling::stop_fan()
 {
-    //odrive->set_velocity(motor_number, 0);
+    // odrive->set_velocity(motor_number, 0);
 }
 
 void Cooling::set_fan_speed(int rpm)
-//NOTE: Dont know how rpm -> velocity works, so should look into that
+// NOTE: Dont know how rpm -> velocity works, so should look into that
 {
-    //odrive->set_velocity(motor_number, rpm);
+    // odrive->set_velocity(motor_number, rpm);
 }
 
 float Cooling::get_temperature()
