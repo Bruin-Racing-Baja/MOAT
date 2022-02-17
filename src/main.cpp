@@ -95,10 +95,10 @@ General code to oversee all functions of the Teensy
 
   static void external_count_egTooth();
 
-  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
+  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, hall_inbound, hall_outbound, PRINTTOSERIAL);
 
-  static void external_count_egTooth(){
-    actuator.count_egTooth();
+  static void external_count_eg_tooth(){
+    actuator.count_eg_tooth();
   }
   
 //FREE FUNCTIONS
@@ -150,7 +150,7 @@ void setup() {
   cooler_o.init();
   //-------------Actuator-----------------
   //General Init
-  int o_actuator_init = actuator.init(odrive_starting_timeout);
+  int o_actuator_init = actuator.init(odrive_starting_timeout,external_count_eg_tooth);
   if(o_actuator_init) {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
     Serial.println("Actuator init failed code: " + String(o_actuator_init));
