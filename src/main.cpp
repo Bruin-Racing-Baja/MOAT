@@ -14,6 +14,8 @@ General code to oversee all functions of the Teensy
 #include <ArduinoLog.h>
 #include <SD.h>
 
+#include <Constant.h>
+
 //Classes
 #include <Actuator.h>
 #include <Radio.h>
@@ -123,18 +125,23 @@ void setup() {
     //This means that no SD card was found or there was an error with it
     //In this case, we will switch to the headless horseman mode and continue to operate with no logging
     //This behaviour is arbitrary, and may be changed in the future
-    #define MODE 3
+    Constant constant(nullptr, 3);
   }
+
   if (SD.exists("settings.txt")) {
     //This means the settings file exists, so we will load it
     //This is where the bulk of the development for this feature will occur as we need to read in certain values, then set them in the program accordingly
-    
+    File settingFile = SD.open("settings.txt", FILE_READ);
+    while(settingFile.available()) {
+      String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
+      Constant constant(settingFile);  //Creates the constant object
+      constant.init();  //Initializes the constant object, actually reading in the values from the SD card
+    }
     
     } else {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
-    #define MODE 1
-    //Set to completely headless operation if no SD card is present when trying to run the car
+    Constant constant(nullptr, 1);
   }
 
 
