@@ -117,8 +117,29 @@ void setup() {
       ; // wait for serial port to connect. Needed for native USB port only
     }
   }
+
+  //-------------Loading and Initializing SD-----------------
+  if (!SD.begin(BUILTIN_SDCARD)) {
+    //This means that no SD card was found or there was an error with it
+    //In this case, we will switch to the headless horseman mode and continue to operate with no logging
+    //This behaviour is arbitrary, and may be changed in the future
+    #define MODE 3
+  }
+  if (SD.exists("settings.txt")) {
+    //This means the settings file exists, so we will load it
+    //This is where the bulk of the development for this feature will occur as we need to read in certain values, then set them in the program accordingly
+    
+    
+    } else {
+    //This means the settings file does not exist, but there is an SD card present
+    //In this case, we will operate in headless diagnostic mode as we dont know the user intention
+    #define MODE 1
+    //Set to completely headless operation if no SD card is present when trying to run the car
+  }
+
+
   //-------------Logging and SD Card-----------------
-  SD.begin(BUILTIN_SDCARD);
+  
   logFile = SD.open("log.txt", FILE_WRITE);
 
   Log.begin(LOG_LEVEL, &logFile, false);
