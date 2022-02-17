@@ -104,8 +104,8 @@ class Actuator{
     //running gear tooth sensor counts
     volatile unsigned long egTooth_Count;
     unsigned long egTooth_Count_last;
-    int currentrpm_eg = 0;
-    int currentrpm_eg_accum = 0;
+    float currentrpm_eg = 0;
+    float currentrpm_eg_accum = 0;
 };
 
 #endif /*ACTUATOR_H*/
