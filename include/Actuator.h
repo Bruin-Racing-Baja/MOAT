@@ -35,6 +35,8 @@ const unsigned int desired_rpm = 2250;
 const float RPM_TARGET_MULTIPLIER = 1.5;
 
 const float proportionalGain = .015; // gain of the p controller
+const float derivativeGain = .01;
+const float integralGain = 0.001;
 
 class Actuator{
     public:
