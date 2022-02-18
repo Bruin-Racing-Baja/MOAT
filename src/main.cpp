@@ -120,13 +120,12 @@ void setup() {
     }
   }
 
-  //-------------Loading and Initializing SD-----------------
+  //-------------Initializing SD and Loading Settings-----------------
   if (!SD.begin(BUILTIN_SDCARD)) {
     //This means that no SD card was found or there was an error with it
     //In this case, we will switch to the headless horseman mode and continue to operate with no logging
     //This behaviour is arbitrary, and may be changed in the future
     Constant constant(nullptr, 3);
-    Serial.println("No SD found");
   }
   else {
     if (SD.exists("settings.txt")) {
@@ -136,11 +135,6 @@ void setup() {
     while(settingFile.available()) {
       String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
       Constant constant(settingFile);  //Creates the constant object
-      constant.init();  //Initializes the constant object, actually reading in the values from the SD card
-      Serial.println("Mode:");
-      Serial.println(constant.mode);
-      Serial.println("Desired RPM:" + String(constant.desired_rpm));
-      Serial.println("Desired Torque:" + String(constant.p));
       }
     
     }
@@ -148,7 +142,6 @@ void setup() {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
     Constant constant(nullptr, 1);
-    Serial.println("No settings file found");
     }
   }
 

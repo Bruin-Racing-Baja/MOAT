@@ -12,8 +12,6 @@ struct Constant{
     
     int isDefault;
 
-    int init();
-
     private:
     File settingsFile;
 

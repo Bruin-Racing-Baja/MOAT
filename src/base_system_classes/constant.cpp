@@ -8,21 +8,14 @@ Constant::Constant(File settingsFile_i, int defaultValueMode = 0){
     and all the other values will be set to default values (Can pass a nullptr to not use a settings file)
     */
     settingsFile = settingsFile_i;
-    isDefault = defaultValueMode;
-}
-
-int Constant::init() {
-    if (isDefault) {
+    if (defaultValueMode) {
         //Set mode to passed value, leave all others as defaults
         mode = isDefault;
-        return 0;
     }
     else {
         Constant::read_ints();
         Constant::read_floats();
-        return 0;
     }
-    
 }
 
 int Constant::read_ints() {
