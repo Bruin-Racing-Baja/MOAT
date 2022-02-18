@@ -128,8 +128,8 @@ void setup() {
     Constant constant(nullptr, 3);
     Serial.println("No SD found");
   }
-
-  if (SD.exists("settings.txt")) {
+  else {
+    if (SD.exists("settings.txt")) {
     //This means the settings file exists, so we will load it
     //This is where the bulk of the development for this feature will occur as we need to read in certain values, then set them in the program accordingly
     File settingFile = SD.open("settings.txt", FILE_READ);
@@ -141,15 +141,18 @@ void setup() {
       Serial.println(constant.mode);
       Serial.println("Desired RPM:" + String(constant.desired_rpm));
       Serial.println("Desired Torque:" + String(constant.p));
-      
-    }
+      }
     
-    } else {
+    }
+    else {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
     Constant constant(nullptr, 1);
     Serial.println("No settings file found");
+    }
   }
+
+  
 
 
   //-------------Logging and SD Card-----------------
