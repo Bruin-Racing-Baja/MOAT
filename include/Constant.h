@@ -22,7 +22,7 @@ struct Constant{
     int int_size = 2;
     int float_size = 1;
     int *ints[2] = {&mode, &desired_rpm};
-    float *floats[1] = {&p};
+    float *floats[3] = {&p};
 };
 
 #endif

@@ -15,6 +15,7 @@ int Constant::init() {
     if (isDefault) {
         //Set mode to passed value, leave all others as defaults
         mode = isDefault;
+        return 0;
     }
     else {
         Constant::read_ints();

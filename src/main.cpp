@@ -38,11 +38,11 @@ General code to oversee all functions of the Teensy
     NOTE: Recommend disabling logging object in its include
 
   */
-  #define MODE 0
+  #define MODE 2
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
-  #define HOME_ON_STARTUP 1
+  #define WAIT_SERIAL_STARTUP 1  //Set headless mode or not
+  #define HOME_ON_STARTUP 0
   //#define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
@@ -126,6 +126,7 @@ void setup() {
     //In this case, we will switch to the headless horseman mode and continue to operate with no logging
     //This behaviour is arbitrary, and may be changed in the future
     Constant constant(nullptr, 3);
+    Serial.println("No SD found");
   }
 
   if (SD.exists("settings.txt")) {
@@ -136,12 +137,18 @@ void setup() {
       String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
       Constant constant(settingFile);  //Creates the constant object
       constant.init();  //Initializes the constant object, actually reading in the values from the SD card
+      Serial.println("Mode:");
+      Serial.println(constant.mode);
+      Serial.println("Desired RPM:" + String(constant.desired_rpm));
+      Serial.println("Desired Torque:" + String(constant.p));
+      
     }
     
     } else {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
     Constant constant(nullptr, 1);
+    Serial.println("No settings file found");
   }
 
 
