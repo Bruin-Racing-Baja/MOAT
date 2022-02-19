@@ -187,8 +187,8 @@ int *Actuator::control_function(int *out)
         // Compute error
 
         // If error is within a certain deviation from the desired value, do not shift
-        int error = m_eg_rpm - k_desired_rpm;
-        int motor_velocity = -1 * k_p * error;
+        int error = k_desired_rpm - m_eg_rpm;
+        int motor_velocity = k_p_gain * error;
         // if (abs(error) <= rpm_allowance) {
         //     error = 0;
         // }
@@ -363,7 +363,7 @@ void Actuator::test_voltage()
 
 float Actuator::get_p_value()
 {
-    return k_p;
+    return k_p_gain;
 }
 
 String Actuator::odrive_errors()
