@@ -71,11 +71,11 @@ Cooling cooler_o;
 #define PRINT_TO_SERIAL false
 
 // Pins test bed
-// #define enc_A 20
-// #define enc_B 21
-// #define hall_inbound 12
-// #define hall_outbound 11
-// #define gearTooth_engine 15 //rn just attached to encoder B haha
+//#define ENC_A_PIN 20
+//#define ENC_B_PIN 21
+//#define HALL_INBOUND_PIN 12
+//#define HALL_OUTBOUND_PIN 11
+//#define GEARTOOTH_ENGINE_PIN 15
 
 // PINS CAR
 #define ENC_A_PIN 2

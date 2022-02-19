@@ -33,7 +33,7 @@ public:
     const float k_rpm_target_multiplier = 1.5;
 
     // pid constants
-    const float k_p = 0.015;
+    const float k_p_gain = 0.015;
 
     Actuator(
         HardwareSerial &serial,
