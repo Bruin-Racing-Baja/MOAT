@@ -34,7 +34,7 @@ float Cooling::get_temperature()
 void Cooling::control_function()
 {
     m_control_execution_count++;
-    if (millis() - m_last_control_execution > k_cycle_period_millis)
+    if (millis() - m_last_control_execution > k_cycle_period)
     {
         float temperature = get_temperature();
         m_fan_enabled = temperature > k_temp_threshold;

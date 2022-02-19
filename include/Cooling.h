@@ -14,7 +14,7 @@ class Cooling
     static const int k_thermocouple_pin = 38;   // C
     static const float k_voltage = 3.3;
     static const int k_cooling_rpm = 500; 
-    static const int k_cycle_period_millis = 10;
+    static const int k_cycle_period = 10; // ms
 
 public:
     void init();

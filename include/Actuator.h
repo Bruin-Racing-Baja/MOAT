@@ -11,16 +11,15 @@ public:
     const static int k_enc_ppr = 88;
 
     const static int k_motor_number = 0;       // odrive axis
-    const static int k_homing_timeout = 50000; // ms
+    const static int k_homing_timeout = 50e3; // ms
     const static int k_min_rpm = 1000;
-    const static int k_cycle_period = 1e5; // us
+    const static int k_cycle_period = 10; // ms
     const int k_rpm_allowance = 30;
 
     const static float k_linear_distance_per_rotation = 0.125; // inches/rotation
     const static float k_linear_shift_length = 3.5;            // inches
     const static int32_t k_encoder_count_shift_length = (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048;
-    const float k_cycle_period_minutes = (k_cycle_period / 1e6) / 60;
-    const int k_cycle_period_millis = k_cycle_period / 1e4;
+    const float k_cycle_period_minutes = (k_cycle_period / 1e3) / 60;
     const static int k_eg_teeth_per_rotation = 88;
 
     // reference signals form tyler

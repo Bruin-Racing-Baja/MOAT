@@ -141,7 +141,7 @@ int *Actuator::control_function(int *out)
     //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos, odrive_volt, odrive_current>
     out[5] = millis();
     m_control_function_count++;
-    if (millis() - m_last_control_execution > k_cycle_period_millis)
+    if (millis() - m_last_control_execution > k_cycle_period)
     {
         out[0] = 0;
         out[3] = 0;
