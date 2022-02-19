@@ -10,25 +10,25 @@ class Actuator
 public:
     const static int k_enc_ppr = 88;
 
-    const static int k_motor_number = 0;       // odrive axis
+    const static int k_motor_number = 0;      // odrive axis
     const static int k_homing_timeout = 50e3; // ms
-    const static int k_min_rpm = 1000;
-    const static int k_cycle_period = 10; // ms
+    const static int k_min_rpm = 1000;        // rpm
+    const static int k_cycle_period = 10;     // ms
     const int k_rpm_allowance = 30;
 
     const static float k_linear_distance_per_rotation = 0.125; // inches/rotation
     const static float k_linear_shift_length = 3.5;            // inches
     const static int32_t k_encoder_count_shift_length = (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048;
-    const float k_cycle_period_minutes = (k_cycle_period / 1e3) / 60;
+    const float k_cycle_period_minutes = (k_cycle_period / 1e3) / 60; // minutes
     const static int k_eg_teeth_per_rotation = 88;
 
     // reference signals form tyler
-    const unsigned int k_eg_idle = 1750;
-    const unsigned int k_eg_engage = 2100;
-    const unsigned int k_eg_launch = 2600;
-    const unsigned int k_eg_torque = 2700; // going for this one
-    const unsigned int k_eg_power = 3400;
-    const unsigned int k_desired_rpm = 2250;
+    const unsigned int k_eg_idle = 1750;     // rpm
+    const unsigned int k_eg_engage = 2100;   // rpm
+    const unsigned int k_eg_launch = 2600;   // rpm
+    const unsigned int k_eg_torque = 2700;   // rpm
+    const unsigned int k_eg_power = 3400;    // rpm
+    const unsigned int k_desired_rpm = 2250; // rpm
     const float k_rpm_target_multiplier = 1.5;
 
     // pid constants

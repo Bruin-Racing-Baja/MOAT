@@ -12,8 +12,8 @@ class Cooling
     static const int k_motor_number = 1;
     static const double k_temp_threshold = 100; // C
     static const int k_thermocouple_pin = 38;   // C
-    static const float k_voltage = 3.3;
-    static const int k_cooling_rpm = 500; 
+    static const float k_voltage = 3.3; // volts
+    static const int k_cooling_rpm = 500; //rpm
     static const int k_cycle_period = 10; // ms
 
 public:
