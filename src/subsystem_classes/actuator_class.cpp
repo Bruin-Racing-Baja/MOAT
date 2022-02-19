@@ -145,7 +145,7 @@ int* Actuator::control_function(int* out){
         float dt = millis()-last_control_execution;
         currentrpm_eg = calc_engine_rpm(dt);
 
-        currentrpm_eg = (EXP_FILTER_CONST*currentrpm_eg) + (1-EXP_FILTER_CONST)*currentrpm_eg_accum;
+        currentrpm_eg = (k_exp_filt_alpha*currentrpm_eg) + (1-k_exp_filt_alpha)*currentrpm_eg_accum;
         currentrpm_eg_accum = currentrpm_eg;    
         //this is an exponential moving average
         //"averages" the last 1/EXP_FILTER_CONST data points
@@ -186,8 +186,8 @@ int* Actuator::control_function(int* out){
 
         //If error is within a certain deviation from the desired value, do not shift
         error = desired_rpm - currentrpm_eg;
-        int error_deriv = (prev_error - error) / dt;
-        int motor_velocity = proportionalGain*error + derivativeGain*error_deriv;
+        int error_deriv = (error - prev_error) / dt;        //16ms in between runs rn
+        int motor_velocity = k_proportional_gain*error + k_derivative_gain*error_deriv;
         prev_error = error;
         // if (abs(error) <= rpm_allowance) {
         //     error = 0;

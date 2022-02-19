@@ -34,10 +34,10 @@ const unsigned int EG_POWER = 3400;
 const unsigned int desired_rpm = 2250;
 const float RPM_TARGET_MULTIPLIER = 1.5;
 
-const float proportionalGain = .015; // gain of the p controller
-const float derivativeGain   = .005;    
-const float integralGain     = .0001;
-const int EXP_FILTER_CONST = 0.5;   
+const float k_proportional_gain = .015; // gain of the p controller
+const float k_derivative_gain   = .005;    
+const float k_integral_gain     = .0001;
+const int k_exp_filt_alpha = 0.5;   
 
 class Actuator{
     public:
