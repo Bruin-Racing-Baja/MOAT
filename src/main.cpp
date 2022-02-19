@@ -7,10 +7,10 @@ General code to oversee all functions of the Teensy
 #include <Arduino.h>
 
 // Libraries
-#include <ArduinoLog.h>
+#include <SPI.h> // MUST BE INCLUDED BEFORE ArduinoLog.h
+#include <ArduinoLog.h> 
 #include <HardwareSerial.h>
 #include <SD.h>
-#include <SPI.h>
 #include <SoftwareSerial.h>
 #include <string>
 
