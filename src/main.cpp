@@ -237,7 +237,7 @@ void loop()
     Log.notice("%d", i);
     // Assumes main power is connected
     Log.notice((actuator.diagnostic(is_main_power, false)).c_str());
-    Log.notice("Thermocouple temp: %d", cooler_o.thermo_check());
+    Log.notice("Thermocouple temp: %d", cooler_o.get_temperature());
     delay(100);
   }
 
@@ -254,8 +254,8 @@ void loop()
 {
   // Assumes main power isnt connected as connected to serial
   Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
-  Log.notice("Thermo temp: %d" CR, cooler_o.thermo_check());
-  Serial.println(cooler_o.thermo_check());
+  Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
+  Serial.println(cooler_o.get_temperature());
   // Serial.println(analogRead(38));
   delay(100);
 }
