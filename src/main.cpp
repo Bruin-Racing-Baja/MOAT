@@ -149,7 +149,7 @@ void setup() {
 
 
   //-------------Logging and SD Card-----------------  
-  logFile = SD.open("log.txt", FILE_WRITE);
+  logFile = SD.open("log_" + constant.log_num + ".txt", FILE_WRITE);
 
   Log.begin(LOG_LEVEL, &logFile, false);
   Log.notice("Initialization Started" CR);
