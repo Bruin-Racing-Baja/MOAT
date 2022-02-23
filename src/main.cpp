@@ -106,10 +106,10 @@ General code to oversee all functions of the Teensy
 //FREE FUNCTIONS
 
 //NOTE: May want to test expanding this function to take in a file object to save
-void save_log() {
+void save_log(String fileName) {
   //Closes and then opens the file stream
   logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
+  logFile = SD.open(fileName.c_str(), FILE_WRITE);
 }
 
 void setup() {
@@ -148,9 +148,8 @@ void setup() {
   
 
 
-  //-------------Logging and SD Card-----------------
-  
-  logFile = SD.open("log.txt", FILE_WRITE);
+  //-------------Logging and SD Card-----------------  
+  logFile = SD.open("log_" + constant.log_num + ".txt", FILE_WRITE);
 
   Log.begin(LOG_LEVEL, &logFile, false);
   Log.notice("Initialization Started" CR);
