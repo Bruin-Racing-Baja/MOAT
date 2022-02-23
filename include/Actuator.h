@@ -61,6 +61,7 @@ class Actuator{
     float communication_speed();
     void count_egTooth();
     String odrive_errors();
+    String odrive_data();
     
 
     String diagnostic(bool is_mainpower_on, bool serial_out);

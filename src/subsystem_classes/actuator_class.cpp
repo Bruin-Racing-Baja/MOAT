@@ -377,3 +377,7 @@ String Actuator::odrive_errors()
 {
     return odrive.dump_errors();
 }
+String Actuator::odrive_data()
+{
+    return odrive.dump_data();
+}
