@@ -14,6 +14,8 @@ General code to oversee all functions of the Teensy
 #include <ArduinoLog.h>
 #include <SD.h>
 
+#include <Constant.h>
+
 //Classes
 #include <Actuator.h>
 #include <Radio.h>
@@ -36,11 +38,11 @@ General code to oversee all functions of the Teensy
     NOTE: Recommend disabling logging object in its include
 
   */
-  #define MODE 0
+  #define MODE 2
 
   //Startup
-  #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
-  #define HOME_ON_STARTUP 1
+  #define WAIT_SERIAL_STARTUP 1  //Set headless mode or not
+  #define HOME_ON_STARTUP 0
   //#define RUN_DIAGNOSTIC_STARTUP 0
 
   //Log
@@ -117,8 +119,37 @@ void setup() {
       ; // wait for serial port to connect. Needed for native USB port only
     }
   }
+
+  //-------------Initializing SD and Loading Settings-----------------
+  if (!SD.begin(BUILTIN_SDCARD)) {
+    //This means that no SD card was found or there was an error with it
+    //In this case, we will switch to the headless horseman mode and continue to operate with no logging
+    //This behaviour is arbitrary, and may be changed in the future
+    Constant constant(nullptr, 3);
+  }
+  else {
+    if (SD.exists("settings.txt")) {
+    //This means the settings file exists, so we will load it
+    //This is where the bulk of the development for this feature will occur as we need to read in certain values, then set them in the program accordingly
+    File settingFile = SD.open("settings.txt", FILE_READ);
+    while(settingFile.available()) {
+      String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
+      Constant constant(settingFile);  //Creates the constant object
+      }
+    
+    }
+    else {
+    //This means the settings file does not exist, but there is an SD card present
+    //In this case, we will operate in headless diagnostic mode as we dont know the user intention
+    Constant constant(nullptr, 1);
+    }
+  }
+
+  
+
+
   //-------------Logging and SD Card-----------------
-  SD.begin(BUILTIN_SDCARD);
+  
   logFile = SD.open("log.txt", FILE_WRITE);
 
   Log.begin(LOG_LEVEL, &logFile, false);
