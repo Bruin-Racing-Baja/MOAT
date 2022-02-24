@@ -144,7 +144,8 @@ int *Actuator::control_function(int *out)
     if (millis() - m_last_control_execution > k_cycle_period)
     {
         out[0] = 0;
-        out[3] = 0;
+        out[3] = 777;
+        //out[3] = 0;
         out[4] = 0;
 
         //Calculate Engine Speed + Filter Engine Speed
@@ -224,7 +225,8 @@ int *Actuator::control_function(int *out)
             if (motor_velocity < 0)
                 motor_velocity = 0;
             out[0] = 7;
-            out[3] = 1;
+            //out[3] = 1;
+            out[3] = 777;
         }
 
         // Multiply by gain and set new motor velocity.
@@ -238,12 +240,13 @@ int *Actuator::control_function(int *out)
         else
         {
             odrive.set_velocity(k_motor_number, motor_velocity);
-            odrive.set_velocity(k_motor_number, motor_velocity);
+            odrive.run_state(k_motor_number, 8, false, 0);
         }
         out[8] = odrive.get_voltage();
         out[9] = odrive.get_cur();
         out[7] = encoder.read();
         out[6] = millis();
+        out[3] = error;
         return out;
     }
 

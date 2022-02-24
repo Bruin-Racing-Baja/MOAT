@@ -244,7 +244,7 @@ void loop()
   if (save_count > SAVE_THRESHOLD)
   {
     int save_start = millis();
-    Log.notice(actuator.odrive_errors().c_str());
+    //Log.notice(actuator.odrive_errors().c_str());
     Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
