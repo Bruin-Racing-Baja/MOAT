@@ -69,7 +69,8 @@ General code to oversee all functions of the Teensy
 //LOGGING AND SD SETTINGS
   //Create file to log to
   File logFile;
-  //Cannot create logging object until init
+  //Create constant control object to read from sd
+  Constant constant;
 
 //<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
 //COOLING SETTINGS
@@ -125,7 +126,7 @@ void setup() {
     //This means that no SD card was found or there was an error with it
     //In this case, we will switch to the headless horseman mode and continue to operate with no logging
     //This behaviour is arbitrary, and may be changed in the future
-    Constant constant(nullptr, 3);
+    constant.init(nullptr, 3);
   }
   else {
     if (SD.exists("settings.txt")) {
@@ -134,14 +135,14 @@ void setup() {
     File settingFile = SD.open("settings.txt", FILE_READ);
     while(settingFile.available()) {
       String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
-      Constant constant(settingFile);  //Creates the constant object
+      constant.init(settingFile);  //Creates the constant object
       }
     
     }
     else {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
-    Constant constant(nullptr, 1);
+    constant.init(nullptr, 1);
     }
   }
 

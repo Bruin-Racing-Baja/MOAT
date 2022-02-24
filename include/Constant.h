@@ -4,7 +4,7 @@
 #include <SD.h>
 
 struct Constant{
-    Constant(File settingsFile, int defaultValueMode = 0);
+    void init(File settingsFile, int defaultValueMode = 0);
     int mode;
     int desired_rpm;
 

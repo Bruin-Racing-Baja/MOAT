@@ -1,7 +1,7 @@
 #include <Constant.h>
 #include <SD.h>
 
-Constant::Constant(File settingsFile_i, int defaultValueMode = 0){
+void Constant::init(File settingsFile_i, int defaultValueMode = 0) {
     /*
     Passed settings file to read from
     If settings file cant be opened, passing an int will set the default value mode, where the mode is the passed int
