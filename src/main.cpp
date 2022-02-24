@@ -65,7 +65,7 @@ General code to oversee all functions of the Teensy
 // ODrive odrive(Serial1);
 
 //LOGGING AND SD SETTINGS
-  File logFile;
+  File log_file;
   //Create constant control object to read from sd
   Constant constant;
 
@@ -102,8 +102,8 @@ void external_count_eg_tooth()
 void save_log()
 {
   // Closes and then opens the file stream
-  logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
+  log_file.close();
+  log_file = SD.open("log.txt", FILE_WRITE);
 }
 
 void setup()
@@ -121,7 +121,7 @@ void setup()
     //This means that no SD card was found or there was an error with it
     //In this case, we will switch to the headless horseman mode and continue to operate with no logging
     //This behaviour is arbitrary, and may be changed in the future
-    constant.init(nullptr, 3);
+    //constant.init(nullptr, 3);
   }
   else {
     if (SD.exists("settings.txt")) {
@@ -137,7 +137,7 @@ void setup()
     else {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
-    constant.init(nullptr, 1);
+    //constant.init(nullptr, 1);
     }
   }
 
@@ -146,9 +146,9 @@ void setup()
 
   //-------------Logging and SD Card-----------------
   
-  logFile = SD.open("log.txt", FILE_WRITE);
+  log_file = SD.open("log.txt", FILE_WRITE);
 
-  Log.begin(LOG_LEVEL, &logFile, false);
+  Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started" CR);
   Log.verbose("Time: %d" CR, millis());
 
