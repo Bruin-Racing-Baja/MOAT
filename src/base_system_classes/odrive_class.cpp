@@ -2,7 +2,7 @@
 #include <ODrive.h>
 #include <SoftwareSerial.h>
 
-template <class T>
+template <class T> 
 inline Print &operator<<(Print &obj, T arg)
 {
     obj.print(arg);
