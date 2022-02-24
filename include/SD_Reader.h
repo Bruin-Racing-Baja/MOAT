@@ -1,25 +1,23 @@
-#ifndef sd_h
-#define sd_h
+#ifndef SD_H
+#define SD_H
 
 #include <Arduino.h>
-#include <SPI.h>
 #include <SD.h>
+#include <SPI.h>
 
-#define pin BUILTIN_SDCARD;
-
-class Sd{
-    public:
-    Sd(File* log_i);
+class Sd
+{
+public:
+    Sd(File *log_file);
     int init();
-    int write(String);
+    int write(String data);
     int save();
-    File* getFileStream();
+    File *get_file_stream();
 
-    private:
-    int status;
-    bool exposed_stream = false;
-    File logFile;
-
+private:
+    int m_status;
+    bool m_exposed_stream = false;
+    File m_log_file;
 };
 
 #endif
