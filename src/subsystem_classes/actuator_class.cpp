@@ -233,7 +233,7 @@ int *Actuator::control_function(int *out)
         else
         {
             odrive.set_velocity(k_motor_number, motor_velocity);
-            odrive.set_velocity(k_motor_number, motor_velocity);
+            odrive.run_state(k_motor_number, 8, false, 0);
         }
         out[8] = odrive.get_voltage();
         out[9] = odrive.get_cur();
