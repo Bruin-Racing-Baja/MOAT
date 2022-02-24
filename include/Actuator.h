@@ -37,7 +37,7 @@ public:
     const float k_proportional_gain = .015; // gain of the p controller
     const float k_derivative_gain   = .005;    
     const float k_integral_gain     = .0001;
-    const int k_exp_filt_alpha = 0.5;   
+    const float k_exp_filt_alpha = 0.5;   
 
     Actuator(
         HardwareSerial &serial,

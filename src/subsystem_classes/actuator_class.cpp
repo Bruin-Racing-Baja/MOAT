@@ -247,7 +247,7 @@ int *Actuator::control_function(int *out)
         out[7] = encoder.read();
         out[6] = millis();
         out[3] = error;
-        return out;
+       return out;
     }
 
     // Return status if attempt to run the control function too soon
