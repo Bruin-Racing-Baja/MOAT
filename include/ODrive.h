@@ -2,15 +2,15 @@
 #define odrive_h
 
 #include <Arduino.h>
+#include <HardwareSerial.h>
 #include <ODrive.h>
 #include <SoftwareSerial.h>
-#include <HardwareSerial.h>
 
-class ODrive{
-    public:
+class ODrive
+{
+public:
     ODrive(
-        HardwareSerial& serial
-    );
+        HardwareSerial &serial);
     int init(int timeout = 1000);
     bool run_state(int axis, int requested_state, bool wait_for_idle, float timeout);
     void set_velocity(int motor_number, float velocity);
@@ -23,9 +23,9 @@ class ODrive{
     float read_float();
     float get_cur();
 
-    private:
+private:
     int status;
-    HardwareSerial& OdriveSerial;
+    HardwareSerial &OdriveSerial;
     float get_voltage_private();
 };
 

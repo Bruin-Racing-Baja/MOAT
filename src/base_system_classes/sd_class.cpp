@@ -1,28 +1,32 @@
 #include <Arduino.h>
+#include <SD.h>
 #include <SD_Reader.h>
 #include <SPI.h>
-#include <SD.h>
 
-
-Sd::Sd(File* log_i) {
-    logFile = *log_i;
+Sd::Sd(File *log_file): m_log_file(*log_file)
+{
 }
 
-int Sd::init() {
-    if (!SD.begin(BUILTIN_SDCARD)) {
-        status = 4001;
-        return status;
+int Sd::init()
+{
+    if (!SD.begin(BUILTIN_SDCARD))
+    {
+        m_status = 4001;
+        return m_status;
     }
-    else {
-        status = 0;
-        return status;
+    else
+    {
+        m_status = 0;
+        return m_status;
     }
-    logFile = SD.open("data.txt", FILE_WRITE);
+    m_log_file = SD.open("data.txt", FILE_WRITE);
 }
 
-int Sd::write(String i) {
-    //Takes in a string and writes it to SD card
-    if (logFile) {
-        logFile.println(i);
+int Sd::write(String data)
+{
+    // Takes in a string and writes it to SD card
+    if (m_log_file)
+    {
+        m_log_file.println(data);
     }
 }
