@@ -34,6 +34,11 @@ public:
     // pid constants
     const float k_p_gain = 0.015;
 
+    const float k_proportional_gain = .015; // gain of the p controller
+    const float k_derivative_gain   = .0;//.005;    
+    const float k_integral_gain     = .0001;
+    const float k_exp_filt_alpha = 0.5;   
+
     Actuator(
         HardwareSerial &serial,
         const int enc_a_pin,
@@ -86,10 +91,15 @@ private:
     int m_control_function_count;
     bool m_has_run;
 
-    // running gear tooth sensor counts
+    //running gear tooth sensor counts
     volatile unsigned long m_eg_tooth_count;
     unsigned long m_last_eg_tooth_count;
-    int m_eg_rpm;
+    float m_eg_rpm = 0;
+    float m_currentrpm_eg_accum = 0;
+
+    //running control terms
+    int error = 0;
+    int prev_error = 0;
 };
 
 #endif

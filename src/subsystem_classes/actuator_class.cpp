@@ -148,22 +148,27 @@ int *Actuator::control_function(int *out)
         //out[3] = 0;
         out[4] = 0;
 
-        // Calculate Engine Speed
-        float dt = millis() - m_last_control_execution;
+        //Calculate Engine Speed + Filter Engine Speed
+        float dt = millis()-m_last_control_execution;
         m_eg_rpm = calc_engine_rpm(dt);
+
+        m_eg_rpm = (k_exp_filt_alpha*m_eg_rpm) + (1-k_exp_filt_alpha)*m_currentrpm_eg_accum;
+        m_currentrpm_eg_accum = m_eg_rpm;    
+        //this is an exponential moving average
+        //"averages" the last 1/EXP_FILTER_CONST data points
+        //chosen because very simple to implement - use better filters in the future?
+
         out[1] = m_eg_rpm;
-        // currentrpm_eg = analogRead(A2)*4;
+        //currentrpm_eg = analogRead(A2)*4;
         m_last_control_execution = millis();
 
-        // If motor is spinning too slow, then shift all the way out
-        if (m_eg_rpm < k_min_rpm)
-        {
-            if ((digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound))
-            {
-                // If below min rpm and shifted out all the way
-                odrive.run_state(k_motor_number, 1, false, 0); // SET IDLE
-                out[0] = 4;                                    // Report status
-                out[2] = 0;                                    // Report velocity
+        //If motor is spinning too slow, then shift all the way out
+        if(m_eg_rpm < k_min_rpm) {
+            if((digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)){
+                //If below min rpm and shifted out all the way
+                odrive.run_state(k_motor_number, 1, false, 0); //SET IDLE
+                out[0] = 4; //Report status
+                out[2] = 0; //Report velocity
                 out[4] = 1;
                 out[8] = odrive.get_voltage();
                 out[9] = odrive.get_cur();
@@ -187,9 +192,11 @@ int *Actuator::control_function(int *out)
 
         // Compute error
 
-        // If error is within a certain deviation from the desired value, do not shift
-        int error = k_desired_rpm - m_eg_rpm;
-        int motor_velocity = k_p_gain * error;
+        //If error is within a certain deviation from the desired value, do not shift
+        error = k_desired_rpm - m_eg_rpm;
+        int error_deriv = (error - prev_error) / dt;        //16ms in between runs rn
+        int motor_velocity = k_proportional_gain*error + k_derivative_gain*error_deriv;
+        prev_error = error;
         // if (abs(error) <= rpm_allowance) {
         //     error = 0;
         // }
@@ -240,7 +247,7 @@ int *Actuator::control_function(int *out)
         out[7] = encoder.read();
         out[6] = millis();
         out[3] = error;
-        return out;
+       return out;
     }
 
     // Return status if attempt to run the control function too soon
