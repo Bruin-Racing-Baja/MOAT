@@ -2,12 +2,9 @@ name: PIO Build
 on: [pull_request]
 
 jobs:
-  test:
+  PlatformIO-Test:
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
