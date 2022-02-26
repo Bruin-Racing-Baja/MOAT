@@ -5,23 +5,23 @@
 
 struct Constant
 {
-    void init(File settingsFile, int defaultValueMode = 0);
-    int mode;
-    int desired_rpm;
+  void init(File settingsFile, int defaultValueMode = 0);
+  int mode;
+  int desired_rpm;
 
-    float p;
+  float p;
 
-    int isDefault;
+  int isDefault;
 
 private:
-    File settingsFile;
+  File settingsFile;
 
-    int read_ints();
-    int read_floats();
-    int int_size = 2;
-    int float_size = 1;
-    int *ints[2] = {&mode, &desired_rpm};
-    float *floats[3] = {&p};
+  int read_ints();
+  int read_floats();
+  int int_size = 2;
+  int float_size = 1;
+  int* ints[2] = { &mode, &desired_rpm };
+  float* floats[3] = { &p };
 };
 
 #endif
