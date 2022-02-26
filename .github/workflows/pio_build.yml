@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v1
@@ -18,6 +18,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install platformio
     - name: Run test for Teensy 4.1
-      run: platformio test -e teensy41
+      run: platformio run -e teensy41
     - name: Run test for Teensy 4.0
-      run: platformio test -e teensy40
+      run: platformio run -e teensy40
