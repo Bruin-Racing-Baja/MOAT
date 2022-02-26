@@ -224,8 +224,8 @@ if __name__ == '__main__':
     # MAIN ROUTINE
 
     # For IDE testing, just replace sys.argv with an array like this ['print_graphs', ...(all the other parameters in string form) ]
-    #args = sys.argv
-    args = ['print_graphs','log_1.txt','log_3.txt' ,'rpm' ,'status']
+    args = sys.argv
+    #args = ['print_graphs','log_1.txt','log_3.txt' ,'rpm' ,'status']
     paths_list = []
     data_series_list = []
     start_bound = 0
