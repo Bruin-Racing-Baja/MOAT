@@ -129,7 +129,7 @@ void setup()
     //This is where the bulk of the development for this feature will occur as we need to read in certain values, then set them in the program accordingly
     File settingFile = SD.open("settings.txt", FILE_READ);
     while(settingFile.available()) {
-      String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
+      settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
       constant.init(settingFile);  //Creates the constant object
       }
     

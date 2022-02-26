@@ -20,7 +20,7 @@ void Constant::init(File settingsFile_i, int defaultValueMode = 0) {
 
 int Constant::read_ints() {
     for (int i = 0; i < int_size; i++) {
-        String dump = settingsFile.readStringUntil(':'); //Ignore writing up until the colon
+        settingsFile.readStringUntil(':'); //Ignore writing up until the colon
         *ints[i] = settingsFile.parseInt(); //Save the next value into the location of the pointer
     }
     return 0;
@@ -28,7 +28,7 @@ int Constant::read_ints() {
 
 int Constant::read_floats() {
     for (int i = 0; i < float_size; i++) {
-        String dump = settingsFile.readStringUntil(':'); //Ignore writing up until the colon
+        settingsFile.readStringUntil(':'); //Ignore writing up until the colon
         *floats[i] = settingsFile.parseFloat(); //Save the next value into the location of the pointer
     }
     return 0;

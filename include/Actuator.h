@@ -2,6 +2,7 @@
 #define ACTUATOR_H
 
 #include <Arduino.h>
+#include <SPI.h>
 #include <ArduinoLog.h>
 #include <Constant.h>
 #include <Encoder.h>
