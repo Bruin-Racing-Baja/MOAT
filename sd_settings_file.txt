@@ -1,0 +1,9 @@
+Baja ECVT Settings File
+The format should be title:# 
+NO SPACE BETWEEN COLON AND NUMBER
+All the integers will be set first, then the floats, and anything else after that
+The file will skip all the text up until the dollar sign and treat as comment
+Not much about this setup is flexible, and it is very annoying to debug, so make sure you dont accidentally change anything
+$
+Mode:
+P-value:

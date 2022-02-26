@@ -22,48 +22,42 @@ inline Print &operator<<(Print &obj, float arg)
 
 Actuator::Actuator(
     HardwareSerial &serial,
-    const int enc_A,
-    const int enc_B,
-    const int egTooth,
-    const int gbTooth,
-    const int hall_inbound,
-    const int hall_outbound,
-    void (*external_count_egTooth)(),
-    bool printToSerial)
-    : encoder(enc_A, enc_B), odrive(serial)
+    const int enc_a_pin,
+    const int enc_b_pin,
+    const int eg_tooth_pin,
+    const int hall_inbound_pin,
+    const int hall_outbound_pin,
+    bool print_to_serial)
+    : encoder(enc_a_pin, enc_b_pin), odrive(serial)
 {
 
     // Save pin values
-    m_egTooth = egTooth;
-    m_gbTooth = gbTooth;
-    m_hall_inbound = hall_inbound;
-    m_hall_outbound = hall_outbound;
+    m_eg_tooth_pin = eg_tooth_pin;
+    m_hall_inbound_pin = hall_inbound_pin;
+    m_hall_outbound_pin = hall_outbound_pin;
 
-    m_printToSerial = printToSerial;
+    m_print_to_serial = print_to_serial;
 
     // initialize count vairables
-    egTooth_Count = 0;
-    egTooth_Count_last = 0;
-    last_control_execution = 0;
-    currentrpm_eg = 0;
-
-    // Functions to support interrupt
-    m_external_count_egTooth = external_count_egTooth;
+    m_eg_tooth_count = 0;
+    m_last_eg_tooth_count = 0;
+    m_last_control_execution = 0;
+    m_eg_rpm = 0;
 
     // Test variable
-    hasRun = false;
+    m_has_run = false;
 
     // limit variables
     m_encoder_outbound = encoder.read();
     m_encoder_inbound = -666;
 }
 
-int Actuator::init(int odrive_timeout)
+int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)())
 {
 
     // Attaches geartooth sensor to interrupt
     interrupts(); // allows interupts
-    attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
+    attachInterrupt(m_eg_tooth_pin, external_count_eg_tooth, FALLING);
 
     // Initialize Odrive object
     int o_init = odrive.init(odrive_timeout);
@@ -73,7 +67,7 @@ int Actuator::init(int odrive_timeout)
         return status;
     }
 
-    odrive.run_state(motor_number, AXIS_STATE_IDLE, true, 0); // Sets ODrive to IDLE
+    odrive.run_state(k_motor_number, AXIS_STATE_IDLE, true, 0); // Sets ODrive to IDLE
 
     status = 0;
     return status;
@@ -84,7 +78,7 @@ int *Actuator::homing_sequence(int *out)
     // Returns an array of ints in format <status, inbound, outbound>
     out[0] = 0;
 
-    odrive.run_state(motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0); // Enter velocity control mode
+    odrive.run_state(k_motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0); // Enter velocity control mode
     // TODO: Enums for IDLE, VELOCITY_CONTROL
     delay(1000);
 
@@ -92,29 +86,29 @@ int *Actuator::homing_sequence(int *out)
     digitalWrite(LED_BUILTIN, HIGH);
     int start = millis();
 
-    odrive.set_velocity(motor_number, 2);
+    odrive.set_velocity(k_motor_number, 2);
 
-    while (digitalReadFast(m_hall_outbound) == 1)
+    while (digitalReadFast(m_hall_outbound_pin) == 1)
     {
         delay(10);
-        if (digitalReadFast(m_hall_outbound) == 0)
+        if (digitalReadFast(m_hall_outbound_pin) == 0)
         {
             break;
         }
         m_encoder_outbound = encoder.read();
-        if (millis() - start > homing_timeout)
+        if (millis() - start > k_homing_timeout)
         {
             out[0] = 2;
-            odrive.run_state(motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0);
+            odrive.run_state(k_motor_number, AXIS_STATE_UNDEFINED, false, 0);
             out[1], out[2] = -1;
             return out;
         }
     }
-    odrive.set_velocity(motor_number, 0);                      // Stop spinning after homing
-    odrive.run_state(motor_number, AXIS_STATE_IDLE, false, 0); // Idle state
+    odrive.set_velocity(k_motor_number, 0);        // Stop spinning after homing
+    odrive.run_state(k_motor_number, AXIS_STATE_IDLE, false, 0); // Idle state
     digitalWrite(LED_BUILTIN, LOW);
 
-    m_encoder_inbound = m_encoder_outbound - encoderCountShiftLength;
+    m_encoder_inbound = m_encoder_outbound - k_encoder_count_shift_length;
 
     // Home inbound - [IN PURGATORY]
     //  set_velocity(-10);
@@ -147,29 +141,35 @@ int *Actuator::control_function(int *out)
     // Returns an array of ints in format
     //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos, odrive_volt, odrive_current>
     out[5] = millis();
-    control_function_count++;
-    if (millis() - last_control_execution > cycle_period_millis)
+    m_control_function_count++;
+    if (millis() - m_last_control_execution > k_cycle_period)
     {
         out[0] = 0;
-        out[3] = 0;
+        out[3] = 777;
+        //out[3] = 0;
         out[4] = 0;
 
-        // Calculate Engine Speed
-        float dt = millis() - last_control_execution;
-        currentrpm_eg = calc_engine_rpm(dt);
-        out[1] = currentrpm_eg;
-        // currentrpm_eg = analogRead(A2)*4;
-        last_control_execution = millis();
+        //Calculate Engine Speed + Filter Engine Speed
+        float dt = millis()-m_last_control_execution;
+        m_eg_rpm = calc_engine_rpm(dt);
 
-        // If motor is spinning too slow, then shift all the way out
-        if (currentrpm_eg < min_rpm)
-        {
-            if ((digitalReadFast(m_hall_outbound) == 0 || encoder.read() >= m_encoder_outbound))
-            {
-                // If below min rpm and shifted out all the way
-                odrive.run_state(motor_number, AXIS_STATE_IDLE, false, 0); // SET IDLE
-                out[0] = 4;                                                // Report status
-                out[2] = 0;                                                // Report velocity
+        m_eg_rpm = (k_exp_filt_alpha*m_eg_rpm) + (1-k_exp_filt_alpha)*m_currentrpm_eg_accum;
+        m_currentrpm_eg_accum = m_eg_rpm;    
+        //this is an exponential moving average
+        //"averages" the last 1/EXP_FILTER_CONST data points
+        //chosen because very simple to implement - use better filters in the future?
+
+        out[1] = m_eg_rpm;
+        //currentrpm_eg = analogRead(A2)*4;
+        m_last_control_execution = millis();
+
+        //If motor is spinning too slow, then shift all the way out
+        if(m_eg_rpm < k_min_rpm) {
+            if((digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)){
+                //If below min rpm and shifted out all the way
+                odrive.run_state(k_motor_number, 1, false, 0); //SET IDLE
+                out[0] = 4; //Report status
+                out[2] = 0; //Report velocity
                 out[4] = 1;
                 out[8] = odrive.get_voltage();
                 out[9] = odrive.get_current();
@@ -180,7 +180,7 @@ int *Actuator::control_function(int *out)
             else
             {
                 // If below min rpm and not shifted out all the way
-                odrive.set_velocity(motor_number, 3); // Shift out
+                odrive.set_velocity(k_motor_number, 3); // Shift out
                 out[0] = 5;
                 out[2] = 3;
                 out[8] = odrive.get_voltage();
@@ -193,9 +193,11 @@ int *Actuator::control_function(int *out)
 
         // Compute error
 
-        // If error is within a certain deviation from the desired value, do not shift
-        int error = currentrpm_eg - desired_rpm;
-        int motor_velocity = -1 * proportionalGain * error;
+        //If error is within a certain deviation from the desired value, do not shift
+        error = k_desired_rpm - m_eg_rpm;
+        int error_deriv = (error - prev_error) / dt;        //16ms in between runs rn
+        int motor_velocity = k_proportional_gain*error + k_derivative_gain*error_deriv;
+        prev_error = error;
         // if (abs(error) <= rpm_allowance) {
         //     error = 0;
         // }
@@ -210,7 +212,7 @@ int *Actuator::control_function(int *out)
         // HALL TRIGGERED IS 0
 
         // If error will over or under actuate actuator then set error to 0.
-        if (digitalReadFast(m_hall_outbound) == 0 || encoder.read() >= m_encoder_outbound)
+        if (digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)
         {
             // Shifted out completely
             if (motor_velocity > 0)
@@ -218,13 +220,14 @@ int *Actuator::control_function(int *out)
             out[0] = 6;
             out[4] = 1;
         }
-        else if (digitalReadFast(m_hall_inbound) == 0 || encoder.read() <= m_encoder_inbound)
+        else if (digitalReadFast(m_hall_inbound_pin) == 0 || encoder.read() <= m_encoder_inbound)
         {
             // Shifted in completely
             if (motor_velocity < 0)
                 motor_velocity = 0;
             out[0] = 7;
-            out[3] = 1;
+            //out[3] = 1;
+            out[3] = 777;
         }
 
         // Multiply by gain and set new motor velocity.
@@ -233,18 +236,19 @@ int *Actuator::control_function(int *out)
 
         if (motor_velocity == 0)
         {
-            odrive.run_state(motor_number, AXIS_STATE_IDLE, false, 0);
+            odrive.run_state(k_motor_number, AXIS_STATE_IDLE, false, 0);
         }
         else
         {
-            odrive.set_velocity(motor_number, motor_velocity);
-            odrive.run_state(motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0);
+            odrive.set_velocity(k_motor_number, motor_velocity);
+            odrive.run_state(k_motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0);
         }
         out[8] = odrive.get_voltage();
         out[9] = odrive.get_current();
         out[7] = encoder.read();
         out[6] = millis();
-        return out;
+        out[3] = error;
+       return out;
     }
 
     // Return status if attempt to run the control function too soon
@@ -254,17 +258,17 @@ int *Actuator::control_function(int *out)
 }
 
 //----------------Geartooth Functions----------------//
-void Actuator::count_egTooth()
+void Actuator::count_eg_tooth()
 {
-    egTooth_Count++;
+    m_eg_tooth_count++;
 }
 
-double Actuator::calc_engine_rpm(float dt)
+float Actuator::calc_engine_rpm(float dt)
 {
     noInterrupts();
-    double freqInminutes = 1000 * 60 / dt;
-    float rpm = (float(egTooth_Count - egTooth_Count_last) / egTeethPerRotation) * freqInminutes;
-    egTooth_Count_last = egTooth_Count;
+    float freq_in_minutes = 1000 * 60 / dt;
+    float rpm = (float(m_eg_tooth_count - m_last_eg_tooth_count) / k_eg_teeth_per_rotation) * freq_in_minutes;
+    m_last_eg_tooth_count = m_eg_tooth_count;
     interrupts();
     return rpm;
 }
@@ -284,27 +288,27 @@ int Actuator::target_rpm()
 }
 //-----------------Diagnostic Functions--------------//
 
-String Actuator::diagnostic(bool mainPower, bool printSerial = true)
+String Actuator::diagnostic(bool main_power, bool print_serial = true)
 {
     // General diagnostic tool to record sensor readings as well as some odrive info
 
     String output = "";
     output += "-----------------------------\n";
     output += "Time: " + String(millis()) + "\n";
-    if (mainPower)
+    if (main_power)
     {
         output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
-        output += "Odrive speed: " + String(odrive.get_velocity(motor_number)) + "\n";
+        output += "Odrive speed: " + String(odrive.get_velocity(k_motor_number)) + "\n";
         output += "Encoder count: " + String(encoder.read()) + "\n";
     }
     output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
     output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
-    output += "Outbound reading: " + String(digitalReadFast(m_hall_outbound)) + "\n";
-    output += "Inbound reading: " + String(digitalReadFast(m_hall_inbound)) + "\n";
-    output += "Engine Gear Tooth Count: " + String(egTooth_Count) + "\n";
-    output += "Current rpm: " + String(currentrpm_eg) + "\n";
+    output += "Outbound reading: " + String(digitalReadFast(m_hall_outbound_pin)) + "\n";
+    output += "Inbound reading: " + String(digitalReadFast(m_hall_inbound_pin)) + "\n";
+    output += "Engine Gear Tooth Count: " + String(m_eg_tooth_count) + "\n";
+    output += "Current rpm: " + String(m_eg_rpm) + "\n";
 
-    if (printSerial)
+    if (print_serial)
     {
         Serial.print(output);
     }
@@ -320,8 +324,8 @@ float Actuator::communication_speed()
     int com_total = 0;
     int com_bench = 0;
     // float test = 0;
-    odrive.run_state(motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0);
-    odrive.set_velocity(motor_number, .5);
+    odrive.run_state(k_motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0);
+    odrive.set_velocity(k_motor_number, .5);
     delay(1000);
 
     // Benchmark
@@ -334,20 +338,20 @@ float Actuator::communication_speed()
 
     Serial.println(com_bench);
 
-    // With command to odrive/run
+    // With command to odrive
     for (int i = 0; i < data_points; i++)
     {
         com_start = millis();
 
         // command to odrive
-        // test = odrive.get_velocity(motor_number);
+        // test = odrive.get_vel(motor_number);
 
         com_end = millis();
         com_total += com_end - com_start;
     }
     Serial.println(com_total);
-    odrive.set_velocity(motor_number, 0); // Stop spinning after homing
-    odrive.run_state(motor_number, AXIS_STATE_IDLE, false, 0);
+    odrive.set_velocity(k_motor_number, 0); // Stop spinning after homing
+    odrive.run_state(k_motor_number, AXIS_STATE_IDLE, false, 0);
 
     return float(com_total - com_bench) / float(data_points);
 }
@@ -357,20 +361,20 @@ void Actuator::test_voltage()
     // Reads bus voltage immediately after the odrive moves
     delay(1000);
     Serial.println("Reading Voltage");
-    odrive.run_state(motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0); // Tells Odrive to rotate motor
-    odrive.set_velocity(motor_number, -1);
+    odrive.run_state(k_motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0); // Tells Odrive to rotate motor
+    odrive.set_velocity(k_motor_number, -1);
     for (int i = 0; i < 250; i++)
     {
         Serial.println(odrive.get_voltage()); // Show bus voltage on serial moniter
         delay(10);
     }
-    odrive.run_state(motor_number, AXIS_STATE_IDLE, false, 0); // Tell Odrive to stop rotating
-    odrive.set_velocity(motor_number, 0);
+    odrive.run_state(k_motor_number, 1, false, 0); // Tell Odrive to stop rotating
+    odrive.set_velocity(k_motor_number, 0);
 }
 
 float Actuator::get_p_value()
 {
-    return proportionalGain;
+    return k_p_gain;
 }
 
 String Actuator::odrive_errors()
