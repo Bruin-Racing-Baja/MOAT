@@ -3,13 +3,14 @@
 
 #include <Arduino.h>
 #include <ArduinoLog.h>
+#include <Constant.h>
 #include <Encoder.h>
 #include <ODrive.h>
 class Actuator
 {
 public:
-    const static int k_enc_ppr = 88;
 
+    const static int k_enc_ppr = 88;
     const static int k_motor_number = 0;      // odrive axis
     const static int k_homing_timeout = 50e3; // ms
     const static int k_min_rpm = 1000;        // rpm
@@ -29,23 +30,18 @@ public:
     const unsigned int k_eg_torque = 2700;   // rpm
     const unsigned int k_eg_power = 3400;    // rpm
     const unsigned int k_desired_rpm = 2250; // rpm
-    const float k_rpm_target_multiplier = 1.5;
+    const float k_rpm_target_multiplier = 1.5; 
 
-    // pid constants
-    const float k_p_gain = 0.015;
-
-    const float k_proportional_gain = .015; // gain of the p controller
-    const float k_derivative_gain   = .0;//.005;    
-    const float k_integral_gain     = .0001;
-    const float k_exp_filt_alpha = 0.5;   
+    //  pins
+    const int enc_a_pin = 2;
+    const int enc_b_pin = 3;
+    const int eg_tooth_pin = 41;
+    const int hall_inbound_pin = 22;
+    const int hall_outbound_pin = 23;
 
     Actuator(
         HardwareSerial &serial,
-        const int enc_a_pin,
-        const int enc_b_pin,
-        const int eg_tooth_pin,
-        const int hall_inbound_pin,
-        const int hall_outbound_pin,
+        Constant* constant_i,
         bool print_to_serial);
 
     int init(int odrive_timeout, void (*external_count_eg_tooth)());
@@ -67,6 +63,7 @@ private:
     int status;
     Encoder encoder;
     ODrive odrive;
+    Constant *constant;
 
     // Functions that get information from Odrive
     int get_encoder_count();

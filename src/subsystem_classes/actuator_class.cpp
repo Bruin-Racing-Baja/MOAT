@@ -1,4 +1,5 @@
 #include <Actuator.h>
+#include <Constant.h>
 #include <Encoder.h>
 #include <HardwareSerial.h>
 #include <ODrive.h>
@@ -21,11 +22,7 @@ inline Print &operator<<(Print &obj, float arg)
 
 Actuator::Actuator(
     HardwareSerial &serial,
-    const int enc_a_pin,
-    const int enc_b_pin,
-    const int eg_tooth_pin,
-    const int hall_inbound_pin,
-    const int hall_outbound_pin,
+    Constant *constant_i,
     bool print_to_serial)
     : encoder(enc_a_pin, enc_b_pin), odrive(serial)
 {
@@ -49,11 +46,13 @@ Actuator::Actuator(
     // limit variables
     m_encoder_outbound = encoder.read();
     m_encoder_inbound = -666;
+
+    // Save pointer to constant object
+    constant = constant_i;
 }
 
 int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)())
 {
-
     // Attaches geartooth sensor to interrupt
     interrupts(); // allows interupts
     attachInterrupt(m_eg_tooth_pin, external_count_eg_tooth, FALLING);
@@ -152,7 +151,7 @@ int *Actuator::control_function(int *out)
         float dt = millis()-m_last_control_execution;
         m_eg_rpm = calc_engine_rpm(dt);
 
-        m_eg_rpm = (k_exp_filt_alpha*m_eg_rpm) + (1-k_exp_filt_alpha)*m_currentrpm_eg_accum;
+        m_eg_rpm = ((constant->k_exp_filt_alpha)*m_eg_rpm) + (1-(constant->k_exp_filt_alpha))*m_currentrpm_eg_accum;
         m_currentrpm_eg_accum = m_eg_rpm;    
         //this is an exponential moving average
         //"averages" the last 1/EXP_FILTER_CONST data points
@@ -195,7 +194,7 @@ int *Actuator::control_function(int *out)
         //If error is within a certain deviation from the desired value, do not shift
         error = k_desired_rpm - m_eg_rpm;
         int error_deriv = (error - prev_error) / dt;        //16ms in between runs rn
-        int motor_velocity = k_proportional_gain*error + k_derivative_gain*error_deriv;
+        int motor_velocity = (constant->k_proportional_gain)*error + (constant->k_derivative_gain)*error_deriv;
         prev_error = error;
         // if (abs(error) <= rpm_allowance) {
         //     error = 0;
@@ -373,7 +372,7 @@ void Actuator::test_voltage()
 
 float Actuator::get_p_value()
 {
-    return k_p_gain;
+    return constant->k_proportional_gain;
 }
 
 String Actuator::odrive_errors()

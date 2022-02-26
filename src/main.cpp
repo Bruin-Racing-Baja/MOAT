@@ -75,22 +75,7 @@ Cooling cooler_o;
 // Acuator settings
 #define PRINT_TO_SERIAL false
 
-// Pins test bed
-//#define ENC_A_PIN 20
-//#define ENC_B_PIN 21
-//#define HALL_INBOUND_PIN 12
-//#define HALL_OUTBOUND_PIN 11
-//#define GEARTOOTH_ENGINE_PIN 15
-
-// PINS CAR
-#define ENC_A_PIN 2
-#define ENC_B_PIN 3
-#define HALL_INBOUND_PIN 22
-#define HALL_OUTBOUND_PIN 23
-#define GEARTOOTH_ENGINE_PIN 41
-#define GEARTOOTH_GEARBOX_PIN 40
-
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN, PRINT_TO_SERIAL);
+Actuator actuator(Serial1, &constant, PRINT_TO_SERIAL);
 
 // externally declared for interrupt
 void external_count_eg_tooth()
@@ -121,7 +106,7 @@ void setup()
     //This means that no SD card was found or there was an error with it
     //In this case, we will switch to the headless horseman mode and continue to operate with no logging
     //This behaviour is arbitrary, and may be changed in the future
-    //constant.init(nullptr, 3);
+    constant.init(nullptr, 3);
   }
   else {
     if (SD.exists("settings.txt")) {
@@ -132,12 +117,13 @@ void setup()
       String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
       constant.init(settingFile);  //Creates the constant object
       }
+    settingFile.close();
     
     }
     else {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
-    //constant.init(nullptr, 1);
+    constant.init(nullptr, 1);
     }
   }
 
