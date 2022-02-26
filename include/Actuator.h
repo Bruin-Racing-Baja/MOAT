@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <ArduinoLog.h>
+#include <Constant.h>
 #include <Encoder.h>
 #include <ODrive.h>
 class Actuator
@@ -36,12 +37,14 @@ public:
 
     Actuator(
         HardwareSerial &serial,
+        Constant &constant_i,
         const int enc_a_pin,
         const int enc_b_pin,
         const int eg_tooth_pin,
         const int hall_inbound_pin,
         const int hall_outbound_pin,
-        bool print_to_serial);
+        bool print_to_serial
+        );
 
     int init(int odrive_timeout, void (*external_count_eg_tooth)());
     int *control_function(int *out);
@@ -62,6 +65,7 @@ private:
     int status;
     Encoder encoder;
     ODrive odrive;
+    Constant constant;
 
     // Functions that get information from Odrive
     int get_encoder_count();

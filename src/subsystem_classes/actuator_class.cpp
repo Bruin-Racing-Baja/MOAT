@@ -21,6 +21,7 @@ inline Print &operator<<(Print &obj, float arg)
 
 Actuator::Actuator(
     HardwareSerial &serial,
+    Constant &constant_i,
     const int enc_a_pin,
     const int enc_b_pin,
     const int eg_tooth_pin,
@@ -49,6 +50,9 @@ Actuator::Actuator(
     // limit variables
     m_encoder_outbound = encoder.read();
     m_encoder_inbound = -666;
+
+    //Save constants file
+    Constant constant = constant_i;
 }
 
 int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)())

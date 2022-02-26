@@ -3,16 +3,17 @@
 
 #include <SD.h>
 
-struct Constant{
+struct Constant
+{
     void init(File settingsFile, int defaultValueMode = 0);
     int mode;
     int desired_rpm;
 
     float p;
-    
+
     int isDefault;
 
-    private:
+private:
     File settingsFile;
 
     int read_ints();
