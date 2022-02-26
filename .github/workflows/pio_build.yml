@@ -17,5 +17,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install platformio
-    - name: Run tests on the native platform
-      run: platformio test -e native
+    - name: Run test for Teensy 4.1
+      run: platformio test -e teensy41
+    - name: Run test for Teensy 4.0
+      run: platformio test -e teensy40
