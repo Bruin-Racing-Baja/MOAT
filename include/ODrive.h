@@ -11,14 +11,15 @@
 class ODrive
 {
 public:
-    static const uint32_t k_read_timeout = 1000; // ms
-    static String k_system_errors[64];
-    static String k_can_errors[64];
-    static String k_axis_errors[64];
-    static String k_motor_errors[64];
-    static String k_controller_errors[64];
-    static String k_encoder_errors[64];
-    static String k_sensorless_estimator_errors[64];
+    const uint32_t k_read_timeout = 1000; // ms
+    // TODO make static
+    String k_system_errors[64];
+    String k_can_errors[64];
+    String k_axis_errors[64];
+    String k_motor_errors[64];
+    String k_controller_errors[64];
+    String k_encoder_errors[64];
+    String k_sensorless_estimator_errors[64];
     ODrive(HardwareSerial &serial);
 
     int init(uint32_t timeout = 1000);
