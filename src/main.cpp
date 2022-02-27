@@ -73,7 +73,7 @@ Cooling cooler_o;
 // Acuator settings
 #define PRINT_TO_SERIAL false
 
-//Pins test bed
+// Pins test bed
 //#define ENC_A_PIN 20
 //#define ENC_B_PIN 21
 //#define HALL_INBOUND_PIN 12
@@ -92,7 +92,8 @@ Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBO
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
-void external_count_eg_tooth() {
+void external_count_eg_tooth()
+{
   actuator.count_eg_tooth();
 }
 
