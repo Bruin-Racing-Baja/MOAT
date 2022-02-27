@@ -64,13 +64,13 @@ General code to oversee all functions of the Teensy
 // Create objects
 // ODrive odrive(Serial1);
 
-//LOGGING AND SD SETTINGS
-  File log_file;
-  //Create constant control object to read from sd
-  Constant constant;
+// LOGGING AND SD SETTINGS
+File log_file;
+// Create constant control object to read from sd
+Constant constant;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
-Cooling cooler_o;
+Cooling cooler_o(&constant);
 
 // Acuator settings
 #define PRINT_TO_SERIAL false

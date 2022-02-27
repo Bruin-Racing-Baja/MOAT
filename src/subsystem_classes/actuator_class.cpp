@@ -4,7 +4,6 @@
 #include <HardwareSerial.h>
 #include <ODrive.h>
 #include <SoftwareSerial.h>
-#include <TimerThree.h>
 
 // Print with stream operator
 template <class T>
