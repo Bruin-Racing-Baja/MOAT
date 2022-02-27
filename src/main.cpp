@@ -134,7 +134,7 @@ void setup()
       while (settingFile.available())
       {
         settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
-        //constant.init(settingFile);        // Creates the constant object
+        // constant.init(settingFile);        // Creates the constant object
       }
     }
     else
