@@ -2,6 +2,7 @@
 #define COOLING_H
 
 #include <Arduino.h>
+#include <Constant.h>
 #include <ODrive.h>
 
 #define AREF 3.3
@@ -10,13 +11,11 @@
 class Cooling
 {
     static const int k_motor_number = 1;
-    static const double k_temp_threshold = 100; // C
     static const int k_thermocouple_pin = 38;   // C
     static const float k_voltage = 3.3; // volts
-    static const int k_cooling_rpm = 500; //rpm
-    static const int k_cycle_period = 10; // ms
 
 public:
+    Cooling(Constant* constant_i);
     void init();
     void control_function();
 
@@ -28,6 +27,8 @@ private:
     bool m_fan_enabled;
     unsigned long m_last_control_execution;
     unsigned long m_control_execution_count;
+    Constant* constant;
+
 };
 
 #endif //! COOLING_H

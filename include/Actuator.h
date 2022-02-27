@@ -14,13 +14,12 @@ public:
     const static int k_motor_number = 0;      // odrive axis
     const static int k_homing_timeout = 50e3; // ms
     const static int k_min_rpm = 1000;        // rpm
-    const static int k_cycle_period = 10;     // ms
+
     const int k_rpm_allowance = 30;
 
     constexpr static float k_linear_distance_per_rotation = 0.125; // inches/rotation
     constexpr static float k_linear_shift_length = 3.5;            // inches
     constexpr static int32_t k_encoder_count_shift_length = (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048;
-    constexpr static float k_cycle_period_minutes = (k_cycle_period / 1e3) / 60; // minutes
     constexpr static int k_eg_teeth_per_rotation = 88;
 
     // reference signals form tyler
@@ -29,8 +28,6 @@ public:
     const unsigned int k_eg_launch = 2600;   // rpm
     const unsigned int k_eg_torque = 2700;   // rpm
     const unsigned int k_eg_power = 3400;    // rpm
-    const unsigned int k_desired_rpm = 2250; // rpm
-    const float k_rpm_target_multiplier = 1.5; 
 
     //  pins
     const int enc_a_pin = 2;

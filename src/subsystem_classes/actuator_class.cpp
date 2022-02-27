@@ -140,7 +140,7 @@ int *Actuator::control_function(int *out)
     //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos, odrive_volt, odrive_current>
     out[5] = millis();
     m_control_function_count++;
-    if (millis() - m_last_control_execution > k_cycle_period)
+    if (millis() - m_last_control_execution > constant->k_actuator_cycle_period)
     {
         out[0] = 0;
         out[3] = 777;
@@ -192,7 +192,7 @@ int *Actuator::control_function(int *out)
         // Compute error
 
         //If error is within a certain deviation from the desired value, do not shift
-        error = k_desired_rpm - m_eg_rpm;
+        error = constant->k_desired_rpm - m_eg_rpm;
         int error_deriv = (error - prev_error) / dt;        //16ms in between runs rn
         int motor_velocity = (constant->k_proportional_gain)*error + (constant->k_derivative_gain)*error_deriv;
         prev_error = error;

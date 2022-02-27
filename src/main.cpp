@@ -88,7 +88,7 @@ void save_log()
 {
   // Closes and then opens the file stream
   log_file.close();
-  log_file = SD.open("log.txt", FILE_WRITE);
+  log_file = SD.open(constant.log_name.c_str(), FILE_WRITE);
 }
 
 void setup()
@@ -132,7 +132,7 @@ void setup()
 
   //-------------Logging and SD Card-----------------
   
-  log_file = SD.open("log.txt", FILE_WRITE);
+  log_file = SD.open(constant.log_name.c_str(), FILE_WRITE);
 
   Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started" CR);
