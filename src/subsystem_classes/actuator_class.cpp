@@ -93,7 +93,8 @@ int* Actuator::homing_sequence(int* out)
     {
       out[0] = 2;
       odrive.run_state(k_motor_number, 0, false, 0);
-      out[1], out[2] = -1;
+      out[1] = -1;
+      out[2] = -1;
       return out;
     }
   }

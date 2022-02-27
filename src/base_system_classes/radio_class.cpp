@@ -72,7 +72,7 @@ bool Radio::checkConnection()
   return false;
 }
 
-int Radio::send(String in, int timeout = 0)
+int Radio::send(String in, int timeout)
 {
   /*
   This method takes a string and sends it over the radio module
@@ -171,13 +171,13 @@ int Radio::send(String in, int timeout = 0)
   // }
 }
 
-int Radio::waitReplySend(String in, String& out, int timeout = 0)
-{
-  /*
-  Similar to the send method, but this method will wait for a reply from the radio module and update the out variable
-  with the reply
-  */
-}
+// int Radio::waitReplySend(String in, String& out, int timeout)
+// {
+//   /*
+//   Similar to the send method, but this method will wait for a reply from the radio module and update the out variable
+//   with the reply
+//   */
+// }
 
 //-----------------Radio Getters--------------//
 int Radio::getStatus()
