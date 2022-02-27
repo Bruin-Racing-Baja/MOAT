@@ -2,7 +2,7 @@
 #define constant_h
 
 #include <SD.h>
-#include <String>
+#include <string>
 
 struct Constant
 {
