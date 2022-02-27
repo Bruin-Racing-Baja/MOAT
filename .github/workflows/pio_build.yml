@@ -16,5 +16,3 @@ jobs:
         pip install platformio
     - name: Run test for Teensy 4.1
       run: platformio run -e teensy41
-    - name: Run test for Teensy 4.0
-      run: platformio run -e teensy40
