@@ -31,23 +31,28 @@ int Constant::read_ints()
   return 0;
 }
 
-int Constant::read_floats() {
-    for (int i = 0; i < float_size; i++) {
-        String dump = settingsFile.readStringUntil(':'); //Ignore writing up until the colon
-        *floats[i] = settingsFile.parseFloat(); //Save the next value into the location of the pointer
-    }
-    return 0;
+int Constant::read_floats()
+{
+  for (int i = 0; i < float_size; i++)
+  {
+    String dump = settingsFile.readStringUntil(':');  // Ignore writing up until the colon
+    *floats[i] = settingsFile.parseFloat();           // Save the next value into the location of the pointer
+  }
+  return 0;
 }
 
-String Constant::get_values(){
-    String output = "";
-    for (int i = 0; i < int_size; i++) {
-        output += *ints[i];
-        output += ", ";
-    }
-    for (int i = 0; i < float_size; i++) {
-        output += String(*floats[i]);
-        output += ", ";
-    }
-    return output;
+String Constant::get_values()
+{
+  String output = "";
+  for (int i = 0; i < int_size; i++)
+  {
+    output += *ints[i];
+    output += ", ";
+  }
+  for (int i = 0; i < float_size; i++)
+  {
+    output += String(*floats[i]);
+    output += ", ";
+  }
+  return output;
 }
