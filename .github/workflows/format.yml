@@ -1,11 +1,9 @@
 name: C++ Code Formatter
 on:
-  pull_request_review:
-    types: [submitted]
+  push:
 
 jobs:
   clang-format:
-    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
