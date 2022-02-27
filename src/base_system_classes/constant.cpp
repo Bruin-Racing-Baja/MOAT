@@ -33,3 +33,16 @@ int Constant::read_floats() {
     }
     return 0;
 }
+
+String Constant::get_values(){
+    String output = "";
+    for (int i = 0; i < int_size; i++) {
+        output += *ints[i];
+        output += ", ";
+    }
+    for (int i = 0; i < float_size; i++) {
+        output += String(*floats[i]);
+        output += ", ";
+    }
+    return output;
+}

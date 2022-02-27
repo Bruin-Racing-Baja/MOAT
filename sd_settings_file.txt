@@ -5,5 +5,25 @@ All the integers will be set first, then the floats, and anything else after tha
 The file will skip all the text up until the dollar sign and treat as comment
 Not much about this setup is flexible, and it is very annoying to debug, so make sure you dont accidentally change anything
 $
-Mode:
-P-value:
+General
+    Mode:2
+    Home on startup:0
+    Wait for serial:1
+Logging
+    Log level:6
+    (6-Verbose, 4-Notice, 0-Silent)
+    Save interval:1000
+Cooling
+    Cooling RPM:500
+    Temperature threshold(C):100
+    Cooling cycle(ms):14
+
+Actuator
+    Desired RPM:2500
+    Actuator cycle(ms):10
+    
+PID
+    Proportional gain:0.35
+    Integral gain:0.0001
+    Derivative gain:0.005
+    Exponential filter alpha:0.5

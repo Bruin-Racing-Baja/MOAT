@@ -14,55 +14,22 @@ General code to oversee all functions of the Teensy
 #include <SoftwareSerial.h>
 #include <string>
 
-
-
 //Classes
 #include <Actuator.h>
 #include <Constant.h>
 #include <Cooling.h>
 #include <Radio.h>
 
-// Modes
-/*
- * Operating (0): For normal operation. Initializes then runs main control function in loop.
- * May disable logging object in its library config to free up memory.
- *
- * Headless Diagnostic (1): Runs diagnostic test 100 times, then stops, saves to SD card.
- * This is used for testing in sitations where the main power is on, and data will be retrieved from SD.
- * NOTE: DO NOT CONNECT TO TEENSY WHEN MAIN POWER IS ON OR IT COULD DAMAGE YOUR LAPTOP
- *
- * Serial Diagnostic (2): Runs diagnostic test continuously, prints to serial.
- *
- * Headless Horseman (3): For operation where data is not recorded.
- * This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up.
- * NOTE: Recommend disabling logging object in its include
- *
- */
-#define MODE 0
+// Most settings are located in the SD card settings file, and can be changed there
+int MODE;
 
+#define DIAGNOSTIC_MODE_SHOTS 100
 // Startup
-#define WAIT_SERIAL_STARTUP 0 // Set headless mode or not
-#define HOME_ON_STARTUP 1
-//#define RUN_DIAGNOSTIC_STARTUP 0
-
-// Logging
-// NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
-#define LOG_LEVEL LOG_LEVEL_NOTICE
-#define SAVE_THRESHOLD 1000 // Sets how often the log object will save to SD when in operating mode
-
-// Actuator
-
-// Diagnostic Mode
-#define DIAGNOSTIC_MODE_SHOTS 100 // Number of times diagnostic mode is run
+#define WAIT_SERIAL_STARTUP_SD 0 // Set to stop program before the sd card initialization
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 // ODrive Settings
 #define ODRIVE_STARTING_TIMEOUT 1000 // [ms]
-
-// Pins
-
-// Create objects
-// ODrive odrive(Serial1);
 
 // LOGGING AND SD SETTINGS
 File log_file;
@@ -93,10 +60,9 @@ void save_log()
 
 void setup()
 {
-  //-------------Wait for serial-----------------//
-  if (WAIT_SERIAL_STARTUP)
+  if (WAIT_SERIAL_STARTUP_SD)
   {
-    while (!Serial) // wait for serial port to connect. Needed for native USB port only
+    while (!Serial) // wait for serial port to connect, before SD card init
     {
     }
   }
@@ -107,6 +73,7 @@ void setup()
     //In this case, we will switch to the headless horseman mode and continue to operate with no logging
     //This behaviour is arbitrary, and may be changed in the future
     constant.init(nullptr, 3);
+    Log.warning("No SD card found, using headless horseman mode");
   }
   else {
     if (SD.exists("settings.txt")) {
@@ -118,45 +85,36 @@ void setup()
       constant.init(settingFile);  //Creates the constant object
       }
     settingFile.close();
+    Log.verbose(constant.get_values().c_str());
     
     }
     else {
     //This means the settings file does not exist, but there is an SD card present
     //In this case, we will operate in headless diagnostic mode as we dont know the user intention
     constant.init(nullptr, 1);
+    Log.warning("No settings file found, running in headless diagnostic mode");
     }
   }
+  //-------------Loading Settings-----------------
+  MODE = constant.mode;
 
-  
-
+  //-------------Wait for serial-----------------//
+  if (constant.wait_serial_startup)
+  {
+    while (!Serial) // wait for serial port to connect. Needed for native USB port only
+    {
+    }
+  }
 
   //-------------Logging and SD Card-----------------
   
   log_file = SD.open(constant.log_name.c_str(), FILE_WRITE);
 
-  Log.begin(LOG_LEVEL, &log_file, false);
+  Log.begin(constant.log_level, &log_file, false);
   Log.notice("Initialization Started" CR);
   Log.verbose("Time: %d" CR, millis());
 
   save_log();
-
-  //------------------ODrive------------------//
-
-  // At this time the following code is depricated, but until we make final decisions about the odrive class, we will leave it in
-
-  // int odrive_init = actuator.odrive.init(1000);
-  // if (odrive_init) {
-  //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
-  // }
-  // else {
-  //   Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
-  // }
-  // Serial.println("ODrive init: " + String(odrive_init));
-  // for (int i = 0; i < 20; i++) {
-  //   Serial.println(odrive.get_voltage());
-  // }
-  // log_file.close();
-  // log_file = SD.open("log.txt", FILE_WRITE);
 
   //------------------Cooling------------------//
 
@@ -180,7 +138,7 @@ void setup()
   save_log();
 
   // Homing if enabled
-  if (HOME_ON_STARTUP)
+  if (constant.home_on_startup)
   {
     int o_homing[3];
     actuator.homing_sequence(o_homing);
@@ -227,7 +185,7 @@ void loop()
   }
 
   // Save data to sd every SAVE_THRESHOLD
-  if (save_count > SAVE_THRESHOLD)
+  if (save_count > constant.save_threshold)
   {
     int save_start = millis();
     //Log.notice(actuator.odrive_errors().c_str());
