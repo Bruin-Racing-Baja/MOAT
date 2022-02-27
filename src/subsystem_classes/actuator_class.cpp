@@ -19,7 +19,7 @@ inline Print& operator<<(Print& obj, float arg)
   return obj;
 }
 
-Actuator::Actuator(HardwareSerial& serial, Constant& constant_i, const int enc_a_pin, const int enc_b_pin,
+Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin,
                    const int eg_tooth_pin, const int hall_inbound_pin, const int hall_outbound_pin,
                    bool print_to_serial)
   : encoder(enc_a_pin, enc_b_pin), odrive(serial)
@@ -45,7 +45,6 @@ Actuator::Actuator(HardwareSerial& serial, Constant& constant_i, const int enc_a
   m_encoder_inbound = -666;
 
   // Save constants file
-  Constant constant = constant_i;
 }
 
 int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)())
@@ -154,31 +153,111 @@ int* Actuator::control_function(int* out)
     // If motor is spinning too slow, then shift all the way out
     if (m_eg_rpm < k_min_rpm)
     {
-      if ((digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound))
-      {
-        // If below min rpm and shifted out all the way
-        odrive.run_state(k_motor_number, 1, false, 0);  // SET IDLE
-        out[0] = 4;                                     // Report status
-        out[2] = 0;                                     // Report velocity
-        out[4] = 1;
+        out[0] = 0;
+        out[3] = 777;
+        //out[3] = 0;
+        out[4] = 0;
+
+        //Calculate Engine Speed + Filter Engine Speed
+        float dt = millis()-m_last_control_execution;
+        m_eg_rpm = calc_engine_rpm(dt);
+
+        m_eg_rpm = (k_exp_filt_alpha*m_eg_rpm) + (1-k_exp_filt_alpha)*m_currentrpm_eg_accum;
+        m_currentrpm_eg_accum = m_eg_rpm;    
+        //this is an exponential moving average
+        //"averages" the last 1/EXP_FILTER_CONST data points
+        //chosen because very simple to implement - use better filters in the future?
+
+        out[1] = m_eg_rpm;
+        //currentrpm_eg = analogRead(A2)*4;
+        m_last_control_execution = millis();
+
+        //If motor is spinning too slow, then shift all the way out
+        if(m_eg_rpm < k_min_rpm) {
+            if((digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)){
+                //If below min rpm and shifted out all the way
+                odrive.run_state(k_motor_number, 1, false, 0); //SET IDLE
+                out[0] = 4; //Report status
+                out[2] = 0; //Report velocity
+                out[4] = 1;
+                out[8] = odrive.get_voltage();
+                out[9] = odrive.get_cur();
+                out[7] = encoder.read();
+                out[6] = millis();
+                return out;
+            }
+            else
+            {
+                // If below min rpm and not shifted out all the way
+                odrive.set_velocity(k_motor_number, 3); // Shift out
+                out[0] = 5;
+                out[2] = 3;
+                out[8] = odrive.get_voltage();
+                out[9] = odrive.get_cur();
+                out[7] = encoder.read();
+                out[6] = millis();
+                return out;
+            }
+        }
+
+        // Compute error
+
+        //If error is within a certain deviation from the desired value, do not shift
+        error = k_desired_rpm - m_eg_rpm;
+        int error_deriv = (error - prev_error) / dt;        //16ms in between runs rn
+        int motor_velocity = k_proportional_gain*error + k_derivative_gain*error_deriv;
+        prev_error = error;
+        // if (abs(error) <= rpm_allowance) {
+        //     error = 0;
+        // }
+
+        // TODO
+        // MIN/MAX instead of if else
+        // Check halls 0/1 when triggered ITS 0
+        // Change output from int array to array of pointers
+        // Attach to interrupt
+
+        // INWARDS IN NEGATIVE
+        // HALL TRIGGERED IS 0
+
+        // If error will over or under actuate actuator then set error to 0.
+        if (digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)
+        {
+            // Shifted out completely
+            if (motor_velocity > 0)
+                motor_velocity = 0;
+            out[0] = 6;
+            out[4] = 1;
+        }
+        else if (digitalReadFast(m_hall_inbound_pin) == 0 || encoder.read() <= m_encoder_inbound)
+        {
+            // Shifted in completely
+            if (motor_velocity < 0)
+                motor_velocity = 0;
+            out[0] = 7;
+            //out[3] = 1;
+            out[3] = 777;
+        }
+
+        // Multiply by gain and set new motor velocity.
+
+        out[2] = motor_velocity;
+
+        if (motor_velocity == 0)
+        {
+            odrive.run_state(k_motor_number, 1, false, 0);
+        }
+        else
+        {
+            odrive.set_velocity(k_motor_number, motor_velocity);
+            odrive.run_state(k_motor_number, 8, false, 0);
+        }
         out[8] = odrive.get_voltage();
         out[9] = odrive.get_cur();
         out[7] = encoder.read();
         out[6] = millis();
-        return out;
-      }
-      else
-      {
-        // If below min rpm and not shifted out all the way
-        odrive.set_velocity(k_motor_number, 3);  // Shift out
-        out[0] = 5;
-        out[2] = 3;
-        out[8] = odrive.get_voltage();
-        out[9] = odrive.get_cur();
-        out[7] = encoder.read();
-        out[6] = millis();
-        return out;
-      }
+        out[3] = error;
+       return out;
     }
 
     // Compute error

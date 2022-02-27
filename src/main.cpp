@@ -62,10 +62,10 @@ General code to oversee all functions of the Teensy
 // Create objects
 // ODrive odrive(Serial1);
 
-// LOGGING AND SD SETTINGS
-File logFile;
-// Create constant control object to read from sd
-Constant constant;
+//LOGGING AND SD SETTINGS
+  File log_file;
+  //Create constant control object to read from sd
+  Constant constant;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
@@ -88,7 +88,7 @@ Cooling cooler_o;
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
-Actuator actuator(Serial1, constant, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
+Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
@@ -101,8 +101,8 @@ void external_count_eg_tooth()
 void save_log()
 {
   // Closes and then opens the file stream
-  logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
+  log_file.close();
+  log_file = SD.open("log.txt", FILE_WRITE);
 }
 
 void setup()
@@ -116,12 +116,11 @@ void setup()
   }
 
   //-------------Initializing SD and Loading Settings-----------------
-  if (!SD.begin(BUILTIN_SDCARD))
-  {
-    // This means that no SD card was found or there was an error with it
-    // In this case, we will switch to the headless horseman mode and continue to operate with no logging
-    // This behaviour is arbitrary, and may be changed in the future
-    constant.init(nullptr, 3);
+  if (!SD.begin(BUILTIN_SDCARD)) {
+    //This means that no SD card was found or there was an error with it
+    //In this case, we will switch to the headless horseman mode and continue to operate with no logging
+    //This behaviour is arbitrary, and may be changed in the future
+    //constant.init(nullptr, 3);
   }
   else
   {
@@ -137,19 +136,18 @@ void setup()
         constant.init(settingFile);        // Creates the constant object
       }
     }
-    else
-    {
-      // This means the settings file does not exist, but there is an SD card present
-      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-      constant.init(nullptr, 1);
+    else {
+    //This means the settings file does not exist, but there is an SD card present
+    //In this case, we will operate in headless diagnostic mode as we dont know the user intention
+    //constant.init(nullptr, 1);
     }
   }
 
   //-------------Logging and SD Card-----------------
+  
+  log_file = SD.open("log.txt", FILE_WRITE);
 
-  logFile = SD.open("log.txt", FILE_WRITE);
-
-  Log.begin(LOG_LEVEL, &logFile, false);
+  Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started" CR);
   Log.verbose("Time: %d" CR, millis());
 
@@ -250,7 +248,7 @@ void loop()
   if (save_count > SAVE_THRESHOLD)
   {
     int save_start = millis();
-    Log.notice(actuator.odrive_errors().c_str());
+    //Log.notice(actuator.odrive_errors().c_str());
     Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
