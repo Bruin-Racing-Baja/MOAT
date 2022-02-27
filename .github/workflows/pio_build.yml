@@ -1,6 +1,6 @@
 name: PIO Build
-on: [pull_request]
-
+on:
+  push:
 jobs:
   PlatformIO-Test:
 
