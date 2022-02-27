@@ -4,7 +4,7 @@
 
 Cooling::Cooling(Constant* constant_i)
 {
-    constant = constant_i;
+  constant = constant_i;
 }
 
 void Cooling::init()
@@ -33,22 +33,22 @@ float Cooling::get_temperature()
 
 void Cooling::control_function()
 {
-    m_control_execution_count++;
-    if (millis() - m_last_control_execution > constant->k_cooling_cycle_period)
+  m_control_execution_count++;
+  if (millis() - m_last_control_execution > constant->k_cooling_cycle_period)
+  {
+    float temperature = get_temperature();
+    m_fan_enabled = temperature > constant->k_temp_threshold;
+    if (m_fan_enabled)
     {
-        float temperature = get_temperature();
-        m_fan_enabled = temperature > constant->k_temp_threshold;
-        if (m_fan_enabled)
-        {
-            set_fan_speed(constant->k_cooling_rpm);
-        }
-        else
-        {
-            stop_fan();
-        }
+      set_fan_speed(constant->k_cooling_rpm);
     }
     else
     {
       stop_fan();
     }
   }
+  else
+  {
+    stop_fan();
+  }
+}
