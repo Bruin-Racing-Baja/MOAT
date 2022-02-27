@@ -36,8 +36,6 @@ struct Constant{
     int k_cooling_rpm = 500; //rpm
     int k_cooling_cycle_period = 10; // ms
 
-    
-
     private:
     File settingsFile;
 

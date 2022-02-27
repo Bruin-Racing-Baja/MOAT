@@ -7,14 +7,14 @@ General code to oversee all functions of the Teensy
 #include <Arduino.h>
 
 // Libraries
-#include <SPI.h> // MUST BE INCLUDED BEFORE ArduinoLog.h
-#include <ArduinoLog.h> 
+#include <SPI.h>  // MUST BE INCLUDED BEFORE ArduinoLog.h
+#include <ArduinoLog.h>
 #include <HardwareSerial.h>
 #include <SD.h>
 #include <SoftwareSerial.h>
 #include <string>
 
-//Classes
+// Classes
 #include <Actuator.h>
 #include <Constant.h>
 #include <Cooling.h>
@@ -29,7 +29,7 @@ int MODE;
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 // ODrive Settings
-#define ODRIVE_STARTING_TIMEOUT 1000 // [ms]
+#define ODRIVE_STARTING_TIMEOUT 1000  // [ms]
 
 // LOGGING AND SD SETTINGS
 File log_file;
@@ -75,14 +75,18 @@ void setup()
     constant.init(nullptr, 3);
     Log.warning("No SD card found, using headless horseman mode");
   }
-  else {
-    if (SD.exists("settings.txt")) {
-    //This means the settings file exists, so we will load it
-    //This is where the bulk of the development for this feature will occur as we need to read in certain values, then set them in the program accordingly
-    File settingFile = SD.open("settings.txt", FILE_READ);
-    while(settingFile.available()) {
-      String dump = settingFile.readStringUntil('$');  //This removes the comments in the beginning of the file
-      constant.init(settingFile);  //Creates the constant object
+  else
+  {
+    if (SD.exists("settings.txt"))
+    {
+      // This means the settings file exists, so we will load it
+      // This is where the bulk of the development for this feature will occur as we need to read in certain values,
+      // then set them in the program accordingly
+      File settingFile = SD.open("settings.txt", FILE_READ);
+      while (settingFile.available())
+      {
+        settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
+        constant.init(settingFile);        // Creates the constant object
       }
     settingFile.close();
     Log.verbose(constant.get_values().c_str());
@@ -173,27 +177,31 @@ void loop()
   if (o_control[0] == 3)
   {
     Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-                o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+                o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5],
+                o_control[6]);
   }
   else
   {
-    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
-    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
+    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,
+    // Voltage: %d" CR,
+    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
+    //   o_control[8]);
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR,
-               o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.get_temperature());
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
+               cooler_o.get_temperature());
   }
 
   // Save data to sd every SAVE_THRESHOLD
   if (save_count > constant.save_threshold)
   {
     int save_start = millis();
-    //Log.notice(actuator.odrive_errors().c_str());
+    // Log.notice(actuator.odrive_errors().c_str());
     Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
     Log.verbose("Battery level ok? %d", o_control[8] > 20);
-    digitalWrite(LED_BUILTIN, !(o_control[8] > 20)); // TURN LED ON IF BATTERY TOO LOW
+    digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
     Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;

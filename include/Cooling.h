@@ -19,9 +19,9 @@ public:
     void init();
     void control_function();
 
-    float get_temperature();
-    void stop_fan();
-    void set_fan_speed(int rpm);
+  float get_temperature();
+  void stop_fan();
+  void set_fan_speed(int rpm);
 
 private:
     bool m_fan_enabled;
@@ -31,4 +31,4 @@ private:
 
 };
 
-#endif //! COOLING_H
+#endif  //! COOLING_H
