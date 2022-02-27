@@ -1,11 +1,14 @@
 name: C++ Code Formatter
 on:
-  push:
+  pull_request_review:
+    types: [submitted]
+
 jobs:
   clang-format:
-      runs-on: ubuntu-latest
-      steps:
-      - uses: actions/checkout@v2
-      - uses: AutoModality/action-ros-clang-format@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    if: github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: AutoModality/action-ros-clang-format@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
