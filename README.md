@@ -29,4 +29,4 @@ Error codes
     3: Odometry complete, no action
     4: Performing action
 
-    In addition, there will be an error code, stored as an int. What each code means should be determined by whoever is creating the subsystem class, and should be included in that class header file. I may also make an error code document for easier reference where they could be foudn.
+    In addition, there will be an error code, stored as an int. What each code means should be determined by whoever is creating the subsystem class, and should be included in that class header file. I may also make an error code document for easier reference where they could be found.
