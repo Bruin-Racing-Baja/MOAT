@@ -221,7 +221,7 @@ void setup()
 int o_control[10];
 int save_count = 0;
 int last_save = 0;
-int *status = &o_control[0];
+int* status = &o_control[0];
 void loop()
 {
   // Main control loop, with actuator
