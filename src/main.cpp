@@ -16,7 +16,7 @@ General code to oversee all functions of the Teensy
 
 // Classes
 #include <Actuator.h>
-#include <Constant.h>
+// #include <Constant.h>
 #include <Cooling.h>
 #include <Radio.h>
 
@@ -65,7 +65,7 @@ General code to oversee all functions of the Teensy
 // LOGGING AND SD SETTINGS
 File log_file;
 // Create constant control object to read from sd
-Constant constant;
+// Constant constant;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
@@ -116,34 +116,34 @@ void setup()
   }
 
   //-------------Initializing SD and Loading Settings-----------------
-  if (!SD.begin(BUILTIN_SDCARD))
-  {
-    // This means that no SD card was found or there was an error with it
-    // In this case, we will switch to the headless horseman mode and continue to operate with no logging
-    // This behaviour is arbitrary, and may be changed in the future
-    // constant.init(nullptr, 3);
-  }
-  else
-  {
-    if (SD.exists("settings.txt"))
-    {
-      // This means the settings file exists, so we will load it
-      // This is where the bulk of the development for this feature will occur as we need to read in certain values,
-      // then set them in the program accordingly
-      File settingFile = SD.open("settings.txt", FILE_READ);
-      while (settingFile.available())
-      {
-        settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
-        // constant.init(settingFile);        // Creates the constant object
-      }
-    }
-    else
-    {
-      // This means the settings file does not exist, but there is an SD card present
-      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-      // constant.init(nullptr, 1);
-    }
-  }
+  // if (!SD.begin(BUILTIN_SDCARD))
+  // {
+  //   // This means that no SD card was found or there was an error with it
+  //   // In this case, we will switch to the headless horseman mode and continue to operate with no logging
+  //   // This behaviour is arbitrary, and may be changed in the future
+  //   // constant.init(nullptr, 3);
+  // }
+  // else
+  // {
+  //   if (SD.exists("settings.txt"))
+  //   {
+  //     // This means the settings file exists, so we will load it
+  //     // This is where the bulk of the development for this feature will occur as we need to read in certain values,
+  //     // then set them in the program accordingly
+  //     File settingFile = SD.open("settings.txt", FILE_READ);
+  //     while (settingFile.available())
+  //     {
+  //       settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
+  //       // constant.init(settingFile);        // Creates the constant object
+  //     }
+  //   }
+  //   else
+  //   {
+  //     // This means the settings file does not exist, but there is an SD card present
+  //     // In this case, we will operate in headless diagnostic mode as we dont know the user intention
+  //     // constant.init(nullptr, 1);
+  //   }
+  // }
 
   //-------------Logging and SD Card-----------------
 
@@ -221,6 +221,7 @@ void setup()
 int o_control[10];
 int save_count = 0;
 int last_save = 0;
+int *status = &o_control[0];
 void loop()
 {
   // Main control loop, with actuator
