@@ -226,7 +226,6 @@ unsigned long long timestamp = 0;
 unsigned long long last_error_log = 0;
 void loop()
 {
-
   timestamp = millis();
   // Main control loop, with actuator
   actuator.control_function(o_control);

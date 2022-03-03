@@ -4,7 +4,7 @@
 #include <SoftwareSerial.h>
 
 template <class T>
-inline Print &operator<<(Print &obj, T arg)
+inline Print& operator<<(Print& obj, T arg)
 {
   obj.print(arg);
   return obj;
@@ -16,144 +16,144 @@ inline Print& operator<<(Print& obj, float arg)
   return obj;
 }
 
-ODrive::ODrive(HardwareSerial &odrive_serial) : m_odrive_serial(odrive_serial)
+ODrive::ODrive(HardwareSerial& odrive_serial) : m_odrive_serial(odrive_serial)
 {
-    k_system_errors[0] = "ODRIVE_ERROR_NONE";
-    k_system_errors[1] = "ODRIVE_ERROR_CONTROL_ITERATION_MISSED";
-    k_system_errors[2] = "ODRIVE_ERROR_DC_BUS_UNDER_VOLTAGE";
-    k_system_errors[3] = "ODRIVE_ERROR_DC_BUS_OVER_VOLTAGE";
-    k_system_errors[4] = "ODRIVE_ERROR_DC_BUS_OVER_REGEN_CURRENT";
-    k_system_errors[5] = "ODRIVE_ERROR_DC_BUS_OVER_CURRENT";
-    k_system_errors[6] = "ODRIVE_ERROR_BRAKE_DEADTIME_VIOLATION";
-    k_system_errors[7] = "ODRIVE_ERROR_BRAKE_DUTY_CYCLE_NAN";
-    k_system_errors[8] = "ODRIVE_ERROR_INVALID_BRAKE_RESISTANCE";
-    k_system_errors[9] = "NULL";
+  k_system_errors[0] = "ODRIVE_ERROR_NONE";
+  k_system_errors[1] = "ODRIVE_ERROR_CONTROL_ITERATION_MISSED";
+  k_system_errors[2] = "ODRIVE_ERROR_DC_BUS_UNDER_VOLTAGE";
+  k_system_errors[3] = "ODRIVE_ERROR_DC_BUS_OVER_VOLTAGE";
+  k_system_errors[4] = "ODRIVE_ERROR_DC_BUS_OVER_REGEN_CURRENT";
+  k_system_errors[5] = "ODRIVE_ERROR_DC_BUS_OVER_CURRENT";
+  k_system_errors[6] = "ODRIVE_ERROR_BRAKE_DEADTIME_VIOLATION";
+  k_system_errors[7] = "ODRIVE_ERROR_BRAKE_DUTY_CYCLE_NAN";
+  k_system_errors[8] = "ODRIVE_ERROR_INVALID_BRAKE_RESISTANCE";
+  k_system_errors[9] = "NULL";
 
-    k_can_errors[0] = "CAN_ERROR_NONE";
-    k_can_errors[1] = "CAN_ERROR_DUPLICATE_CAN_IDS";
-    k_can_errors[2] = "NULL";
+  k_can_errors[0] = "CAN_ERROR_NONE";
+  k_can_errors[1] = "CAN_ERROR_DUPLICATE_CAN_IDS";
+  k_can_errors[2] = "NULL";
 
-    k_axis_errors[0] = "AXIS_ERROR_NONE";
-    k_axis_errors[1] = "AXIS_ERROR_INVALID_STATE";
-    k_axis_errors[12] = "AXIS_ERROR_WATCHDOG_TIMER_EXPIRED";
-    k_axis_errors[13] = "AXIS_ERROR_MIN_ENDSTOP_PRESSED";
-    k_axis_errors[14] = "AXIS_ERROR_MAX_ENDSTOP_PRESSED";
-    k_axis_errors[15] = "AXIS_ERROR_ESTOP_REQUESTED";
-    k_axis_errors[18] = "AXIS_ERROR_HOMING_WITHOUT_ENDSTOP";
-    k_axis_errors[19] = "AXIS_ERROR_OVER_TEMP";
-    k_axis_errors[20] = "AXIS_ERROR_UNKNOWN_POSITION";
-    k_axis_errors[21] = "NULL";
+  k_axis_errors[0] = "AXIS_ERROR_NONE";
+  k_axis_errors[1] = "AXIS_ERROR_INVALID_STATE";
+  k_axis_errors[12] = "AXIS_ERROR_WATCHDOG_TIMER_EXPIRED";
+  k_axis_errors[13] = "AXIS_ERROR_MIN_ENDSTOP_PRESSED";
+  k_axis_errors[14] = "AXIS_ERROR_MAX_ENDSTOP_PRESSED";
+  k_axis_errors[15] = "AXIS_ERROR_ESTOP_REQUESTED";
+  k_axis_errors[18] = "AXIS_ERROR_HOMING_WITHOUT_ENDSTOP";
+  k_axis_errors[19] = "AXIS_ERROR_OVER_TEMP";
+  k_axis_errors[20] = "AXIS_ERROR_UNKNOWN_POSITION";
+  k_axis_errors[21] = "NULL";
 
-    k_motor_errors[0] = "MOTOR_ERROR_NONE";
-    k_motor_errors[1] = "MOTOR_ERROR_PHASE_RESISTANCE_OUT_OF_RANGE";
-    k_motor_errors[2] = "MOTOR_ERROR_PHASE_INDUCTANCE_OUT_OF_RANGE";
-    k_motor_errors[4] = "MOTOR_ERROR_DRV_FAULT";
-    k_motor_errors[5] = "MOTOR_ERROR_CONTROL_DEADLINE_MISSED";
-    k_motor_errors[8] = "MOTOR_ERROR_MODULATION_MAGNITUDE";
-    k_motor_errors[11] = "MOTOR_ERROR_CURRENT_SENSE_SATURATION";
-    k_motor_errors[13] = "MOTOR_ERROR_CURRENT_LIMIT_VIOLATION";
-    k_motor_errors[17] = "MOTOR_ERROR_MODULATION_IS_NAN";
-    k_motor_errors[18] = "MOTOR_ERROR_MOTOR_THERMISTOR_OVER_TEMP";
-    k_motor_errors[19] = "MOTOR_ERROR_FET_THERMISTOR_OVER_TEMP";
-    k_motor_errors[20] = "MOTOR_ERROR_TIMER_UPDATE_MISSED";
-    k_motor_errors[21] = "MOTOR_ERROR_CURRENT_MEASUREMENT_UNAVAILABLE";
-    k_motor_errors[22] = "MOTOR_ERROR_CONTROLLER_FAILED";
-    k_motor_errors[23] = "MOTOR_ERROR_I_BUS_OUT_OF_RANGE";
-    k_motor_errors[24] = "MOTOR_ERROR_BRAKE_RESISTOR_DISARMED";
-    k_motor_errors[25] = "MOTOR_ERROR_SYSTEM_LEVEL";
-    k_motor_errors[26] = "MOTOR_ERROR_BAD_TIMING";
-    k_motor_errors[27] = "MOTOR_ERROR_UNKNOWN_PHASE_ESTIMATE";
-    k_motor_errors[28] = "MOTOR_ERROR_UNKNOWN_PHASE_VEL";
-    k_motor_errors[29] = "MOTOR_ERROR_UNKNOWN_TORQUE";
-    k_motor_errors[30] = "MOTOR_ERROR_UNKNOWN_CURRENT_COMMAND";
-    k_motor_errors[31] = "MOTOR_ERROR_UNKNOWN_CURRENT_MEASUREMENT";
-    k_motor_errors[32] = "MOTOR_ERROR_UNKNOWN_VBUS_VOLTAGE";
-    k_motor_errors[33] = "MOTOR_ERROR_UNKNOWN_VOLTAGE_COMMAND";
-    k_motor_errors[34] = "MOTOR_ERROR_UNKNOWN_GAINS";
-    k_motor_errors[35] = "MOTOR_ERROR_CONTROLLER_INITIALIZING";
-    k_motor_errors[36] = "MOTOR_ERROR_UNBALANCED_PHASES";
-    k_motor_errors[37] = "NULL";
+  k_motor_errors[0] = "MOTOR_ERROR_NONE";
+  k_motor_errors[1] = "MOTOR_ERROR_PHASE_RESISTANCE_OUT_OF_RANGE";
+  k_motor_errors[2] = "MOTOR_ERROR_PHASE_INDUCTANCE_OUT_OF_RANGE";
+  k_motor_errors[4] = "MOTOR_ERROR_DRV_FAULT";
+  k_motor_errors[5] = "MOTOR_ERROR_CONTROL_DEADLINE_MISSED";
+  k_motor_errors[8] = "MOTOR_ERROR_MODULATION_MAGNITUDE";
+  k_motor_errors[11] = "MOTOR_ERROR_CURRENT_SENSE_SATURATION";
+  k_motor_errors[13] = "MOTOR_ERROR_CURRENT_LIMIT_VIOLATION";
+  k_motor_errors[17] = "MOTOR_ERROR_MODULATION_IS_NAN";
+  k_motor_errors[18] = "MOTOR_ERROR_MOTOR_THERMISTOR_OVER_TEMP";
+  k_motor_errors[19] = "MOTOR_ERROR_FET_THERMISTOR_OVER_TEMP";
+  k_motor_errors[20] = "MOTOR_ERROR_TIMER_UPDATE_MISSED";
+  k_motor_errors[21] = "MOTOR_ERROR_CURRENT_MEASUREMENT_UNAVAILABLE";
+  k_motor_errors[22] = "MOTOR_ERROR_CONTROLLER_FAILED";
+  k_motor_errors[23] = "MOTOR_ERROR_I_BUS_OUT_OF_RANGE";
+  k_motor_errors[24] = "MOTOR_ERROR_BRAKE_RESISTOR_DISARMED";
+  k_motor_errors[25] = "MOTOR_ERROR_SYSTEM_LEVEL";
+  k_motor_errors[26] = "MOTOR_ERROR_BAD_TIMING";
+  k_motor_errors[27] = "MOTOR_ERROR_UNKNOWN_PHASE_ESTIMATE";
+  k_motor_errors[28] = "MOTOR_ERROR_UNKNOWN_PHASE_VEL";
+  k_motor_errors[29] = "MOTOR_ERROR_UNKNOWN_TORQUE";
+  k_motor_errors[30] = "MOTOR_ERROR_UNKNOWN_CURRENT_COMMAND";
+  k_motor_errors[31] = "MOTOR_ERROR_UNKNOWN_CURRENT_MEASUREMENT";
+  k_motor_errors[32] = "MOTOR_ERROR_UNKNOWN_VBUS_VOLTAGE";
+  k_motor_errors[33] = "MOTOR_ERROR_UNKNOWN_VOLTAGE_COMMAND";
+  k_motor_errors[34] = "MOTOR_ERROR_UNKNOWN_GAINS";
+  k_motor_errors[35] = "MOTOR_ERROR_CONTROLLER_INITIALIZING";
+  k_motor_errors[36] = "MOTOR_ERROR_UNBALANCED_PHASES";
+  k_motor_errors[37] = "NULL";
 
-    k_encoder_errors[0] = "ENCODER_ERROR_NONE";
-    k_encoder_errors[1] = "ENCODER_ERROR_UNSTABLE_GAIN";
-    k_encoder_errors[2] = "ENCODER_ERROR_CPR_POLEPAIRS_MISMATCH";
-    k_encoder_errors[3] = "ENCODER_ERROR_NO_RESPONSE";
-    k_encoder_errors[4] = "ENCODER_ERROR_UNSUPPORTED_ENCODER_MODE";
-    k_encoder_errors[5] = "ENCODER_ERROR_ILLEGAL_HALL_STATE";
-    k_encoder_errors[6] = "ENCODER_ERROR_INDEX_NOT_FOUND_YET";
-    k_encoder_errors[7] = "ENCODER_ERROR_ABS_SPI_TIMEOUT";
-    k_encoder_errors[8] = "ENCODER_ERROR_ABS_SPI_COM_FAIL";
-    k_encoder_errors[9] = "ENCODER_ERROR_ABS_SPI_NOT_READY";
-    k_encoder_errors[10] = "ENCODER_ERROR_HALL_NOT_CALIBRATED_YET";
-    k_encoder_errors[11] = "NULL";
+  k_encoder_errors[0] = "ENCODER_ERROR_NONE";
+  k_encoder_errors[1] = "ENCODER_ERROR_UNSTABLE_GAIN";
+  k_encoder_errors[2] = "ENCODER_ERROR_CPR_POLEPAIRS_MISMATCH";
+  k_encoder_errors[3] = "ENCODER_ERROR_NO_RESPONSE";
+  k_encoder_errors[4] = "ENCODER_ERROR_UNSUPPORTED_ENCODER_MODE";
+  k_encoder_errors[5] = "ENCODER_ERROR_ILLEGAL_HALL_STATE";
+  k_encoder_errors[6] = "ENCODER_ERROR_INDEX_NOT_FOUND_YET";
+  k_encoder_errors[7] = "ENCODER_ERROR_ABS_SPI_TIMEOUT";
+  k_encoder_errors[8] = "ENCODER_ERROR_ABS_SPI_COM_FAIL";
+  k_encoder_errors[9] = "ENCODER_ERROR_ABS_SPI_NOT_READY";
+  k_encoder_errors[10] = "ENCODER_ERROR_HALL_NOT_CALIBRATED_YET";
+  k_encoder_errors[11] = "NULL";
 
-    k_controller_errors[0] = "CONTROLLER_ERROR_NONE";
-    k_controller_errors[1] = "CONTROLLER_ERROR_OVERSPEED";
-    k_controller_errors[2] = "CONTROLLER_ERROR_INVALID_INPUT_MODE";
-    k_controller_errors[3] = "CONTROLLER_ERROR_UNSTABLE_GAIN";
-    k_controller_errors[4] = "CONTROLLER_ERROR_INVALID_MIRROR_AXIS";
-    k_controller_errors[5] = "CONTROLLER_ERROR_INVALID_LOAD_ENCODER";
-    k_controller_errors[6] = "CONTROLLER_ERROR_INVALID_ESTIMATE";
-    k_controller_errors[7] = "CONTROLLER_ERROR_INVALID_CIRCULAR_RANGE";
-    k_controller_errors[8] = "CONTROLLER_ERROR_SPINOUT_DETECTED";
-    k_controller_errors[9] = "NULL";
+  k_controller_errors[0] = "CONTROLLER_ERROR_NONE";
+  k_controller_errors[1] = "CONTROLLER_ERROR_OVERSPEED";
+  k_controller_errors[2] = "CONTROLLER_ERROR_INVALID_INPUT_MODE";
+  k_controller_errors[3] = "CONTROLLER_ERROR_UNSTABLE_GAIN";
+  k_controller_errors[4] = "CONTROLLER_ERROR_INVALID_MIRROR_AXIS";
+  k_controller_errors[5] = "CONTROLLER_ERROR_INVALID_LOAD_ENCODER";
+  k_controller_errors[6] = "CONTROLLER_ERROR_INVALID_ESTIMATE";
+  k_controller_errors[7] = "CONTROLLER_ERROR_INVALID_CIRCULAR_RANGE";
+  k_controller_errors[8] = "CONTROLLER_ERROR_SPINOUT_DETECTED";
+  k_controller_errors[9] = "NULL";
 
-    k_sensorless_estimator_errors[0] = "SENSORLESS_ESTIMATOR_ERROR_NONE";
-    k_sensorless_estimator_errors[1] = "SENSORLESS_ESTIMATOR_ERROR_UNSTABLE_GAIN";
-    k_sensorless_estimator_errors[2] = "SENSORLESS_ESTIMATOR_ERROR_UNKNOWN_CURRENT_MEASUREMENT";
-    k_sensorless_estimator_errors[3] = "NULL";
+  k_sensorless_estimator_errors[0] = "SENSORLESS_ESTIMATOR_ERROR_NONE";
+  k_sensorless_estimator_errors[1] = "SENSORLESS_ESTIMATOR_ERROR_UNSTABLE_GAIN";
+  k_sensorless_estimator_errors[2] = "SENSORLESS_ESTIMATOR_ERROR_UNKNOWN_CURRENT_MEASUREMENT";
+  k_sensorless_estimator_errors[3] = "NULL";
 }
 
 uint64_t ODrive::string_to_ull(String s)
 {
-    uint32_t n_0 = s.substring(0, 8).toInt();
-    uint32_t n_1 = s.substring(8).toInt();
+  uint32_t n_0 = s.substring(0, 8).toInt();
+  uint32_t n_1 = s.substring(8).toInt();
 
-    short zeros = s.substring(8).length();
-    uint32_t multiplier = 1;
-    for (int i = 0; i < zeros; i++)
-    {
-        multiplier *= 10;
-    }
-    return (n_0 * multiplier) + n_1;
+  short zeros = s.substring(8).length();
+  uint32_t multiplier = 1;
+  for (int i = 0; i < zeros; i++)
+  {
+    multiplier *= 10;
+  }
+  return (n_0 * multiplier) + n_1;
 }
 
 String ODrive::ull_to_string(uint64_t n)
 {
-    char s[1000];
-    sprintf(s, "Formatted data:  %llu", n);
-    return String(s);
+  char s[1000];
+  sprintf(s, "Formatted data:  %llu", n);
+  return String(s);
 }
 
 String ODrive::read_string()
 {
-    String str = "";
-    unsigned long timeout_start = millis();
-    while (1)
+  String str = "";
+  unsigned long timeout_start = millis();
+  while (1)
+  {
+    while (!m_odrive_serial.available())
     {
-        while (!m_odrive_serial.available())
-        {
-            if (millis() - timeout_start >= k_read_timeout)
-            {
-                return str;
-            }
-        }
-        char c = m_odrive_serial.read();
-        if (c == '\n')
-            break;
-        str += c;
+      if (millis() - timeout_start >= k_read_timeout)
+      {
+        return str;
+      }
     }
+    char c = m_odrive_serial.read();
+    if (c == '\n')
+      break;
+    str += c;
+  }
   return str;
 }
 
 int ODrive::read_int()
 {
-    return read_string().toInt();
+  return read_string().toInt();
 }
 
 uint64_t ODrive::read_ull()
 {
-    return string_to_ull(read_string());
+  return string_to_ull(read_string());
 }
 
 float ODrive::read_float()
@@ -163,155 +163,157 @@ float ODrive::read_float()
 
 int ODrive::init(uint32_t timeout)
 {
-    m_status = 0;
-    m_odrive_serial.begin(115200);
+  m_status = 0;
+  m_odrive_serial.begin(115200);
 
-    uint32_t start = millis();
-    while (ODrive::get_voltage() <= 1)
+  uint32_t start = millis();
+  while (ODrive::get_voltage() <= 1)
+  {
+    if (millis() - start > timeout)
     {
-        if (millis() - start > timeout)
-        {
-            m_status = 13;
-            return m_status;
-        }
+      m_status = 13;
+      return m_status;
     }
-    return m_status;
+  }
+  return m_status;
 }
 
 String ODrive::dump_single_error(String error_lut[], String module, int axis, uint64_t error_code, bool indent)
 {
-    String tab = indent ? "\t" : "";
-    String output = tab + module + ": ";
-    if (error_code == 0)
-    {
-        output += "no error\n";
-        return output;
-    }
-    output += "Error(s):\n";
-    for (int bit = 0; bit < 64; bit++)
-    {
-        if (error_lut[bit] == "NULL")
-        {
-            break;
-        }
-        if (error_code & (1ULL << bit))
-        {
-            if (error_lut[bit] != "")
-            {
-
-                output += tab + "\t" + error_lut[bit] + "\n";
-            }
-            else
-            {
-                output = output + tab + "\t" + "UNKOWN ERROR (" + ull_to_string(1ULL << bit) + ")\n";
-            }
-        }
-    }
+  String tab = indent ? "\t" : "";
+  String output = tab + module + ": ";
+  if (error_code == 0)
+  {
+    output += "no error\n";
     return output;
+  }
+  output += "Error(s):\n";
+  for (int bit = 0; bit < 64; bit++)
+  {
+    if (error_lut[bit] == "NULL")
+    {
+      break;
+    }
+    if (error_code & (1ULL << bit))
+    {
+      if (error_lut[bit] != "")
+      {
+        output += tab + "\t" + error_lut[bit] + "\n";
+      }
+      else
+      {
+        output = output + tab + "\t" + "UNKOWN ERROR (" + ull_to_string(1ULL << bit) + ")\n";
+      }
+    }
+  }
+  return output;
 }
 
 String ODrive::dump_errors()
 {
-    String output = "timestamp: ";
-    output += String(millis()) + "\n";
+  String output = "timestamp: ";
+  output += String(millis()) + "\n";
 
-    m_odrive_serial << "r error\n";
-    uint32_t system_error = read_ull();
+  m_odrive_serial << "r error\n";
+  uint32_t system_error = read_ull();
 
-    output += dump_single_error(k_system_errors, "system", system_error, false);
-    for (int axis = 0; axis < 2; ++axis)
-    {
-        m_odrive_serial << "r axis" << axis << ".error\n";
-        uint32_t axis_error = read_ull();
-        m_odrive_serial << "r axis" << axis << "motor.error\n";
-        uint32_t motor_error = read_ull();
-        m_odrive_serial << "r axis" << axis << "sensorless_estimator.error\n";
-        uint32_t sensorless_estimator_error = read_int();
-        m_odrive_serial << "r axis" << axis << "encoder.error\n";
-        uint32_t encoder_error = read_ull();
-        m_odrive_serial << "r axis" << axis << "controller.error\n";
-        uint32_t controller_error = read_ull();
+  output += dump_single_error(k_system_errors, "system", system_error, false);
+  for (int axis = 0; axis < 2; ++axis)
+  {
+    m_odrive_serial << "r axis" << axis << ".error\n";
+    uint32_t axis_error = read_ull();
+    m_odrive_serial << "r axis" << axis << "motor.error\n";
+    uint32_t motor_error = read_ull();
+    m_odrive_serial << "r axis" << axis << "sensorless_estimator.error\n";
+    uint32_t sensorless_estimator_error = read_int();
+    m_odrive_serial << "r axis" << axis << "encoder.error\n";
+    uint32_t encoder_error = read_ull();
+    m_odrive_serial << "r axis" << axis << "controller.error\n";
+    uint32_t controller_error = read_ull();
 
-        output += dump_single_error(k_axis_errors, "axis", axis, axis_error);
-        output += dump_single_error(k_motor_errors, "motor", axis, motor_error);
-        output += dump_single_error(k_sensorless_estimator_errors, "sensorless_estimator", axis, sensorless_estimator_error);
-        output += dump_single_error(k_encoder_errors, "encoder", axis, encoder_error);
-        output += dump_single_error(k_controller_errors, "controller", axis, controller_error);
-    }
-    return output;
+    output += dump_single_error(k_axis_errors, "axis", axis, axis_error);
+    output += dump_single_error(k_motor_errors, "motor", axis, motor_error);
+    output +=
+        dump_single_error(k_sensorless_estimator_errors, "sensorless_estimator", axis, sensorless_estimator_error);
+    output += dump_single_error(k_encoder_errors, "encoder", axis, encoder_error);
+    output += dump_single_error(k_controller_errors, "controller", axis, controller_error);
+  }
+  return output;
 }
 
 String ODrive::dump_data_header()
 {
-    return "timestamp,motor0 current (A),motor1 current (A),motor0 torque estimate (Nm),motor1 torque estimate(Nm),voltage (V),current (A)";
+  return "timestamp,motor0 current (A),motor1 current (A),motor0 torque estimate (Nm),motor1 torque "
+         "estimate(Nm),voltage (V),current (A)";
 }
 
 String ODrive::dump_data()
 {
-    String data(millis());
-    return data + "," + get_motor_current(0) + "," + get_motor_current(1) + "," + get_torque_estimate(0) + "," + get_torque_estimate(1) + "," + get_voltage() + "," + get_current();
+  String data(millis());
+  return data + "," + get_motor_current(0) + "," + get_motor_current(1) + "," + get_torque_estimate(0) + "," +
+         get_torque_estimate(1) + "," + get_voltage() + "," + get_current();
 }
 
 void ODrive::set_velocity_gain(int axis, float vel_gain)
 {
-    m_odrive_serial << "w axis" << axis << ".controller.config.vel_gain" << vel_gain << '\n';
+  m_odrive_serial << "w axis" << axis << ".controller.config.vel_gain" << vel_gain << '\n';
 }
 
 void ODrive::set_velocity_integrator_gain(int axis, float vel_integrator_gain)
 {
-    m_odrive_serial << "w axis" << axis << ".controller.config.vel_integrator_gain" << vel_integrator_gain << '\n';
+  m_odrive_serial << "w axis" << axis << ".controller.config.vel_integrator_gain" << vel_integrator_gain << '\n';
 }
 
 bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, uint32_t timeout)
 {
-    uint32_t timeout_count = timeout / 100;
-    m_odrive_serial << "w axis" << axis << ".requested_state " << requested_state << '\n';
-    if (wait_for_idle)
+  uint32_t timeout_count = timeout / 100;
+  m_odrive_serial << "w axis" << axis << ".requested_state " << requested_state << '\n';
+  if (wait_for_idle)
+  {
+    do
     {
-        do
-        {
-            delay(100);
-            m_odrive_serial << "r axis" << axis << ".current_state\n";
-        } while (read_int() != 1 && --timeout_count > 0);
-    }
+      delay(100);
+      m_odrive_serial << "r axis" << axis << ".current_state\n";
+    } while (read_int() != 1 && --timeout_count > 0);
+  }
 
-    return timeout_count > 0;
+  return timeout_count > 0;
 }
 
 void ODrive::set_velocity(int axis, float velocity)
 {
-    m_odrive_serial << "v " << axis << " " << velocity << " "
-                    << "0.0f"
-                    << "\n";
+  m_odrive_serial << "v " << axis << " " << velocity << " "
+                  << "0.0f"
+                  << "\n";
 }
 
 float ODrive::get_motor_current(int axis)
 {
-    m_odrive_serial << "r axis" << axis << ".motor.current_control.Iq_measured\n";
-    return read_float();
+  m_odrive_serial << "r axis" << axis << ".motor.current_control.Iq_measured\n";
+  return read_float();
 }
 
 float ODrive::get_torque_estimate(int axis)
 {
-    m_odrive_serial << "r axis" << axis << ".motor.config.torque_constant";
-    float kt = read_float();
-    return kt * get_motor_current(axis);
+  m_odrive_serial << "r axis" << axis << ".motor.config.torque_constant";
+  float kt = read_float();
+  return kt * get_motor_current(axis);
 }
 
 float ODrive::get_velocity(int axis)
 {
-    m_odrive_serial << "r axis" << axis << ".encoder.vel_estimate\n";
-    return read_float();
+  m_odrive_serial << "r axis" << axis << ".encoder.vel_estimate\n";
+  return read_float();
 }
 
 float ODrive::get_voltage()
 {
-    m_odrive_serial << "r vbus_voltage\n";
-    return read_float();
+  m_odrive_serial << "r vbus_voltage\n";
+  return read_float();
 }
 
 float ODrive::get_current()
 {
-    m_odrive_serial << "r ibus\n";
-    return read_float();
+  m_odrive_serial << "r ibus\n";
+  return read_float();
 }

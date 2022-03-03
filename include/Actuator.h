@@ -49,14 +49,13 @@ public:
   int* control_function(int* out);
   int* homing_sequence(int* out);
 
-    int get_status_code();
-    int get_encoder_pos();
-    float get_p_value();
-    float communication_speed();
-    void count_eg_tooth();
-    String odrive_errors();
-    String odrive_data();
-    
+  int get_status_code();
+  int get_encoder_pos();
+  float get_p_value();
+  float communication_speed();
+  void count_eg_tooth();
+  String odrive_errors();
+  String odrive_data();
 
   String diagnostic(bool is_mainpower_on, bool serial_out);
 

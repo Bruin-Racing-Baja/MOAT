@@ -70,9 +70,9 @@ int* Actuator::homing_sequence(int* out)
   // Returns an array of ints in format <status, inbound, outbound>
   out[0] = 0;
 
-    odrive.run_state(k_motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0); // Enter velocity control mode
-    // TODO: Enums for IDLE, VELOCITY_CONTROL
-    delay(1000);
+  odrive.run_state(k_motor_number, AXIS_STATE_CLOSED_LOOP_CONTROL, false, 0);  // Enter velocity control mode
+  // TODO: Enums for IDLE, VELOCITY_CONTROL
+  delay(1000);
 
   // Home outbound
   digitalWrite(LED_BUILTIN, HIGH);
@@ -132,7 +132,7 @@ int* Actuator::control_function(int* out)
 {
   // Returns an array of ints in format
   //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos,
-  //odrive_volt, odrive_current>
+  // odrive_volt, odrive_current>
   out[5] = millis();
   m_control_function_count++;
   if (millis() - m_last_control_execution > k_cycle_period)
@@ -374,9 +374,9 @@ float Actuator::get_p_value()
 
 String Actuator::odrive_errors()
 {
-    return odrive.dump_errors();
+  return odrive.dump_errors();
 }
 String Actuator::odrive_data()
 {
-    return odrive.dump_data();
+  return odrive.dump_data();
 }
