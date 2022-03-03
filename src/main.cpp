@@ -99,14 +99,13 @@ void setup()
       constant.init(nullptr, 1);
       Log.warning("No settings file found, running in headless diagnostic mode");
     }
-  //-------------Log file splitting-----------------
-  int log_file_number = 0;
-  while(SD.exists(("/logs/log_" + String(log_file_number) + ".txt").c_str()))
-  {
-    log_file_number++;
-  }
-  constant.log_name = "/logs/log_" + String(log_file_number) + ".txt";
-
+    //-------------Log file splitting-----------------
+    int log_file_number = 0;
+    while (SD.exists(("/logs/log_" + String(log_file_number) + ".txt").c_str()))
+    {
+      log_file_number++;
+    }
+    constant.log_name = "/logs/log_" + String(log_file_number) + ".txt";
   }
   //-------------Loading Settings-----------------
   MODE = constant.mode;
