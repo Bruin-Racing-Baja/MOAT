@@ -127,19 +127,18 @@ int* Actuator::homing_sequence(int* out)
   return out;
 }
 
-int* Actuator::control_function(int* out)
+void Actuator::control_function(int* status, int* rpm, int* actuator_velocity, int* inbound_triggered, int* outbound_triggered, int* time_start, int* time_end, int* encoder_position, int* odrive_voltage, int* odrive_current, int* error_out)
 {
   // Returns an array of ints in format
   //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos,
   // odrive_volt, odrive_current>
-  out[5] = millis();
+  *time_start = millis();
   m_control_function_count++;
   if (millis() - m_last_control_execution > k_cycle_period)
   {
-    out[0] = 0;
-    out[3] = 777;
-    // out[3] = 0;
-    out[4] = 0;
+    *status = 0;
+    *inbound_triggered = 777;
+    *outbound_triggered = 0;
 
     // Calculate Engine Speed + Filter Engine Speed
     float dt = millis() - m_last_control_execution;
@@ -151,7 +150,7 @@ int* Actuator::control_function(int* out)
     //"averages" the last 1/EXP_FILTER_CONST data points
     // chosen because very simple to implement - use better filters in the future?
 
-    out[1] = m_eg_rpm;
+    *rpm = m_eg_rpm;
     // currentrpm_eg = analogRead(A2)*4;
     m_last_control_execution = millis();
 
@@ -162,26 +161,26 @@ int* Actuator::control_function(int* out)
       {
         // If below min rpm and shifted out all the way
         odrive.run_state(k_motor_number, 1, false, 0);  // SET IDLE
-        out[0] = 4;                                     // Report status
-        out[2] = 0;                                     // Report velocity
-        out[4] = 1;
-        out[8] = odrive.get_voltage();
-        out[9] = odrive.get_cur();
-        out[7] = encoder.read();
-        out[6] = millis();
-        return out;
+        *status = 4;                                     // Report status
+        *actuator_velocity = 0;                                     // Report velocity
+        *outbound_triggered = 1;
+        *odrive_voltage = odrive.get_voltage();
+        *odrive_current = odrive.get_cur();
+        *encoder_position = encoder.read();
+        *time_end = millis();
+        return;
       }
       else
       {
         // If below min rpm and not shifted out all the way
         odrive.set_velocity(k_motor_number, 3);  // Shift out
-        out[0] = 5;
-        out[2] = 3;
-        out[8] = odrive.get_voltage();
-        out[9] = odrive.get_cur();
-        out[7] = encoder.read();
-        out[6] = millis();
-        return out;
+        *status = 5;
+        *actuator_velocity = 3;
+        *odrive_voltage = odrive.get_voltage();
+        *odrive_current = odrive.get_cur();
+        *encoder_position = encoder.read();
+        *time_end = millis();
+        return;
       }
     }
 
@@ -196,37 +195,28 @@ int* Actuator::control_function(int* out)
     //     error = 0;
     // }
 
-    // TODO
-    // MIN/MAX instead of if else
-    // Check halls 0/1 when triggered ITS 0
-    // Change output from int array to array of pointers
-    // Attach to interrupt
-
-    // INWARDS IN NEGATIVE
-    // HALL TRIGGERED IS 0
-
     // If error will over or under actuate actuator then set error to 0.
     if (digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)
     {
       // Shifted out completely
       if (motor_velocity > 0)
         motor_velocity = 0;
-      out[0] = 6;
-      out[4] = 1;
+      *status = 6;
+      *outbound_triggered = 1;
     }
     else if (digitalReadFast(m_hall_inbound_pin) == 0 || encoder.read() <= m_encoder_inbound)
     {
       // Shifted in completely
       if (motor_velocity < 0)
         motor_velocity = 0;
-      out[0] = 7;
+      *status = 7;
       // out[3] = 1;
-      out[3] = 777;
+      *inbound_triggered = 777;
     }
 
     // Multiply by gain and set new motor velocity.
 
-    out[2] = motor_velocity;
+    *actuator_velocity = motor_velocity;
 
     if (motor_velocity == 0)
     {
@@ -237,18 +227,18 @@ int* Actuator::control_function(int* out)
       odrive.set_velocity(k_motor_number, motor_velocity);
       odrive.run_state(k_motor_number, 8, false, 0);
     }
-    out[8] = odrive.get_voltage();
-    out[9] = odrive.get_cur();
-    out[7] = encoder.read();
-    out[6] = millis();
-    out[3] = error;
-    return out;
+    *odrive_voltage = odrive.get_voltage();
+    *odrive_current = odrive.get_cur();
+    *encoder_position = encoder.read();
+    *time_end = millis();
+    *error_out = error;
+    return;
   }
 
   // Return status if attempt to run the control function too soon
-  out[0] = 3;
-  out[6] = millis();
-  return out;
+  *status = 3;
+  *time_end = millis();
+  return;
 }
 
 //----------------Geartooth Functions----------------//
