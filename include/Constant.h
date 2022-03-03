@@ -18,7 +18,7 @@ struct Constant
   // Log
   int log_level;
   int save_threshold;
-  String log_name = "log.txt";
+  String log_name = "/logs/log_default.txt";
 
   // Actuator
   int k_actuator_cycle_period = 10;  // ms
