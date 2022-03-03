@@ -199,7 +199,15 @@ def parse_txt(paths, different_files, no_auto_crop=False):
                     run.append(float_datapoint)
                     line = ""
                 runs[run_num] = (run, run_metadata)
-    return auto_crop(runs)
+    new_runs = {}
+    if disable_auto_crop:
+        for key in runs:
+            run = runs[key][0]
+            run = np.array(run[1:])
+            new_runs[key] = (run, runs[key][1])
+        return new_runs
+    else:
+        return auto_crop(runs)
 
 def auto_crop(runs):
 
@@ -231,7 +239,7 @@ if __name__ == '__main__':
 
     # For IDE testing, just replace sys.argv with an array like this ['print_graphs', ...(all the other parameters in string form) ]
     args = sys.argv
-    #args = ['print_graphs.py', 'C:/Users/srini/Desktop/Baja_2021-2022/Controls_Code/MOAT/data_analysis/Data/GrantCode.txt', 'rpm', 'act_vel', 'enc_pos']
+    #args = ['print_graphs.py', 'C:/Users/srini/Desktop/Baja_2021-2022/Controls_Code/MOAT/data_analysis/Data/DriveNight3-2-22main1.txt','--nac' ,'rpm', 'act_vel', 'enc_pos']
     paths_list = []
     data_series_list = []
     start_bound = 0
@@ -262,6 +270,7 @@ if __name__ == '__main__':
         elif arg == "--sp":
             sp = True
             i += 1
+
         elif args[i] == "--mc":
             mc = True
             if len(args) <= i + 2:
@@ -270,6 +279,9 @@ if __name__ == '__main__':
             start_bound = int(args[i + 1])
             end_bound = int(args[i + 2])
             i += 3
+        elif args[i] == "--nac" and mc==False:
+            disable_auto_crop = True
+            i += 1
         else:
             data_series_list.append(args[i])
             i += 1
