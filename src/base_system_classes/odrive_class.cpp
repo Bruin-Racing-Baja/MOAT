@@ -6,14 +6,14 @@
 template <class T>
 inline Print &operator<<(Print &obj, T arg)
 {
-    obj.print(arg);
-    return obj;
+  obj.print(arg);
+  return obj;
 }
 template <>
-inline Print &operator<<(Print &obj, float arg)
+inline Print& operator<<(Print& obj, float arg)
 {
-    obj.print(arg, 4);
-    return obj;
+  obj.print(arg, 4);
+  return obj;
 }
 
 ODrive::ODrive(HardwareSerial &odrive_serial) : m_odrive_serial(odrive_serial)
@@ -143,7 +143,7 @@ String ODrive::read_string()
             break;
         str += c;
     }
-    return str;
+  return str;
 }
 
 int ODrive::read_int()
@@ -158,7 +158,7 @@ uint64_t ODrive::read_ull()
 
 float ODrive::read_float()
 {
-    return read_string().toFloat();
+  return read_string().toFloat();
 }
 
 int ODrive::init(uint32_t timeout)
