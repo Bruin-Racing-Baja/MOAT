@@ -3,10 +3,15 @@ To Use in Command Line:
 
 There are 2 ways to graph stuff.
     -Either pass the specific paths directly to the function, in which case you can plot quantities from one file
+        - i.e print_graphs.py path_to_text_file.txt rpm act_vel --sp
     -Or, use the number method, where you can pass a number in to stand in for a path (i.e pass 3 to refer to log_3.txt)
         - With this, you need to be specific with the quantities to be graphed. To graph rpm from log_1.txt and act_vel from log_5.txt,
           run print_graphs 1 5 rpm#1 act_vel#5
 
+    Flags:
+        --sp : same plot
+        --mc : manual crop, pass in start and end crop values
+            i.e --mc 100 2000
 
 
 '''
@@ -63,6 +68,7 @@ def print_graphs(path=[], data_selections=(), display_on_same_axes=False, manual
 
         # Change bounds if manual cropping is enabled
         if manual_crop:
+
             run_to_graph = run_to_graph[int(crop_bounds[0]): int(crop_bounds[1])]
 
 
@@ -115,7 +121,7 @@ def graph_same(selections, indices, runs=None ,specific_run=None):
             axes[i].spines.right.set_position(('axes', 0.95+(0.1*i)))
 
         #populate each set of axes with data, format them
-        axes[i].plot(run[:, indices[selections[i][0]]], color=color, linewidth=0.5)
+        axes[i].plot(run[:, indices["control_start"]], run[:, indices[selections[i][0]]], color=color, linewidth=0.5)
 
         if selections[i][1] == -1:
             axes[i].set_ylabel(str(selections[i][0]), color=color)
@@ -225,7 +231,7 @@ if __name__ == '__main__':
 
     # For IDE testing, just replace sys.argv with an array like this ['print_graphs', ...(all the other parameters in string form) ]
     args = sys.argv
-    #args = ['print_graphs','log_1.txt','log_3.txt' ,'rpm' ,'status']
+    #args = ['print_graphs.py', 'C:/Users/srini/Desktop/Baja_2021-2022/Controls_Code/MOAT/data_analysis/Data/GrantCode.txt', 'rpm', 'act_vel', 'enc_pos']
     paths_list = []
     data_series_list = []
     start_bound = 0
