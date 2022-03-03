@@ -213,7 +213,7 @@ String ODrive::dump_single_error(String error_lut[], String module, int axis, ui
 String ODrive::dump_errors()
 {
     String output = "timestamp: ";
-    output += millis() + "\n";
+    output += String(millis()) + "\n";
 
     m_odrive_serial << "r error\n";
     uint32_t system_error = read_ull();
