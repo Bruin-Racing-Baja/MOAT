@@ -21,7 +21,7 @@ General code to oversee all functions of the Teensy
 #include <Radio.h>
 
 // Most settings are located in the SD card settings file, and can be changed there
-int MODE;
+#define MODE 0
 
 #define DIAGNOSTIC_MODE_SHOTS 100
 // Startup
@@ -71,10 +71,12 @@ void setup()
   if (!SD.begin(BUILTIN_SDCARD))
   {
     // This means that no SD card was found or there was an error with it
-    // In this case, we will switch to the headless horseman mode and continue to operate with no logging
-    // This behaviour is arbitrary, and may be changed in the future
-    constant.init(nullptr, 3);
-    Log.warning("No SD card found, using headless horseman mode");
+    // We will halt the program
+    Serial.println("No SD card found, halting");
+    while (1) 
+    {
+
+    }
   }
   else
   {
@@ -95,18 +97,22 @@ void setup()
     else
     {
       // This means the settings file does not exist, but there is an SD card present
-      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-      constant.init(nullptr, 1);
-      Log.warning("No settings file found, running in headless diagnostic mode");
+      // WIll halt the program
+      Serial.println("No settings file found, halting");
+      while (1)
+      {
+
+      }
     }
   }
   //-------------Loading Settings-----------------
-  MODE = constant.mode;
+  // This implementation will not work, but it is still here as we may pursue this in the future
+  // MODE = constant.mode;
 
   //-------------Wait for serial-----------------//
   if (constant.wait_serial_startup)
   {
-    while (!Serial)  // wait for serial port to connect. Needed for native USB port only
+    while (!Serial)  // wait for serial port to connect after SD has been read
     {
     }
   }
