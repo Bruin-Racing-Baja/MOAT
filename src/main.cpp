@@ -223,33 +223,34 @@ void setup()
 
 int o_control[11];
 
-//Define pointers to the returned values to increase readability
-int *status = &o_control[0];
-int *rpm = &o_control[1];
-int *actuator_velocity = &o_control[2];
-int *inbound_triggered = &o_control[3];
-int *outbound_triggered = &o_control[4];
-int *time_start = &o_control[5];
-int *time_end = &o_control[6];
-int *encoder_position = &o_control[7];
-int *odrive_voltage = &o_control[8];
-int *odrive_current = &o_control[9];
-int *error = &o_control[10];
+// Define pointers to the returned values to increase readability
+int* status = &o_control[0];
+int* rpm = &o_control[1];
+int* actuator_velocity = &o_control[2];
+int* inbound_triggered = &o_control[3];
+int* outbound_triggered = &o_control[4];
+int* time_start = &o_control[5];
+int* time_end = &o_control[6];
+int* encoder_position = &o_control[7];
+int* odrive_voltage = &o_control[8];
+int* odrive_current = &o_control[9];
+int* error = &o_control[10];
 
 int save_count = 0;
 int last_save = 0;
 void loop()
 {
   // Main control loop, with actuator
-  actuator.control_function(status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_start, time_end, encoder_position, odrive_voltage, odrive_current, error);
+  actuator.control_function(status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_start, time_end,
+                            encoder_position, odrive_voltage, odrive_current, error);
+  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
 
   // Report output with log
   if (*status != 3)
   {
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, 
-               *status, *rpm, *actuator_velocity, *encoder_position,
-               *inbound_triggered, *outbound_triggered, *time_start, *time_end, *odrive_voltage, (*odrive_current * 1000.0),
-               cooler_o.get_temperature());
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
+               *inbound_triggered, *outbound_triggered, *time_start, *time_end, *odrive_voltage,
+               (*odrive_current * 1000.0), cooler_o.get_temperature());
   }
 
   // Save data to sd every SAVE_THRESHOLD

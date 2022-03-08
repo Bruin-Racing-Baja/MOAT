@@ -127,7 +127,9 @@ int* Actuator::homing_sequence(int* out)
   return out;
 }
 
-void Actuator::control_function(int* status, int* rpm, int* actuator_velocity, int* inbound_triggered, int* outbound_triggered, int* time_start, int* time_end, int* encoder_position, int* odrive_voltage, int* odrive_current, int* error_out)
+void Actuator::control_function(int* status, int* rpm, int* actuator_velocity, int* inbound_triggered,
+                                int* outbound_triggered, int* time_start, int* time_end, int* encoder_position,
+                                int* odrive_voltage, int* odrive_current, int* error_out)
 {
   // Returns an array of ints in format
   //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos,
@@ -161,8 +163,8 @@ void Actuator::control_function(int* status, int* rpm, int* actuator_velocity, i
       {
         // If below min rpm and shifted out all the way
         odrive.run_state(k_motor_number, 1, false, 0);  // SET IDLE
-        *status = 4;                                     // Report status
-        *actuator_velocity = 0;                                     // Report velocity
+        *status = 4;                                    // Report status
+        *actuator_velocity = 0;                         // Report velocity
         *outbound_triggered = 1;
         *odrive_voltage = odrive.get_voltage();
         *odrive_current = odrive.get_cur();
