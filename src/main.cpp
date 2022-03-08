@@ -73,9 +73,8 @@ void setup()
     // This means that no SD card was found or there was an error with it
     // We will halt the program
     Serial.println("No SD card found, halting");
-    while (1) 
+    while (1)
     {
-
     }
   }
   else
@@ -101,7 +100,6 @@ void setup()
       Serial.println("No settings file found, halting");
       while (1)
       {
-
       }
     }
   }
