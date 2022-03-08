@@ -212,8 +212,10 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
-  if (MODE == 0) {
-    Log.notice('"status", "rpm", "actuator_velocity", "encoder_position", "fully_shifted_in", "fully_shifted_out", "control_start_time", "control_stop_time", "odrive_voltage", "odrive_current", "cooler_temperature"');
+  if (MODE == 0)
+  {
+    Log.notice(
+        '"status", "rpm", "actuator_velocity", "encoder_position", "fully_shifted_in", "fully_shifted_out", "control_start_time", "control_stop_time", "odrive_voltage", "odrive_current", "cooler_temperature"');
   }
   save_log();
 }
