@@ -262,7 +262,10 @@ void loop()
     // Log.notice(actuator.odrive_errors().c_str());
     save_log();
     save_count = 0;
-    digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
+    if (!(o_control[8] > 20))
+    {
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
   }
   save_count++;
 }
