@@ -248,7 +248,7 @@ void loop()
   // Report output with log
   if (*status != 3)
   {
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %u, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
                *inbound_triggered, *outbound_triggered, *time_start, *time_end, *odrive_voltage,
                (*odrive_current * 1000.0), cooler_o.get_temperature());
   }
@@ -258,12 +258,9 @@ void loop()
   {
     int save_start = millis();
     // Log.notice(actuator.odrive_errors().c_str());
-    Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    Log.verbose("Battery level ok? %d", o_control[8] > 20);
     digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
-    Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
 }
