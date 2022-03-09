@@ -34,7 +34,7 @@ General code to oversee all functions of the Teensy
 // LOGGING AND SD SETTINGS
 File log_file;
 // Create constant control object to read from sd
-// Constant constant;
+Constant constant;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o(&constant);
