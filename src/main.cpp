@@ -1,4 +1,4 @@
-/* 
+/*
 MOAT - Model 2O Awesome Teensy
 mk. V.0
 General code to oversee all functions of the Teensy
@@ -6,260 +6,278 @@ General code to oversee all functions of the Teensy
 
 #include <Arduino.h>
 
-//Libraries
-#include <SPI.h>
-#include <SoftwareSerial.h>
-#include <HardwareSerial.h>
-#include <string>
+// Libraries
+#include <SPI.h>  // MUST BE INCLUDED BEFORE ArduinoLog.h
 #include <ArduinoLog.h>
+#include <HardwareSerial.h>
 #include <SD.h>
+#include <SoftwareSerial.h>
+#include <string>
 
-//Classes
+// Classes
 #include <Actuator.h>
-#include <Radio.h>
+// #include <Constant.h>
 #include <Cooling.h>
+#include <Radio.h>
 
-//General Settings
-  //Mode
-  /*
-  Operating - 0 - For normal operation, initializes then runs main control fn in loop
-    May disable logging object in its library config to free up memory, if relevant
+// Most settings are located in the SD card settings file, and can be changed there
+#define MODE 0
 
-  Headless Diagnostic - 1 - Runs diagnostic test 100 times, then stops, saves to sd
-    DO NOT CONNECT TO TEENSY WHEN MAIN POWER IS ON OR IT COULD DAMAGE YOUR LAPTOP
-    This is used for testing in sitations where the main power is on, and data will be retrieved from sd
-
-  Serial Diagnostic - 2 - Runs diagnostic test continuously, prints to serial
-
-  Headless Horseman - 3 - For operation where data is not recorded
-    This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up
-    NOTE: Recommend disabling logging object in its include
-
-  */
-  #define MODE 0
-
-  //Startup
-  #define WAIT_SERIAL_STARTUP 0  //Set headless mode or not
-  #define HOME_ON_STARTUP 1
-  //#define RUN_DIAGNOSTIC_STARTUP 0
-
-  //Log
-  #define LOG_LEVEL LOG_LEVEL_NOTICE
-  #define SAVE_THRESHOLD 1000 //Sets how often the log object will save to sd when in operating mode
-  //Note: By default the log requires and outputs to the SD card, and can be changed in setup
-
-  //Actuator
-
-
-  //Diagnostic Mode
-  #define DIAGNOSTIC_MODE_SHOTS 100  //Number of times diagnostic mode is run
+#define DIAGNOSTIC_MODE_SHOTS 100
+// Startup
+#define WAIT_SERIAL_STARTUP_SD 0  // Set to stop program before the sd card initialization
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
+// ODrive Settings
+#define ODRIVE_STARTING_TIMEOUT 1000  // [ms]
 
-//ODrive Settings
-  #define odrive_starting_timeout 1000 //NOTE: In ms
+// LOGGING AND SD SETTINGS
+File log_file;
+// Create constant control object to read from sd
+Constant constant;
 
-  //PINS
+//<--><--><--><-->< Subsystems ><--><--><--><--><-->
+Cooling cooler_o(&constant);
 
-  //CREATE OBJECT
-  // ODrive odrive(Serial1);
+// Acuator settings
+#define PRINT_TO_SERIAL false
 
-//LOGGING AND SD SETTINGS
-  //Create file to log to
-  File logFile;
-  //Cannot create logging object until init
+Actuator actuator(Serial1, &constant, PRINT_TO_SERIAL);
 
-//<--><--><--><-->< Sub-Systems ><--><--><--><--><-->
-//COOLING SETTINGS
-  Cooling cooler_o;
-
-//ACTUATOR SETTINGS
-  //PINS TEST BED
-  #define PRINTTOSERIAL false
-  // #define enc_A 20
-  // #define enc_B 21
-  // #define hall_inbound 12
-  // #define hall_outbound 11
-  // #define gearTooth_engine 15 //rn just attached to encoder B haha
-
-  //PINS CAR
-  #define enc_A 2
-  #define enc_B 3
-  #define hall_inbound 22
-  #define hall_outbound 23
-  #define gearTooth_engine 41
-  #define gearTooth_gearbox 40
-
-
-  //CREATE OBJECT
-
-  static void external_count_egTooth();
-  static void external_count_gbTooth();
-
-  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, gearTooth_gearbox, hall_inbound, hall_outbound, &external_count_egTooth, &external_count_gbTooth,PRINTTOSERIAL);
-
-  static void external_count_egTooth(){
-    actuator.count_egTooth();
-  }
-  static void external_count_gbTooth(){
-    actuator.count_gbTooth();
-  }
-
-//FREE FUNCTIONS
-
-//NOTE: May want to test expanding this function to take in a file object to save
-void save_log() {
-  //Closes and then opens the file stream
-  logFile.close();
-  logFile = SD.open("log.txt", FILE_WRITE);
+// externally declared for interrupt
+void external_count_eg_tooth()
+{
+  actuator.count_eg_tooth();
+}
+void external_count_gb_tooth()
+{
+  actuator.count_gb_tooth();
 }
 
-void setup() {
-  //-------------Wait for serial-----------------
-  if(WAIT_SERIAL_STARTUP) {
-    while (!Serial) {
-      ; // wait for serial port to connect. Needed for native USB port only
+// NOTE: May want to test expanding this function to take in a file object to save
+void save_log()
+{
+  // Closes and then opens the file stream
+  log_file.close();
+  log_file = SD.open(constant.log_name.c_str(), FILE_WRITE);
+}
+
+void setup()
+{
+  if (WAIT_SERIAL_STARTUP_SD)
+  {
+    while (!Serial)  // wait for serial port to connect, before SD card init
+    {
     }
   }
-  //-------------Logging and SD Card-----------------
-  SD.begin(BUILTIN_SDCARD);
-  logFile = SD.open("log.txt", FILE_WRITE);
 
-  Log.begin(LOG_LEVEL, &logFile, false);
+  //-------------Initializing SD and Loading Settings-----------------
+  if (!SD.begin(BUILTIN_SDCARD))
+  {
+    // This means that no SD card was found or there was an error with it
+    // We will halt the program
+    Serial.println("No SD card found, halting");
+    while (1)
+    {
+    }
+  }
+  else
+  {
+    if (SD.exists("settings.txt"))
+    {
+      // This means the settings file exists, so we will load it
+      // This is where the bulk of the development for this feature will occur as we need to read in certain values,
+      // then set them in the program accordingly
+      File settingFile = SD.open("settings.txt", FILE_READ);
+      while (settingFile.available())
+      {
+        settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
+        constant.init(settingFile);        // Creates the constant object
+      }
+      settingFile.close();
+      Log.verbose(constant.get_values().c_str());
+    }
+    else
+    {
+      // This means the settings file does not exist, but there is an SD card present
+      // WIll halt the program
+      Serial.println("No settings file found, halting");
+      while (1)
+      {
+      }
+    }
+    //-------------Log file splitting-----------------
+    int log_file_number = 0;
+    while (SD.exists(("/logs/log_" + String(log_file_number) + ".txt").c_str()))
+    {
+      log_file_number++;
+    }
+    constant.log_name = "/logs/log_" + String(log_file_number) + ".txt";
+  }
+  //-------------Loading Settings-----------------
+  // This implementation will not work, but it is still here as we may pursue this in the future
+  // MODE = constant.mode;
+
+  //-------------Wait for serial-----------------//
+  if (constant.wait_serial_startup)
+  {
+    while (!Serial)  // wait for serial port to connect after SD has been read
+    {
+    }
+  }
+
+  //-------------Logging and SD Card-----------------
+
+  log_file = SD.open(constant.log_name.c_str(), FILE_WRITE);
+
+  Log.begin(constant.log_level, &log_file, false);
   Log.notice("Initialization Started" CR);
   Log.verbose("Time: %d" CR, millis());
 
   save_log();
 
-  //------------------Odrive------------------
-
-  //At this time the following code is depricated, but until we make final decisions about the odrive class, we will leave it in
-
-  // int odrive_init = actuator.odrive.init(1000);
-  // if (odrive_init) {
-  //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
-  // }
-  // else {
-  //   Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
-  // }
-  // Serial.println("ODrive init: " + String(odrive_init));
-  // for (int i = 0; i < 20; i++) {
-  //   Serial.println(odrive.get_voltage());
-  // }
-  // logFile.close();
-  // logFile = SD.open("log.txt", FILE_WRITE);
-
-  //------------------Cooling------------------
+  //------------------Cooling------------------//
 
   cooler_o.init();
-  //-------------Actuator-----------------
-  //General Init
-  int o_actuator_init = actuator.init(odrive_starting_timeout);
-  if(o_actuator_init) {
+
+  //-------------Actuator-----------------//
+  // TODO: handle duplicate logs
+  // General Init
+  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth, external_count_gb_tooth);
+  if (o_actuator_init)
+  {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
     Serial.println("Actuator init failed code: " + String(o_actuator_init));
   }
-  else {
+  else
+  {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
     Log.notice("Proportional gain (x1000): %d" CR, (1000.0 * actuator.get_p_value()));
     Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
   save_log();
-  //Homing if enabled
-  if (HOME_ON_STARTUP) {
+
+  // Homing if enabled
+  if (constant.home_on_startup)
+  {
     int o_homing[3];
     actuator.homing_sequence(o_homing);
-    if (o_homing[0]) {
+    if (o_homing[0])
+    {
       Log.error("Homing Failed code: %d" CR, o_homing[0]);
     }
-    else {
+    else
+    {
       Log.verbose("Homing Success code: %d" CR, o_homing[0]);
       Log.notice("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
     }
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
+  if (MODE == 0)
+  {
+    Log.notice(
+        '"status", "rpm", "actuator_velocity", "encoder_position", "fully_shifted_in", "fully_shifted_out", "control_start_time", "control_stop_time", "odrive_voltage", "odrive_current", "cooler_temperature"');
+  }
   save_log();
 }
 
-//OPERATING MODE
+// OPERATING MODE
 #if MODE == 0
 
 int o_control[11];
+
+// Define pointers to the returned values to increase readability
+int* status = &o_control[0];
+int* rpm = &o_control[1];
+int* actuator_velocity = &o_control[2];
+int* inbound_triggered = &o_control[3];
+int* outbound_triggered = &o_control[4];
+int* time_start = &o_control[5];
+int* time_end = &o_control[6];
+int* encoder_position = &o_control[7];
+int* odrive_voltage = &o_control[8];
+int* odrive_current = &o_control[9];
+int* error = &o_control[10];
+int* wheel_rpm = &o_control[11];
+
 int save_count = 0;
 int last_save = 0;
-void loop() {
-  //Main control loop, with actuator
-  actuator.control_function(o_control);
+int* status = &o_control[0];
+void loop()
+{
+  // Main control loop, with actuator
+  actuator.control_function(status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_start, time_end,
+                            encoder_position, odrive_voltage, odrive_current, error, wheel_rpm);
   //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
 
-  //Report output with log
-  if (o_control[0] == 3){
-    Log.verbose("Status: %d  Engine RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,  Wheel RPM: %d" CR,
-    o_control[0], o_control[1],o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[11]);
+  // Report output with log
+  if (*status != 3)
+  {
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %u, %d, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
+               *inbound_triggered, *outbound_triggered, *time_start, *time_end, *odrive_voltage,
+               (*odrive_current * 1000.0), cooler_o.get_temperature(), *wheel_rpm);
   }
-  else {
-    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
-    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
-    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d , %d" CR,
-    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.thermo_check(), o_control[11]);
-  }
-  
-  //Save data to sd every SAVE_THRESHOLD
-  if (save_count > SAVE_THRESHOLD) {
+
+  // Save data to sd every SAVE_THRESHOLD
+  if (save_count > constant.save_threshold)
+  {
     int save_start = millis();
-    Log.notice(actuator.odrive_errors().c_str());
-    Log.verbose("Time since last save: %d" CR, save_start - last_save);
+    // Log.notice(actuator.odrive_errors().c_str());
     save_log();
     save_count = 0;
-    Log.verbose("Battery level ok? %d", o_control[8] > 20);
-    digitalWrite(LED_BUILTIN, !(o_control[8] > 20)); //TURN LED ON IF BATTERY TOO LOW
-    Log.verbose("Saved log in %d ms" CR, millis() - save_start);
+    if (!(o_control[8] > 20))
+    {
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
   }
   save_count++;
 }
 
-//HEADLESS DIAGNOSTIC MODE
+// HEADLESS DIAGNOSTIC MODE
 #elif MODE == 1
 bool is_main_power = true;
 
-void loop() {
+void loop()
+{
   Log.notice("DIAGNOSTIC MODE" CR);
   Log.verbose("Running diagnostic function" CR);
 
-  for (int i = 0; i < DIAGNOSTIC_MODE_SHOTS; i++) {
-    //Serial.println(actuator.diagnostic(false));
+  for (int i = 0; i < DIAGNOSTIC_MODE_SHOTS; i++)
+  {
+    // Serial.println(actuator.diagnostic(false));
     Log.notice("%d", i);
-    //Assumes main power is connected
+    // Assumes main power is connected
     Log.notice((actuator.diagnostic(is_main_power, false)).c_str());
-    Log.notice("Thermocouple temp: %d", cooler_o.thermo_check());
+    Log.notice("Thermocouple temp: %d", cooler_o.get_temperature());
     delay(100);
   }
 
   Log.verbose("End of diagnostic function" CR);
-  logFile.close();
+  log_file.close();
   exit(0);
 }
 
-//SERIAL DIAGNOSTIC MODE
+// SERIAL DIAGNOSTIC MODE
 #elif MODE == 2
 bool is_main_power = false;
 
-void loop() {
-  //Assumes main power isnt connected as connected to serial
+void loop()
+{
+  // Assumes main power isnt connected as connected to serial
   Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
-  Log.notice("Thermo temp: %d" CR, cooler_o.thermo_check());
-  Serial.println(cooler_o.thermo_check());
-  //Serial.println(analogRead(38));
+  Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
+  Serial.println(cooler_o.get_temperature());
+  // Serial.println(analogRead(38));
   delay(100);
 }
 
-//HEADLESS HORSEMAN MODE
+// HEADLESS HORSEMAN MODE
 #elif MODE == 3
 int temp = 0;
 
-void loop() {
+void loop()
+{
   temp = cooler_o.thermo_check();
   Serial.println(temp);
   delay(100);
@@ -271,7 +289,6 @@ void loop() {
 }
 
 #endif
-
 
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
@@ -316,4 +333,3 @@ void loop() {
 //                                                          |
 //                                mGk                       |
 */
-

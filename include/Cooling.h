@@ -2,35 +2,32 @@
 #define COOLING_H
 
 #include <Arduino.h>
-
+#include <Constant.h>
 #include <ODrive.h>
 
 #define AREF 3.3
 #define ADC_RESOLUTION 10
-#define motor_number 1  //ODrive axis
 
 class Cooling
 {
-    static const double m_temp_threshold = 100; // C
-    static const int m_thermocouple_pin = 38;   // C
-    static const float m_voltage = 3.3;
-    static const int m_cooling_rpm = 500;
-    static const int m_cycle_period_millis = 10;
+  static const int k_motor_number = 1;
+  static const int k_thermocouple_pin = 38;  // C
+  static const float k_voltage = 3.3;        // volts
 
 public:
-    // Cooling;
+  Cooling(Constant* constant_i);
+  void init();
+  void control_function();
 
-    void init();
-    void control_function();
-
-    float thermo_check();
-    void stop_fan();
-    void set_fan_speed(int rpm);
+  float get_temperature();
+  void stop_fan();
+  void set_fan_speed(int rpm);
 
 private:
-    bool m_fan_enabled;
-    unsigned long m_last_control_execution;
-    unsigned long m_control_execution_count;
+  bool m_fan_enabled;
+  unsigned long m_last_control_execution;
+  unsigned long m_control_execution_count;
+  Constant* constant;
 };
 
-#endif //! COOLING_H
+#endif  //! COOLING_H

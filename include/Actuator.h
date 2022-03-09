@@ -1,114 +1,106 @@
-#ifndef actuator_h
-#define actuator_h
+#ifndef ACTUATOR_H
+#define ACTUATOR_H
 
 #include <Arduino.h>
+#include <SPI.h>
+#include <ArduinoLog.h>
+#include <Constant.h>
 #include <Encoder.h>
 #include <ODrive.h>
-#include <ArduinoLog.h>
+class Actuator
+{
+public:
+  const static int k_enc_ppr = 88;
+  const static int k_motor_number = 0;       // odrive axis
+  const static int k_homing_timeout = 50e3;  // ms
+  const static int k_min_rpm = 1000;         // rpm
 
-//CONSTANTS
-#define enc_PPR 88
-#define motor_number 0  //Odrive axis
-#define homing_timeout 50000 //NOTE: In ms
-#define min_rpm 1000
-#define cycle_period 10e4 //In microseconds (10^-6 seconds) If u wanna use freq instead : 1/x=T
-#define rpm_allowance 30
+  const int k_rpm_allowance = 30;
 
+  constexpr static float k_linear_distance_per_rotation = 0.125;  // inches/rotation
+  constexpr static float k_linear_shift_length = 3.5;             // inches
+  constexpr static int32_t k_encoder_count_shift_length =
+      (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048;
+  constexpr static int k_eg_teeth_per_rotation = 88;
 
-#define linearDistancePerRotation .125 //inches per rotation
-#define linearShiftLength 3.50 //inches
-const int32_t encoderCountShiftLength = (linearShiftLength/linearDistancePerRotation)*4*2048;
-const float cycle_period_minutes = (cycle_period/1000000)/60; //the cycle period just in minutes
-const int cycle_period_millis = cycle_period/10e3;
-const int cycle_frequency_minutes = 1/cycle_period_minutes; 
+  // reference signals form tyler
+  const unsigned int k_eg_idle = 1750;    // rpm
+  const unsigned int k_eg_engage = 2100;  // rpm
+  const unsigned int k_eg_launch = 2600;  // rpm
+  const unsigned int k_eg_torque = 2700;  // rpm
+  const unsigned int k_eg_power = 3400;   // rpm
 
-#define egTeethPerRotation 88
+  //  pins
+  const int enc_a_pin = 2;
+  const int enc_b_pin = 3;
+  const int gb_tooth_pin = 40;
+  const int eg_tooth_pin = 41;
+  const int hall_inbound_pin = 22;
+  const int hall_outbound_pin = 23;
 
-// reference signals from tyler
-// ***** ENGINE ***** //
-const unsigned int EG_IDLE = 1750;
-const unsigned int EG_ENGAGE = 2100;
-const unsigned int EG_LAUNCH = 2600;
-const int EG_TORQUE = 2700; //<--- Going for this one 
-const unsigned int EG_POWER = 3400; 
-const unsigned int desired_rpm = 2250;
-const float RPM_TARGET_MULTIPLIER = 1.5;
+  Actuator(HardwareSerial& serial, Constant* constant_i, bool print_to_serial);
 
-const float proportionalGain = .015; // gain of the p controller
+  int init(int odrive_timeout, void (*external_count_eg_tooth)(), void(*external_count_gb_tooth)());
+  void control_function(int* status, int* rpm, int* actuator_velocity, int* inbound_triggered, int* outbound_triggered,
+                        int* time_start, int* time_end, int* encoder_position, int* odrive_voltage, int* odrive_current,
+                        int* error_out, int* wheel_rpm);
+  int* homing_sequence(int* out);
 
-class Actuator{
-    public:
-    Actuator(
-        HardwareSerial& serial,
-        const int enc_A, 
-        const int enc_B, 
-        const int egTooth, 
-        const int gbTooth, 
-        const int hall_inbound, 
-        const int hall_outbound,
-        void (*external_count_egTooth)(),
-        void (*external_count_gbTooth)(),
-        bool printToSerial);
+  int get_status_code();
+  int get_encoder_pos();
+  float get_p_value();
+  float communication_speed();
+  void count_eg_tooth();
+  void count_gb_tooth();
+  String odrive_errors();
 
-    int init(int odrive_timeout); 
+  String diagnostic(bool is_mainpower_on, bool serial_out);
 
-    int* control_function(int* out);
-    int* homing_sequence(int* out);
+private:
+  int target_rpm();
+  void test_voltage();
+  int status;
+  Encoder encoder;
+  ODrive odrive;
+  Constant* constant;
 
+  // Functions that get information from Odrive
+  int get_encoder_count();
 
-    int get_status_code();
-    int get_encoder_pos();
-    float get_p_value();
-    float communication_speed();
-    void count_egTooth();
-    void count_gbTooth();
-    String odrive_errors();
-    
+  // Functions that help calculate rpm
+  unsigned long m_last_control_execution;
+  float calc_engine_rpm(float dt);
+  float calc_wheel_rpm(float dt);
 
-    String diagnostic(bool is_mainpower_on, bool serial_out);
+  // Const
+  bool m_print_to_serial;
 
-    private:
-    
-    int target_rpm();
-    void test_voltage();
-    int status;
-    Encoder encoder;
-    ODrive odrive;
+  // member variables for sensor pins
+  int m_eg_tooth_pin;
+  int m_gb_tooth_pin;
+  int m_hall_inbound_pin;
+  int m_hall_outbound_pin;
 
-    // Functions that get information from Odrive
-    int get_encoder_count();
+  // Encoder limit values
+  int32_t m_encoder_outbound;  // out of the car
+  int32_t m_encoder_inbound;   // towards the engine
 
-    //Functions that help calculate rpm
-    unsigned long last_control_execution;
-    void (*m_external_count_egTooth)();
-    void (*m_external_count_gbTooth)();
-    double calc_engine_rpm(float dt);
-    double calc_wheel_rpm(float dt);
+  // Debugging vars
+  int m_control_function_count;
+  bool m_has_run;
 
-    // Const 
-    bool m_printToSerial;
+  // running gear tooth sensor counts
+  volatile unsigned long m_eg_tooth_count;
+  volatile unsigned long m_gb_tooth_count;
+  unsigned long m_last_eg_tooth_count;
+  unsigned long m_last_gb_tooth_count;
+  float m_eg_rpm = 0;
+  float m_gb_rpm = 0;
+  float m_currentrpm_eg_accum = 0;
 
-    // member variables for sensor pins
-    int m_egTooth;
-    int m_gbTooth;
-    int m_hall_inbound;
-    int m_hall_outbound;
-
-    // Encoder limit values
-    int32_t m_encoder_outbound; //out of the car
-    int32_t m_encoder_inbound; //towards the engine
-
-    //Debugging vars
-    int control_function_count;
-    bool hasRun;
-
-    //running gear tooth sensor counts
-    volatile unsigned long gbTooth_Count;
-    volatile unsigned long egTooth_Count;
-    unsigned long egTooth_Count_last;
-    unsigned long gbTooth_Count_last;
-    int currentrpm_eg = 0;
-    int currentrpm_wheel = 0;
+  // running control terms
+  int error = 0;
+  int prev_error = 0;
 };
 
-#endif /*ACTUATOR_H*/
+#endif

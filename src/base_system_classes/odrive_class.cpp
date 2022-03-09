@@ -1,125 +1,153 @@
-#include <ODrive.h>
 #include <HardwareSerial.h>
+#include <ODrive.h>
 #include <SoftwareSerial.h>
 
-template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
-template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
-
-ODrive::ODrive(
-    HardwareSerial& serial
-)
-:OdriveSerial(serial){
+template <class T>
+inline Print& operator<<(Print& obj, T arg)
+{
+  obj.print(arg);
+  return obj;
+}
+template <>
+inline Print& operator<<(Print& obj, float arg)
+{
+  obj.print(arg, 4);
+  return obj;
 }
 
-int ODrive::init(int timeout = 1000){
-    /*
-    Initializes ODrive <--> Teensy
-    Will wait for connection, and return error if unsuccessful after timeout
+ODrive::ODrive(HardwareSerial& serial) : OdriveSerial(serial)
+{
+}
 
-    */
-    OdriveSerial.begin(115200);
+int ODrive::init(int timeout)
+{
+  /*
+  Initializes ODrive <--> Teensy
+  Will wait for connection, and return error if unsuccessful after timeout
 
-    long start = millis();
-    while(ODrive::get_voltage() <= 1){
-        if(millis() - start > timeout){
-            status = 13;
-            return status;
-        }
+  */
+  OdriveSerial.begin(115200);
+
+  long start = millis();
+  while (ODrive::get_voltage() <= 1)
+  {
+    if (millis() - start > timeout)
+    {
+      status = 13;
+      return status;
     }
-    status = 0;
-    return status;
+  }
+  status = 0;
+  return status;
 };
 
 //-----------------ODrive Setters--------------//
-bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float timeout){
-    int timeout_ctr = (int)(timeout * 10.0f);
-    OdriveSerial << "w axis" << axis << ".requested_state " << requested_state << '\n';
-    if (wait_for_idle) {
-        do {
-            delay(100);
-            OdriveSerial << "r axis" << axis << ".current_state\n";
-        } while (read_int() != 1 && --timeout_ctr > 0);
-    }
+bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float timeout)
+{
+  int timeout_ctr = (int)(timeout * 10.0f);
+  OdriveSerial << "w axis" << axis << ".requested_state " << requested_state << '\n';
+  if (wait_for_idle)
+  {
+    do
+    {
+      delay(100);
+      OdriveSerial << "r axis" << axis << ".current_state\n";
+    } while (read_int() != 1 && --timeout_ctr > 0);
+  }
 
-    return timeout_ctr > 0;
+  return timeout_ctr > 0;
 };
 
-void ODrive::set_velocity(int motor_number, float velocity) {
-    OdriveSerial << "v " << motor_number  << " " << velocity << " " << "0.0f" << "\n";;
+void ODrive::set_velocity(int motor_number, float velocity)
+{
+  OdriveSerial << "v " << motor_number << " " << velocity << " "
+               << "0.0f"
+               << "\n";
+  ;
 }
 
 //-----------------ODrive Getters--------------//
-float ODrive::get_vel(int motor_number) {
-	OdriveSerial<< "r axis" << motor_number << ".encoder.vel_estimate\n";
-	return ODrive::read_float();
+float ODrive::get_vel(int motor_number)
+{
+  OdriveSerial << "r axis" << motor_number << ".encoder.vel_estimate\n";
+  return ODrive::read_float();
 }
 
-float ODrive::get_voltage() {
-    OdriveSerial << "r vbus_voltage\n";
-    return ODrive::read_float();
+float ODrive::get_voltage()
+{
+  OdriveSerial << "r vbus_voltage\n";
+  return ODrive::read_float();
 }
 
-float ODrive::get_cur(){
-    OdriveSerial<< "r ibus\n";
-    return ODrive::read_float();
+float ODrive::get_cur()
+{
+  OdriveSerial << "r ibus\n";
+  return ODrive::read_float();
 }
 
-String ODrive::dump_errors(){
-    String output= "";
-    output += "system: ";
+String ODrive::dump_errors()
+{
+  String output = "";
+  output += "system: ";
 
-    OdriveSerial<< "r error\n";
+  OdriveSerial << "r error\n";
+  output += ODrive::read_string();
+  for (int axis = 0; axis < 2; ++axis)
+  {
+    output += "\naxis";
+    output += axis;
+
+    output += "\n  axis: ";
+    OdriveSerial << "r axis" << axis << ".error\n";
     output += ODrive::read_string();
-    for (int axis = 0; axis < 2; ++axis){
-        output += "\naxis";
-        output += axis;
 
-        output += "\n  axis: ";
-        OdriveSerial<< "r axis"<<axis<<".error\n";
-        output += ODrive::read_string();
+    output += "\n  motor: ";
+    OdriveSerial << "r axis" << axis << ".motor.error\n";
+    output += ODrive::read_string();
 
-        output += "\n  motor: ";
-        OdriveSerial<< "r axis"<<axis<<".motor.error\n";
-        output += ODrive::read_string();
+    output += "\n  sensorless_estimator: ";
+    OdriveSerial << "r axis" << axis << ".sensorless_estimator.error\n";
+    output += ODrive::read_string();
 
-        output += "\n  sensorless_estimator: ";
-        OdriveSerial<< "r axis"<<axis<<".sensorless_estimator.error\n";
-        output += ODrive::read_string();
+    output += "\n  encoder: ";
+    OdriveSerial << "r axis" << axis << ".encoder.error\n";
+    output += ODrive::read_string();
 
-        output += "\n  encoder: ";
-        OdriveSerial<< "r axis"<<axis<<".encoder.error\n";
-        output += ODrive::read_string();
+    output += "\n  controller: ";
+    OdriveSerial << "r axis" << axis << ".controller.error\n";
+    output += ODrive::read_string();
+  }
+  return output;
+}
 
-        output += "\n  controller: ";
-        OdriveSerial<< "r axis"<<axis<<".controller.error\n";
-        output += ODrive::read_string();
+String ODrive::read_string()
+{
+  String str = "";
+  static const unsigned long timeout = 1000;
+  unsigned long timeout_start = millis();
+  for (;;)
+  {
+    while (!OdriveSerial.available())
+    {
+      if (millis() - timeout_start >= timeout)
+      {
+        return str;
+      }
     }
-    return output;
+    char c = OdriveSerial.read();
+    if (c == '\n')
+      break;
+    str += c;
+  }
+  return str;
 }
 
-
-String ODrive::read_string() {
-    String str = "";
-    static const unsigned long timeout = 1000;
-    unsigned long timeout_start = millis();
-    for (;;) {
-        while (!OdriveSerial.available()) {
-            if (millis() - timeout_start >= timeout) {
-                return str;
-            }
-        }
-        char c = OdriveSerial.read();
-        if (c == '\n')
-            break;
-        str += c;
-    }
-    return str;
+float ODrive::read_float()
+{
+  return read_string().toFloat();
 }
 
-float ODrive::read_float() {
-    return read_string().toFloat();
-}
-
-int32_t ODrive::read_int() {
-    return read_string().toInt();
+int32_t ODrive::read_int()
+{
+  return read_string().toInt();
 }
