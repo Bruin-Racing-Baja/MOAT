@@ -40,7 +40,7 @@ public:
 
   Actuator(HardwareSerial& serial, Constant* constant_i, bool print_to_serial);
 
-  int init(int odrive_timeout, void (*external_count_eg_tooth)(), void(*external_count_gb_tooth)());
+  int init(int odrive_timeout, void (*external_count_eg_tooth)(), void (*external_count_gb_tooth)());
   void control_function(int* status, int* rpm, int* actuator_velocity, int* inbound_triggered, int* outbound_triggered,
                         int* time_start, int* time_end, int* encoder_position, int* odrive_voltage, int* odrive_current,
                         int* error_out, int* wheel_rpm);
