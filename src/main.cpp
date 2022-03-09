@@ -16,7 +16,7 @@ General code to oversee all functions of the Teensy
 
 // Classes
 #include <Actuator.h>
-#include <Constant.h>
+// #include <Constant.h>
 #include <Cooling.h>
 #include <Radio.h>
 
@@ -34,7 +34,7 @@ General code to oversee all functions of the Teensy
 // LOGGING AND SD SETTINGS
 File log_file;
 // Create constant control object to read from sd
-Constant constant;
+// Constant constant;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o(&constant);
@@ -172,6 +172,7 @@ void setup()
 int o_control[10];
 int save_count = 0;
 int last_save = 0;
+int* status = &o_control[0];
 void loop()
 {
   // Main control loop, with actuator

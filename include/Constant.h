@@ -14,6 +14,8 @@ struct Constant
   int mode;
   int home_on_startup;
   int wait_serial_startup;
+  int desired_rpm;
+  int log_num;
 
   // Log
   int log_level;
