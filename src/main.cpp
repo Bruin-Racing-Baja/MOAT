@@ -16,12 +16,12 @@ General code to oversee all functions of the Teensy
 
 // Classes
 #include <Actuator.h>
-#include <Constant.h>
+// #include <Constant.h>
 #include <Cooling.h>
 #include <Radio.h>
 
 // Most settings are located in the SD card settings file, and can be changed there
-int MODE;
+#define MODE 0
 
 #define DIAGNOSTIC_MODE_SHOTS 100
 // Startup
@@ -71,10 +71,11 @@ void setup()
   if (!SD.begin(BUILTIN_SDCARD))
   {
     // This means that no SD card was found or there was an error with it
-    // In this case, we will switch to the headless horseman mode and continue to operate with no logging
-    // This behaviour is arbitrary, and may be changed in the future
-    constant.init(nullptr, 3);
-    Log.warning("No SD card found, using headless horseman mode");
+    // We will halt the program
+    Serial.println("No SD card found, halting");
+    while (1)
+    {
+    }
   }
   else
   {
@@ -95,9 +96,11 @@ void setup()
     else
     {
       // This means the settings file does not exist, but there is an SD card present
-      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-      constant.init(nullptr, 1);
-      Log.warning("No settings file found, running in headless diagnostic mode");
+      // WIll halt the program
+      Serial.println("No settings file found, halting");
+      while (1)
+      {
+      }
     }
     //-------------Log file splitting-----------------
     int log_file_number = 0;
@@ -108,12 +111,13 @@ void setup()
     constant.log_name = "/logs/log_" + String(log_file_number) + ".txt";
   }
   //-------------Loading Settings-----------------
-  MODE = constant.mode;
+  // This implementation will not work, but it is still here as we may pursue this in the future
+  // MODE = constant.mode;
 
   //-------------Wait for serial-----------------//
   if (constant.wait_serial_startup)
   {
-    while (!Serial)  // wait for serial port to connect. Needed for native USB port only
+    while (!Serial)  // wait for serial port to connect after SD has been read
     {
     }
   }
@@ -166,38 +170,48 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
+  if (MODE == 0)
+  {
+    Log.notice(
+        '"status", "rpm", "actuator_velocity", "encoder_position", "fully_shifted_in", "fully_shifted_out", "control_start_time", "control_stop_time", "odrive_voltage", "odrive_current", "cooler_temperature"');
+  }
   save_log();
 }
 
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[10];
+int o_control[11];
+
+// Define pointers to the returned values to increase readability
+int* status = &o_control[0];
+int* rpm = &o_control[1];
+int* actuator_velocity = &o_control[2];
+int* inbound_triggered = &o_control[3];
+int* outbound_triggered = &o_control[4];
+int* time_start = &o_control[5];
+int* time_end = &o_control[6];
+int* encoder_position = &o_control[7];
+int* odrive_voltage = &o_control[8];
+int* odrive_current = &o_control[9];
+int* error = &o_control[10];
+
 int save_count = 0;
 int last_save = 0;
+int* status = &o_control[0];
 void loop()
 {
   // Main control loop, with actuator
-  actuator.control_function(o_control);
+  actuator.control_function(status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_start, time_end,
+                            encoder_position, odrive_voltage, odrive_current, error);
   //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
 
   // Report output with log
-  if (o_control[0] == 3)
+  if (*status != 3)
   {
-    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-                o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5],
-                o_control[6]);
-  }
-  else
-  {
-    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,
-    // Voltage: %d" CR,
-    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
-    //   o_control[8]);
-    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
-               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature());
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %u, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
+               *inbound_triggered, *outbound_triggered, *time_start, *time_end, *odrive_voltage,
+               (*odrive_current * 1000.0), cooler_o.get_temperature());
   }
 
   // Save data to sd every SAVE_THRESHOLD
@@ -205,12 +219,12 @@ void loop()
   {
     int save_start = millis();
     // Log.notice(actuator.odrive_errors().c_str());
-    Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    Log.verbose("Battery level ok? %d", o_control[8] > 20);
-    digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
-    Log.verbose("Saved log in %d ms" CR, millis() - save_start);
+    if (!(o_control[8] > 20))
+    {
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
   }
   save_count++;
 }
