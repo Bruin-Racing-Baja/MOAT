@@ -18,6 +18,7 @@ Actuator::Actuator(
     const int hall_inbound, 
     const int hall_outbound,
     void (*external_count_egTooth)(),
+    void (*external_count_gbTooth)(),
     bool printToSerial)
     :encoder(enc_A, enc_B), odrive(serial){
 
@@ -30,13 +31,18 @@ Actuator::Actuator(
     m_printToSerial = printToSerial;
 
     //initialize count vairables
+    gbTooth_Count = 0;
+    gbTooth_Count_last = 0;
+
     egTooth_Count = 0;
     egTooth_Count_last = 0;
     last_control_execution = 0;
     currentrpm_eg = 0;
+    currentrpm_wheel = 0;
 
     //Functions to support interrupt
     m_external_count_egTooth = external_count_egTooth;
+    m_external_count_gbTooth = external_count_gbTooth;
 
     //Test variable
     hasRun = false;
@@ -51,7 +57,7 @@ int Actuator::init(int odrive_timeout){
     //Attaches geartooth sensor to interrupt
     interrupts(); //allows interupts
     attachInterrupt(m_egTooth, m_external_count_egTooth, FALLING);
-
+    attachInterrupt(m_gbTooth, m_external_count_gbTooth, FALLING);
     //Initialize Odrive object
     int o_init = odrive.init(odrive_timeout);
     if(o_init != 0){
@@ -132,7 +138,7 @@ int* Actuator::homing_sequence(int* out){
 
 int* Actuator::control_function(int* out){
     //Returns an array of ints in format
-    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos, odrive_volt, odrive_current>
+    //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos, odrive_volt, odrive_current, wheel_rpm>
     out[5] = millis();
     control_function_count++;
     if(millis()-last_control_execution > cycle_period_millis){
@@ -144,6 +150,10 @@ int* Actuator::control_function(int* out){
         float dt = millis()-last_control_execution;
         currentrpm_eg = calc_engine_rpm(dt);
         out[1] = currentrpm_eg;
+        //Calculate Wheel Speed
+        currentrpm_wheel = calc_wheel_rpm(dt);
+        out[11] = currentrpm_wheel;
+
         //currentrpm_eg = analogRead(A2)*4;
         last_control_execution = millis();
 
@@ -235,6 +245,19 @@ int* Actuator::control_function(int* out){
 void Actuator::count_egTooth(){
     egTooth_Count++;
 }
+
+void Actuator::count_gbTooth(){
+  gbTooth_Count++;
+}
+double Actuator::calc_wheel_rpm(float dt){
+  noInterrupts();
+  float rps = (gbTooth_Count - gbTooth_Count_last)/dt;
+  float rpm = rps * 60;
+  gbTooth_Count_last = gbTooth_Count;
+  interrupts();
+  return rpm;
+}
+
 
 double Actuator::calc_engine_rpm(float dt){
     noInterrupts();

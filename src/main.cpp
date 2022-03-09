@@ -94,13 +94,17 @@ General code to oversee all functions of the Teensy
   //CREATE OBJECT
 
   static void external_count_egTooth();
+  static void external_count_gbTooth();
 
-  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, 0, hall_inbound, hall_outbound, &external_count_egTooth, PRINTTOSERIAL);
+  Actuator actuator(Serial1, enc_A, enc_B, gearTooth_engine, gearTooth_gearbox, hall_inbound, hall_outbound, &external_count_egTooth, &external_count_gbTooth,PRINTTOSERIAL);
 
   static void external_count_egTooth(){
     actuator.count_egTooth();
   }
-  
+  static void external_count_gbTooth(){
+    actuator.count_gbTooth();
+  }
+
 //FREE FUNCTIONS
 
 //NOTE: May want to test expanding this function to take in a file object to save
@@ -181,7 +185,7 @@ void setup() {
 //OPERATING MODE
 #if MODE == 0
 
-int o_control[10];
+int o_control[11];
 int save_count = 0;
 int last_save = 0;
 void loop() {
@@ -191,15 +195,15 @@ void loop() {
 
   //Report output with log
   if (o_control[0] == 3){
-    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
+    Log.verbose("Status: %d  Engine RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,  Wheel RPM: %d" CR,
+    o_control[0], o_control[1],o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[11]);
   }
   else {
     // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
     //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR,
-    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.thermo_check());
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d , %d" CR,
+    o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.thermo_check(), o_control[11]);
   }
   
   //Save data to sd every SAVE_THRESHOLD

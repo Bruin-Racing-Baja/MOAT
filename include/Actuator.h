@@ -47,6 +47,7 @@ class Actuator{
         const int hall_inbound, 
         const int hall_outbound,
         void (*external_count_egTooth)(),
+        void (*external_count_gbTooth)(),
         bool printToSerial);
 
     int init(int odrive_timeout); 
@@ -60,6 +61,7 @@ class Actuator{
     float get_p_value();
     float communication_speed();
     void count_egTooth();
+    void count_gbTooth();
     String odrive_errors();
     
 
@@ -79,7 +81,9 @@ class Actuator{
     //Functions that help calculate rpm
     unsigned long last_control_execution;
     void (*m_external_count_egTooth)();
+    void (*m_external_count_gbTooth)();
     double calc_engine_rpm(float dt);
+    double calc_wheel_rpm(float dt);
 
     // Const 
     bool m_printToSerial;
@@ -99,9 +103,12 @@ class Actuator{
     bool hasRun;
 
     //running gear tooth sensor counts
+    volatile unsigned long gbTooth_Count;
     volatile unsigned long egTooth_Count;
     unsigned long egTooth_Count_last;
+    unsigned long gbTooth_Count_last;
     int currentrpm_eg = 0;
+    int currentrpm_wheel = 0;
 };
 
 #endif /*ACTUATOR_H*/
