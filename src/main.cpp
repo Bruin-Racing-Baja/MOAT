@@ -25,7 +25,7 @@ General code to oversee all functions of the Teensy
 
 #define DIAGNOSTIC_MODE_SHOTS 100
 // Startup
-#define WAIT_SERIAL_STARTUP_SD 0  // Set to stop program before the sd card initialization
+#define WAIT_SERIAL_STARTUP_SD 1  // Set to stop program before the sd card initialization
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 // ODrive Settings
@@ -91,7 +91,9 @@ void setup()
         constant.init(settingFile);        // Creates the constant object
       }
       settingFile.close();
-      Log.verbose(constant.get_values().c_str());
+      // Log.verbose(constant.get_values().c_str());
+      Serial.println("Read in settings file constants");
+      Serial.println(constant.get_values());
     }
     else
     {
@@ -104,11 +106,12 @@ void setup()
     }
     //-------------Log file splitting-----------------
     int log_file_number = 0;
-    while (SD.exists(("/logs/log_" + String(log_file_number) + ".txt").c_str()))
+    while (SD.exists(("log_" + String(log_file_number) + ".txt").c_str()))
     {
       log_file_number++;
     }
-    constant.log_name = "/logs/log_" + String(log_file_number) + ".txt";
+    constant.log_name = "log_" + String(log_file_number) + ".txt";
+    Serial.println("Logging at: " + constant.log_name);
   }
   //-------------Loading Settings-----------------
   // This implementation will not work, but it is still here as we may pursue this in the future
@@ -172,8 +175,7 @@ void setup()
   Log.notice("Starting mode %d" CR, MODE);
   if (MODE == 0)
   {
-    Log.notice(
-        '"status", "rpm", "actuator_velocity", "encoder_position", "fully_shifted_in", "fully_shifted_out", "control_start_time", "control_stop_time", "odrive_voltage", "odrive_current", "cooler_temperature"');
+    Log.notice("[Insert data log format]");
   }
   save_log();
 }
@@ -198,7 +200,7 @@ int* error = &o_control[10];
 
 int save_count = 0;
 int last_save = 0;
-int* status = &o_control[0];
+
 void loop()
 {
   // Main control loop, with actuator
