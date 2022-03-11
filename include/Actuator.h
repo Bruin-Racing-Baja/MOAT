@@ -19,7 +19,7 @@ public:
   const int k_rpm_allowance = 30;
 
   constexpr static float k_linear_distance_per_rotation = 0.125;  // inches/rotation
-  constexpr static float k_linear_shift_length = 3.5;             // inches
+  constexpr static float k_linear_shift_length = 3;             // inches
   constexpr static int32_t k_encoder_count_shift_length =
       (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048;
   constexpr static float k_cycle_period_minutes = (k_cycle_period / 1e3) / 60;  // minutes
