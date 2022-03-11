@@ -19,7 +19,7 @@ ODrive::ODrive(HardwareSerial& serial) : OdriveSerial(serial)
 {
 }
 
-int ODrive::init(int timeout = 1000)
+int ODrive::init(int timeout)
 {
   /*
   Initializes ODrive <--> Teensy

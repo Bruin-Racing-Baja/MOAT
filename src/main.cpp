@@ -200,7 +200,7 @@ void setup()
   {
     int o_homing[3];
     actuator.homing_sequence(o_homing);
-    if (o_homing[0])
+    if (o_homing[0] != 0)
     {
       Log.error("Homing Failed code: %d" CR, o_homing[0]);
     }
@@ -227,7 +227,6 @@ void loop()
   // Main control loop, with actuator
   actuator.control_function(o_control);
   //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
-
   // Report output with log
   if (o_control[0] == 3)
   {
@@ -297,7 +296,7 @@ void loop()
   Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
   Serial.println(cooler_o.get_temperature());
   // Serial.println(analogRead(38));
-  delay(100);
+  delay(1000);
 }
 
 // HEADLESS HORSEMAN MODE
