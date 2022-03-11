@@ -10,7 +10,7 @@ class ODrive
 {
 public:
   ODrive(HardwareSerial& serial);
-  int init(int timeout = 1000);
+  int init(int timeout);
   bool run_state(int axis, int requested_state, bool wait_for_idle, float timeout);
   void set_velocity(int motor_number, float velocity);
 

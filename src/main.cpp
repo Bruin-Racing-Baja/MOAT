@@ -83,8 +83,8 @@ Cooling cooler_o;
 // PINS CAR
 #define ENC_A_PIN 2
 #define ENC_B_PIN 3
-#define HALL_INBOUND_PIN 23
-#define HALL_OUTBOUND_PIN 22
+#define HALL_INBOUND_PIN 22
+#define HALL_OUTBOUND_PIN 23
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
@@ -125,24 +125,24 @@ void setup()
   }
   else
   {
-    if (SD.exists("settings.txt"))
-    {
-      // This means the settings file exists, so we will load it
-      // This is where the bulk of the development for this feature will occur as we need to read in certain values,
-      // then set them in the program accordingly
-      File settingFile = SD.open("settings.txt", FILE_READ);
-      while (settingFile.available())
-      {
-        settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
-        constant.init(settingFile);        // Creates the constant object
-      }
-    }
-    else
-    {
-      // This means the settings file does not exist, but there is an SD card present
-      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-      // constant.init(nullptr, 1);
-    }
+    // if (SD.exists("settings.txt"))
+    // {
+    //   // This means the settings file exists, so we will load it
+    //   // This is where the bulk of the development for this feature will occur as we need to read in certain values,
+    //   // then set them in the program accordingly
+    //   File settingFile = SD.open("settings.txt", FILE_READ);
+    //   while (settingFile.available())
+    //   {
+    //     settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
+    //     constant.init(settingFile);        // Creates the constant object
+    //   }
+    // }
+    // else
+    // {
+    //   // This means the settings file does not exist, but there is an SD card present
+    //   // In this case, we will operate in headless diagnostic mode as we dont know the user intention
+    //   // constant.init(nullptr, 1);
+    // }
   }
 
   //-------------Logging and SD Card-----------------
@@ -200,7 +200,7 @@ void setup()
   {
     int o_homing[3];
     actuator.homing_sequence(o_homing);
-    if (o_homing[0])
+    if (o_homing[0] != 0)
     {
       Log.error("Homing Failed code: %d" CR, o_homing[0]);
     }
@@ -226,7 +226,6 @@ void loop()
   // Main control loop, with actuator
   actuator.control_function(o_control);
   //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
-
   // Report output with log
   if (o_control[0] == 3)
   {
