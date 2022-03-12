@@ -36,11 +36,11 @@ General code to oversee all functions of the Teensy
  * NOTE: Recommend disabling logging object in its include
  *
  */
-#define MODE 2
+#define MODE 0
 
 // Startup
-#define WAIT_SERIAL_STARTUP 1  // Set headless mode or not
-#define HOME_ON_STARTUP 0
+#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
+#define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
 
 // Logging
@@ -81,8 +81,8 @@ Cooling cooler_o;
 //#define GEARTOOTH_ENGINE_PIN 15
 
 // PINS CAR
-#define ENC_A_PIN 2
-#define ENC_B_PIN 3
+#define ENC_A_PIN 3
+#define ENC_B_PIN 2
 #define HALL_INBOUND_PIN 22
 #define HALL_OUTBOUND_PIN 23
 #define GEARTOOTH_ENGINE_PIN 41
@@ -249,9 +249,9 @@ void loop()
   // Report output with log
   if (*status != 3)
   {
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %u, %d, %d, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
                *inbound_triggered, *outbound_triggered, *time_start, *time_end, *odrive_voltage,
-               (*odrive_current * 1000.0), cooler_o.get_temperature(), cooler_o.get_thermistor(0), cooler_o.get_thermistor(1));
+               (*odrive_current * 1000.0), cooler_o.get_temperature(), cooler_o.get_thermistor(0), cooler_o.get_thermistor(1), cooler_o.get_thermistor(2));
   }
 
   // Save data to sd every SAVE_THRESHOLD

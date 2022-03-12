@@ -139,7 +139,7 @@ void Actuator::control_function(int* status, int* rpm, int* actuator_velocity, i
   if (millis() - m_last_control_execution > k_cycle_period)
   {
     *status = 0;
-    *inbound_triggered = 777;
+    *inbound_triggered = 0;
     *outbound_triggered = 0;
 
     // Calculate Engine Speed + Filter Engine Speed
@@ -213,7 +213,7 @@ void Actuator::control_function(int* status, int* rpm, int* actuator_velocity, i
         motor_velocity = 0;
       *status = 7;
       // out[3] = 1;
-      *inbound_triggered = 777;
+      *inbound_triggered = 1;
     }
 
     // Multiply by gain and set new motor velocity.
