@@ -74,7 +74,7 @@ void setup()
   {
     // This means that no SD card was found or there was an error with it
     // We will halt the program
-    if (REQUIRE_SD) 
+    if (REQUIRE_SD)
     {
       Serial.println("No SD card found, halting");
       while (1)
