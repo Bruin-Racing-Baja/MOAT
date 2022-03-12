@@ -64,6 +64,7 @@ General code to oversee all functions of the Teensy
 
 // LOGGING AND SD SETTINGS
 File log_file;
+String log_name = "log.txt";
 // Create constant control object to read from sd
 Constant constant;
 
@@ -102,7 +103,7 @@ void save_log()
 {
   // Closes and then opens the file stream
   log_file.close();
-  log_file = SD.open("log.txt", FILE_WRITE);
+  log_file = SD.open(log_name.c_str(), FILE_WRITE);
 }
 
 void setup()
@@ -146,8 +147,15 @@ void setup()
   }
 
   //-------------Logging and SD Card-----------------
+  int log_file_number = 0;
+  while (SD.exists(("log_" + String(log_file_number) + ".txt").c_str()))
+  {
+    log_file_number++;
+  }
+  log_name = "log_" + String(log_file_number) + ".txt";
+  Serial.println("Logging at: " + log_name);
 
-  log_file = SD.open("log.txt", FILE_WRITE);
+  log_file = SD.open(log_name.c_str(), FILE_WRITE);
 
   Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started" CR);
