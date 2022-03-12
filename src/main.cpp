@@ -302,7 +302,7 @@ void loop()
   // Assumes main power isnt connected as connected to serial
   // Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
   // Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
-  Serial.println(String(cooler_o.get_temperature()) + ", " + String(cooler_o.get_thermistor(0)) + ", " + String(cooler_o.get_thermistor(1)));
+  Serial.println(String(cooler_o.get_temperature()) + ", " + String(cooler_o.get_thermistor(0)) + ", " + String(cooler_o.get_thermistor(1)) + ", " + String(cooler_o.get_thermistor(2)));
   // Serial.println(analogRead(38));
   delay(1000);
 }
