@@ -249,9 +249,9 @@ void loop()
   // Report output with log
   if (*status != 3)
   {
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %u, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %u, %d, %d, %d" CR, *status, *rpm, *actuator_velocity, *encoder_position,
                *inbound_triggered, *outbound_triggered, *time_start, *time_end, *odrive_voltage,
-               (*odrive_current * 1000.0), cooler_o.get_temperature());
+               (*odrive_current * 1000.0), cooler_o.get_temperature(), cooler_o.get_thermistor(0), cooler_o.get_thermistor(1));
   }
 
   // Save data to sd every SAVE_THRESHOLD
