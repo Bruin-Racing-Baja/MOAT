@@ -31,6 +31,17 @@ float Cooling::get_temperature()
   return (voltage - 1.25) / 0.005;
 }
 
+float Cooling::get_thermistor(int thermistor_num)
+{
+  if (thermistor_num < 0 || thermistor_num > 2)
+  {
+    return 4242;
+  }
+  int raw = analogRead(k_thermistor_pins[thermistor_num]);
+  float voltage = raw * (AREF / (pow(2, ADC_RESOLUTION) - 1));
+  return (voltage - 1.25) / 0.005;
+}
+
 void Cooling::control_function()
 {
   m_control_execution_count++;
