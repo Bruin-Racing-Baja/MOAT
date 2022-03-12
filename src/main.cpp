@@ -26,6 +26,8 @@ General code to oversee all functions of the Teensy
 #define DIAGNOSTIC_MODE_SHOTS 100
 // Startup
 #define WAIT_SERIAL_STARTUP_SD 0  // Set to stop program before the sd card initialization
+#define REQUIRE_SD 1
+#define REQUIRE_SETTINGS 1
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
 // ODrive Settings
@@ -72,9 +74,12 @@ void setup()
   {
     // This means that no SD card was found or there was an error with it
     // We will halt the program
-    Serial.println("No SD card found, halting");
-    while (1)
+    if (REQUIRE_SD) 
     {
+      Serial.println("No SD card found, halting");
+      while (1)
+      {
+      }
     }
   }
   else
@@ -97,9 +102,12 @@ void setup()
     {
       // This means the settings file does not exist, but there is an SD card present
       // WIll halt the program
-      Serial.println("No settings file found, halting");
-      while (1)
+      if (REQUIRE_SETTINGS)
       {
+        Serial.println("No settings file found, halting");
+        while (1)
+        {
+        }
       }
     }
   }
