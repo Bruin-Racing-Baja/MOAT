@@ -42,10 +42,10 @@ public:
   const float k_integral_gain = .0001;
   const float k_exp_filt_alpha = 0.5;
 
-  Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin,
-           const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial);
+  Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin, const int gb_tooth_pin,
+                   const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial);
 
-  int init(int odrive_timeout, void (*external_count_eg_tooth)());
+  int init(int odrive_timeout, void (*external_count_eg_tooth)(), void (*external_count_gb_tooth)());
   int* control_function(int* out);
   int* homing_sequence(int* out);
 
@@ -54,6 +54,7 @@ public:
   float get_p_value();
   float communication_speed();
   void count_eg_tooth();
+  void count_gb_tooth();
   String odrive_errors();
 
   String diagnostic(bool is_mainpower_on, bool serial_out);
@@ -71,12 +72,13 @@ private:
   // Functions that help calculate rpm
   unsigned long m_last_control_execution;
   float calc_engine_rpm(float dt);
-
+  float calc_wheel_rpm(float dt);
   // Const
   bool m_print_to_serial;
 
   // member variables for sensor pins
   int m_eg_tooth_pin;
+  int m_gb_tooth_pin;
   int m_hall_inbound_pin;
   int m_hall_outbound_pin;
 
@@ -91,8 +93,13 @@ private:
   // running gear tooth sensor counts
   volatile unsigned long m_eg_tooth_count;
   unsigned long m_last_eg_tooth_count;
+  volatile unsigned long m_gb_tooth_count;
+  unsigned long m_last_gb_tooth_count;
   float m_eg_rpm = 0;
   float m_currentrpm_eg_accum = 0;
+  float m_gb_rpm = 0;
+  float m_currentrpm_gb_accum = 0;
+
 
   // running control terms
   int error = 0;

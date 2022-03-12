@@ -88,13 +88,16 @@ Cooling cooler_o;
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
+Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, GEARTOOTH_GEARBOX_PIN ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
 void external_count_eg_tooth()
 {
   actuator.count_eg_tooth();
+}
+void external_count_gb_tooth(){
+  actuator.count_gb_tooth();
 }
 
 // NOTE: May want to test expanding this function to take in a file object to save
@@ -181,7 +184,7 @@ void setup()
   //-------------Actuator-----------------//
   // TODO: handle duplicate logs
   // General Init
-  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth);
+  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth, external_count_gb_tooth);
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -218,7 +221,7 @@ void setup()
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[10];
+int o_control[11];
 int save_count = 0;
 int last_save = 0;
 void loop()
@@ -229,9 +232,9 @@ void loop()
   // Report output with log
   if (o_control[0] == 3)
   {
-    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
+    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Wheel Speed: %d" CR,
                 o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5],
-                o_control[6]);
+                o_control[6], o_control[11]);
   }
   else
   {
@@ -240,9 +243,9 @@ void loop()
     //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
     //   o_control[8]);
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
                o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature());
+               cooler_o.get_temperature(), o_control[11]);
   }
 
   // Save data to sd every SAVE_THRESHOLD
