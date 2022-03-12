@@ -42,7 +42,7 @@ General code to oversee all functions of the Teensy
 #define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
 #define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
-#define ESTOP_PIN 14
+#define ESTOP_PIN 35
 // Logging
 // NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
 #define LOG_LEVEL LOG_LEVEL_NOTICE
@@ -97,13 +97,7 @@ void external_count_eg_tooth()
   actuator.count_eg_tooth();
 }
 
-void odrive_estop()
-{
-  save_log();
-  Log.error("E-STOP at" + String(millis()));
-  Serial.println("E-STOP at " + String(millis()));
-  save_log();
-}
+
 
 // NOTE: May want to test expanding this function to take in a file object to save
 void save_log()
@@ -111,6 +105,18 @@ void save_log()
   // Closes and then opens the file stream
   log_file.close();
   log_file = SD.open("log.txt", FILE_WRITE);
+}
+
+void odrive_estop()
+{
+  if (millis() > 15000){
+    //digitalWrite(LED_BUILTIN, HIGH);
+    save_log();
+    Log.error("E-STOP at %d" CR, millis());
+    Serial.println("E-STOP at " + String(millis()));
+    save_log();
+    //digitalWrite(LED_BUILTIN, LOW);
+  }
 }
 
 void setup()
