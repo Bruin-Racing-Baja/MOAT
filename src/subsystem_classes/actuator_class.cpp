@@ -176,6 +176,7 @@ void Actuator::control_function(int* status, int* rpm, int* actuator_velocity, i
       {
         // If below min rpm and not shifted out all the way
         odrive.set_velocity(k_motor_number, 3);  // Shift out
+        odrive.run_state(k_motor_number, 8, false, 0);  // Enter velocity control mode
         *status = 5;
         *actuator_velocity = 3;
         *odrive_voltage = odrive.get_voltage();
