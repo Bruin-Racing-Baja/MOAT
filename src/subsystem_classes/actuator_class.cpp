@@ -265,9 +265,9 @@ void Actuator::count_gb_tooth()
 float Actuator::calc_wheel_rpm(float dt)
 {
   noInterrupts();
-  float rps = (m_gb_tooth_count - m_last_gb_tooth_count) / dt;
-  float rpm = rps * 60;
-  m_last_gb_tooth_count = m_last_gb_tooth_count;
+  float rps = float(m_gb_tooth_count - m_last_gb_tooth_count) / dt;
+  float rpm = rps * 1000.0 * 60.0;
+  m_last_gb_tooth_count = m_gb_tooth_count;
   interrupts();
   return rpm;
 }

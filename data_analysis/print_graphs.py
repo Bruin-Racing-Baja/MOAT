@@ -10,8 +10,10 @@ There are 2 ways to graph stuff.
 
     Flags:
         --sp : same plot
+        --nac: no auto crop
         --mc : manual crop, pass in start and end crop values
             i.e --mc 100 2000
+                * if the end crop is greater than the size of the array, it just goes to the edge
 
 
 '''
@@ -68,8 +70,13 @@ def print_graphs(path=[], data_selections=(), display_on_same_axes=False, manual
 
         # Change bounds if manual cropping is enabled
         if manual_crop:
-
-            run_to_graph = run_to_graph[int(crop_bounds[0]): int(crop_bounds[1])]
+            start_crop = int(crop_bounds[0])
+            end_crop=int(crop_bounds[1])
+            if int(crop_bounds[0])<0:
+                start_crop = 0
+            if end_crop > len(run_to_graph):
+                end_crop = len(run_to_graph) - 1
+            run_to_graph = run_to_graph[start_crop: end_crop]
 
 
         if display_on_same_axes:
@@ -279,7 +286,7 @@ if __name__ == '__main__':
             start_bound = int(args[i + 1])
             end_bound = int(args[i + 2])
             i += 3
-        elif args[i] == "--nac" and mc==False:
+        elif args[i] == "--nac":
             disable_auto_crop = True
             i += 1
         else:
