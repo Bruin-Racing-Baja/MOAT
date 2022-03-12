@@ -97,6 +97,14 @@ void external_count_eg_tooth()
   actuator.count_eg_tooth();
 }
 
+void odrive_estop()
+{
+  save_log();
+  Log.error("E-STOP at" + String(millis()));
+  Serial.println("E-STOP at " + String(millis()));
+  save_log();
+}
+
 // NOTE: May want to test expanding this function to take in a file object to save
 void save_log()
 {
@@ -108,6 +116,8 @@ void save_log()
 void setup()
 {
   //-------------Wait for serial-----------------//
+  interrupts();
+  attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
   if (WAIT_SERIAL_STARTUP)
   {
     while (!Serial)  // wait for serial port to connect. Needed for native USB port only
