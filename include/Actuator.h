@@ -21,9 +21,28 @@ public:
   constexpr static float k_linear_distance_per_rotation = 0.125;  // inches/rotation
   constexpr static float k_linear_shift_length = 3.5;             // inches
   constexpr static int32_t k_encoder_count_shift_length =
-      (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048;
+      (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048; //encoder count
+  constexpr static float k_linear_engage_length = 1;  //inches
+  constexpr static int32_t k_encoder_engage_dist = 
+      (k_linear_engage_length / k_linear_distance_per_rotation) * 4 * 2048; //encoder count
+  constexpr static float k_linear_engage_buffer = .2; // inches
+  constexpr static int32_t k_encoder_engage_buffer = 
+      (k_linear_engage_buffer) / k_linear_distance_per_rotation * 4 * 2048; //encoder count
   constexpr static float k_cycle_period_minutes = (k_cycle_period / 1e3) / 60;  // minutes
   constexpr static int k_eg_teeth_per_rotation = 88;
+
+  //LOG OUTPUTS  
+  //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos,
+  //odrive_volt, odrive_current>
+  unsigned int STATUS = 0;
+  unsigned int ACT_VEL = 1;
+  unsigned int ENC_IN = 2;
+  unsigned int ENC_OUT = 3;
+  unsigned int T_START = 4;
+  unsigned int T_STOP = 5;
+  unsigned int ENC_POS = 6;
+  unsigned int ODRV_VOLT = 7;
+  unsigned int ODRV_CUR = 8; 
 
   // reference signals form tyler
   const unsigned int k_eg_idle = 1750;      // rpm
@@ -34,7 +53,7 @@ public:
   const unsigned int k_desired_rpm = 2250;  // rpm
   const float k_rpm_target_multiplier = 1.5;
 
-  // pid constants
+  // velocity pid constants
   const float k_p_gain = 0.015;
 
   const float k_proportional_gain = .015;  // gain of the p controller
@@ -42,11 +61,15 @@ public:
   const float k_integral_gain = .0001;
   const float k_exp_filt_alpha = 0.5;
 
+  // position pid constants
+  const float k_position_p_gain = .015;
+
   Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin,
            const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial);
 
   int init(int odrive_timeout, void (*external_count_eg_tooth)());
   int* control_function(int* out);
+  int control_function_two(int* out);
   int* homing_sequence(int* out);
 
   int get_status_code();
@@ -72,6 +95,9 @@ private:
   unsigned long m_last_control_execution;
   float calc_engine_rpm(float dt);
 
+  //Functions that help calculate motor speed
+  int calc_motor_rps(int dt);
+
   // Const
   bool m_print_to_serial;
 
@@ -83,6 +109,7 @@ private:
   // Encoder limit values
   int32_t m_encoder_outbound;  // out of the car
   int32_t m_encoder_inbound;   // towards the engine
+  int32_t m_encoder_engage;    // when belt enganged
 
   // Debugging vars
   int m_control_function_count;

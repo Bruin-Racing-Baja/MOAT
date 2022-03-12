@@ -42,6 +42,7 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_
   // limit variables
   m_encoder_outbound = encoder.read();
   m_encoder_inbound = -666;
+  m_encoder_engage = -666;
 }
 
 int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)())
@@ -100,6 +101,7 @@ int* Actuator::homing_sequence(int* out)
   digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - k_encoder_count_shift_length;
+  m_encoder_engage = m_encoder_outbound - k_encoder_engage_dist;
 
   // Home inbound - [IN PURGATORY]
   //  set_velocity(-10);
@@ -247,6 +249,127 @@ int* Actuator::control_function(int* out)
   out[6] = millis();
   return out;
 }
+
+
+int Actuator::control_function_two(int* out){
+    //returns status of actuator
+
+    //  Things to thinkabout:
+    //  what happens to derivative term in calc engine rpm if it hasn't been called for awhile
+    //  what happens when encoder inbound is re read --> how should we tell ourselves what the actual
+    //  between in and outbound is?
+
+    out[T_START] = millis();
+    if (millis() - m_last_control_execution < k_cycle_period) return 3; //return 3 if control function was called too soon
+
+    // Calculate Engine Speed + Filter Engine Speed
+    float dt = millis() - m_last_control_execution;
+    m_eg_rpm = calc_engine_rpm(dt);
+
+    // update encoder inbound if we weren't quiet right
+    if(digitalReadFast(m_hall_inbound_pin) == 0) m_encoder_inbound = encoder.read();
+
+
+    //  My state? diagram that describes what the actuator should be doing given
+    //  its shift fork position and engine rpm
+    //
+    //  Engine Speed:       1      Engage RPM       2      Target rpm     3
+    //  Position:  shfit to 1 rotation  |  Shfit to engage      |   Vel PID
+    //    (+)       before engage       |                       |                           
+    //  Outbound------------------------------------------------------------------------          
+    //             shift to 1 rotation  |  Shift to engage      |   Vel PID
+    //             before engage        |                       |
+    //  Engage--------------------------------------------------------------------------
+    //             Vel PID              |  Vel PID              |  Vel PID
+    //  In + half-----------------------------------------------------------------------
+    //  rotation   Vel PID              |  Vel PID              |  Vel PID min(-1 rot/s)  
+    //                                  |                       |
+    //  Inbound------------------------------------------------------------------------- 
+    //   (-)       Vel PID              |  Vel PID              | VEL PID min (0 rot/s)
+    
+    
+
+    //errors and motor_velocity
+    uint32_t position_error;    //cpr
+    int motor_velocity;         //rps
+
+
+    //Collumn 1: engine rpm less than engage rpm
+    if (m_eg_rpm < k_eg_engage ){
+        
+        if(encoder.read() > m_encoder_engage){
+            //if engine speed is less than engage rpm & not engaged position p control to just before engage
+            position_error = ( m_encoder_engage + k_encoder_engage_buffer - encoder.read()); //enc greater than buffer error is negative 
+            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain;
+            //TODO Update STATUS
+        } else  {
+            //if engine speed is less than engage rpm & fork is between engage and inbound vel pid control out
+            motor_velocity = calc_motor_rps(dt);
+            //TODO Update STATUS
+        }
+    }
+    //Collumn 2: engine rpm between desired and engage rpm
+    else if(m_eg_rpm < k_desired_rpm){
+        if(encoder.read() > m_encoder_engage){
+            //if engine speed is less than desired rpm & position is less than Engage position p control to just before engage
+            position_error = (m_encoder_engage - encoder.read()); //enc greater than engage error is negative 
+            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain;
+            //TODO Update STATUS
+        }
+        else if (encoder.read() > m_encoder_engage - k_encoder_engage_buffer){
+            motor_velocity = 0; //if engine wants to shift out just before engage stop it from shifing to avoid oscillations
+            //TODO update STATUS
+        }
+        else{
+            //if engine rpm is less than engage rpm and fork is between engage and inbound vel pid control out
+            motor_velocity = calc_motor_rps(dt);
+            //TODO update STATUS
+        }
+    }
+    //Collumn 3: engine rpm greater than desired rpm
+    else{
+        motor_velocity = calc_motor_rps(dt);
+        if(encoder.read() > m_encoder_inbound + k_encoder_engage_buffer){
+            //if engine rpm is above desired rpm & shift fork not near inbound vel pid control in
+            //TODO update STATUS 
+        }
+        else if(encoder.read() > m_encoder_inbound){
+            //if engine rpm is above desired rpm & shift fork close to inbound constrain motor_velocity
+            if(motor_velocity < -1) motor_velocity = -1;
+            //TODO update STATUS
+        }
+        else{
+            //if engine rpm is above desired rpm & shift fork at outbound constrain motor_velocity to 0
+            motor_velocity = 0;
+            //TODO update STATUS
+        }
+    }
+
+
+    odrive.run_state(k_motor_number, 8, false, 0); //maybe we should always be in state 8 as to be faster
+    odrive.set_velocity(k_motor_number, motor_velocity);
+    
+    out[STATUS] = 0;//TODO fix this
+    out[ACT_VEL]=motor_velocity;
+    out[ENC_IN] = digitalRead(m_hall_inbound_pin);
+    out[ENC_OUT] = digitalRead(m_hall_outbound_pin);
+    out[ENC_POS] = encoder.read();
+    out[ODRV_VOLT] = odrive.get_voltage();
+    out[ODRV_CUR] = odrive.get_cur();
+
+    out[T_STOP] = millis();
+    return 0; // Also need to think about this with getty
+}
+
+int Actuator::calc_motor_rps(int dt){
+    error = k_desired_rpm - m_eg_rpm;
+    int error_deriv = (error - prev_error) / dt;  // 16ms in between runs rn
+    int motor_velocity = k_proportional_gain * error + k_derivative_gain * error_deriv;
+    prev_error = error; //TODO error and prev_error need m_ added to them
+    return motor_velocity;
+}
+
+
 
 //----------------Geartooth Functions----------------//
 void Actuator::count_eg_tooth()
