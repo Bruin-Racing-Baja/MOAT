@@ -131,7 +131,7 @@ int* Actuator::control_function(int* out)
 {
   // Returns an array of ints in format
   //<status, rpm, actuator_velocity, fully shifted in, fully shifted out, time_started, time_finished, enc_pos,
-  //odrive_volt, odrive_current>
+  // odrive_volt, odrive_current>
   out[5] = millis();
   m_control_function_count++;
   if (millis() - m_last_control_execution > k_cycle_period)

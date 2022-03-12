@@ -125,24 +125,24 @@ void setup()
   }
   else
   {
-    // if (SD.exists("settings.txt"))
-    // {
-    //   // This means the settings file exists, so we will load it
-    //   // This is where the bulk of the development for this feature will occur as we need to read in certain values,
-    //   // then set them in the program accordingly
-    //   File settingFile = SD.open("settings.txt", FILE_READ);
-    //   while (settingFile.available())
-    //   {
-    //     settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
-    //     constant.init(settingFile);        // Creates the constant object
-    //   }
-    // }
-    // else
-    // {
-    //   // This means the settings file does not exist, but there is an SD card present
-    //   // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-    //   // constant.init(nullptr, 1);
-    // }
+    if (SD.exists("settings.txt"))
+    {
+      // This means the settings file exists, so we will load it
+      // This is where the bulk of the development for this feature will occur as we need to read in certain values,
+      // then set them in the program accordingly
+      // File settingFile = SD.open("settings.txt", FILE_READ);
+      // while (settingFile.available())
+      // {
+      //   settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
+      //   // constant.init(settingFile);        // Creates the constant object
+      // }
+    }
+    else
+    {
+      // This means the settings file does not exist, but there is an SD card present
+      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
+      // constant.init(nullptr, 1);
+    }
   }
 
   //-------------Logging and SD Card-----------------
@@ -248,14 +248,14 @@ void loop()
   // Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD)
   {
-    int save_start = millis();
-    // Log.notice(actuator.odrive_errors().c_str());
-    Log.verbose("Time since last save: %d" CR, save_start - last_save);
+    // int save_start = millis();
+    // // Log.notice(actuator.odrive_errors().c_str());
+    // Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    Log.verbose("Battery level ok? %d", o_control[8] > 20);
-    digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
-    Log.verbose("Saved log in %d ms" CR, millis() - save_start);
+    // Log.verbose("Battery level ok? %d", o_control[8] > 20);
+    // digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
+    // Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
 }
