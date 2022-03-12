@@ -38,8 +38,10 @@ float Cooling::get_thermistor(int thermistor_num)
     return 4242;
   }
   int raw = analogRead(k_thermistor_pins[thermistor_num]);
-  float voltage = raw * (AREF / (pow(2, ADC_RESOLUTION) - 1));
-  return (voltage - 1.25) / 0.005;
+  float R2 = 10000 * (1023.0 / raw - 1.0);
+  float logR2 = log(R2);
+  float T = 1 / (0.001129148 + 0.000234125 * logR2 + 0.0000000876741 * logR2 * logR2 * logR2);
+  return T - 273.15;
 }
 
 void Cooling::control_function()

@@ -36,11 +36,11 @@ General code to oversee all functions of the Teensy
  * NOTE: Recommend disabling logging object in its include
  *
  */
-#define MODE 0
+#define MODE 2
 
 // Startup
-#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
-#define HOME_ON_STARTUP 1
+#define WAIT_SERIAL_STARTUP 1  // Set headless mode or not
+#define HOME_ON_STARTUP 0
 //#define RUN_DIAGNOSTIC_STARTUP 0
 
 // Logging
@@ -212,11 +212,11 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
-  if (MODE == 0)
-  {
-    Log.notice(
-        '"status", "rpm", "actuator_velocity", "encoder_position", "fully_shifted_in", "fully_shifted_out", "control_start_time", "control_stop_time", "odrive_voltage", "odrive_current", "cooler_temperature"');
-  }
+  // if (MODE == 0)
+  // {
+  //   Log.notice(
+  //       '"status", "rpm", "actuator_velocity", "encoder_position", "fully_shifted_in", "fully_shifted_out", "control_start_time", "control_stop_time", "odrive_voltage", "odrive_current", "cooler_temperature"');
+  // }
   save_log();
 }
 
@@ -300,9 +300,9 @@ bool is_main_power = false;
 void loop()
 {
   // Assumes main power isnt connected as connected to serial
-  Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
-  Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
-  Serial.println(cooler_o.get_temperature());
+  // Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
+  // Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
+  Serial.println(String(cooler_o.get_temperature()) + ", " + String(cooler_o.get_thermistor(0)) + ", " + String(cooler_o.get_thermistor(1)));
   // Serial.println(analogRead(38));
   delay(1000);
 }
