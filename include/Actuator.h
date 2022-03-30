@@ -57,6 +57,7 @@ public:
   String odrive_errors();
 
   String diagnostic(bool is_mainpower_on, bool serial_out);
+  int fully_shift(bool direction, int timeout);
 
 private:
   int target_rpm();

@@ -298,7 +298,7 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   output += "Inbound reading: " + String(digitalReadFast(m_hall_inbound_pin)) + "\n";
   output += "Engine Gear Tooth Count: " + String(m_eg_tooth_count) + "\n";
   output += "Current rpm: " + String(m_eg_rpm) + "\n";
-  output += "Estop Signal: " + String(analogRead(A15)) + "\n";
+  output += "Estop Signal: " + String(35) + "\n";
 
   if (print_serial)
   {
@@ -372,4 +372,49 @@ float Actuator::get_p_value()
 String Actuator::odrive_errors()
 {
   return odrive.dump_errors();
+}
+
+int Actuator::fully_shift(bool direction, int timeout)
+{
+  // Shifts the motor all the way in or out
+  // direction = true is in, false is out
+  int speed;
+  int software_limit_pin;
+  if (direction) {
+    speed = -2;
+    software_limit_pin = m_hall_inbound_pin;
+  }
+  else {
+    speed = 2;
+    software_limit_pin = m_hall_outbound_pin;
+  }
+  int status = 0;
+  int start_time = millis();
+
+  odrive.run_state(k_motor_number, 8, false, 0);  // Enter velocity control mode
+  delay(1000);
+
+  // Home outbound
+  int start = millis();
+
+  odrive.set_velocity(k_motor_number, speed);
+
+  while (digitalReadFast(software_limit_pin) == 1)
+  {
+    delay(10);
+    if (digitalReadFast(m_hall_outbound_pin) == 0)
+    {
+      break;
+    }
+    if (millis() - start > k_homing_timeout)
+    {
+      status = 1;
+      odrive.run_state(k_motor_number, 0, false, 0);
+      return status;
+    }
+  }
+  odrive.set_velocity(k_motor_number, 0);         // Stop spinning after homing
+  odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
+
+  return status;
 }
