@@ -322,6 +322,8 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   output += "Engine Gear Tooth Count: " + String(m_eg_tooth_count) + "\n";
   output += "Current rpm: " + String(m_eg_rpm) + "\n";
   output += "Estop Signal: " + String(digitalRead(34)) + "\n";
+  output += "Wheel gear tooth count: " + String(m_gb_tooth_count) + "\n";
+  output += "Current wheel rpm: " + String(m_gb_rpm) + "\n";
 
   if (print_serial)
   {
