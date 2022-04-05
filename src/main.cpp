@@ -35,6 +35,9 @@ General code to oversee all functions of the Teensy
  * This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up.
  * NOTE: Recommend disabling logging object in its include
  *
+ * Wave (4): Operates the actuator in a wave pattern while logging data to the serial monitor
+ * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
+ * 
  */
 #define MODE 0
 
@@ -42,7 +45,7 @@ General code to oversee all functions of the Teensy
 #define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
 #define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
-#define ESTOP_PIN 35
+#define ESTOP_PIN 34
 // Logging
 // NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
 #define LOG_LEVEL LOG_LEVEL_NOTICE
@@ -84,8 +87,8 @@ Cooling cooler_o;
 // PINS CAR
 #define ENC_A_PIN 2
 #define ENC_B_PIN 3
-#define HALL_INBOUND_PIN 22
-#define HALL_OUTBOUND_PIN 23
+#define HALL_INBOUND_PIN 23
+#define HALL_OUTBOUND_PIN 22
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
@@ -100,7 +103,6 @@ void external_count_eg_tooth()
 
 
 
-// NOTE: May want to test expanding this function to take in a file object to save
 void save_log()
 {
   // Closes and then opens the file stream
@@ -108,23 +110,24 @@ void save_log()
   log_file = SD.open(log_name.c_str(), FILE_WRITE);
 }
 
+bool estop_pressed = 0;
+
+// Set flag and turn on LED if the estop is ever pressed
 void odrive_estop()
 {
-  if (millis() > 15000){
-    //digitalWrite(LED_BUILTIN, HIGH);
-    save_log();
-    Log.error("E-STOP at %d" CR, millis());
-    Serial.println("E-STOP at " + String(millis()));
-    save_log();
-    //digitalWrite(LED_BUILTIN, LOW);
-  }
+  estop_pressed = 1;
+  digitalWrite(LED_BUILTIN, HIGH);
+  Serial.println("ESTOP PRESSED" + String(millis()));
 }
 
 void setup()
 {
-  //-------------Wait for serial-----------------//
+  Serial.println("Starting...");
+  //-------------Attach E-Stop interrupt-----------------//
   interrupts();
   attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
+
+  //-------------Wait for serial-----------------//
   if (WAIT_SERIAL_STARTUP)
   {
     while (!Serial)  // wait for serial port to connect. Needed for native USB port only
@@ -203,7 +206,6 @@ void setup()
   cooler_o.init();
 
   //-------------Actuator-----------------//
-  // TODO: handle duplicate logs
   // General Init
   int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth);
   if (o_actuator_init)
@@ -224,6 +226,7 @@ void setup()
   {
     int o_homing[3];
     actuator.homing_sequence(o_homing);
+    Serial.println("Homing sequence: " + String(o_homing[0]) + " " + String(o_homing[1]) + " " + String(o_homing[2]));
     if (o_homing[0] != 0)
     {
       Log.error("Homing Failed code: %d" CR, o_homing[0]);
@@ -237,6 +240,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   save_log();
+  Serial.println("Starting mode " + String(MODE));
 }
 
 // OPERATING MODE
@@ -264,9 +268,10 @@ void loop()
     //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
     //   o_control[8]);
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
                o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature());
+               cooler_o.get_temperature(), estop_pressed);
+    estop_pressed = 0;
   }
 
   // Save data to sd every SAVE_THRESHOLD
@@ -310,7 +315,7 @@ void loop()
 
 // SERIAL DIAGNOSTIC MODE
 #elif MODE == 2
-bool is_main_power = false;
+bool is_main_power = true;
 
 void loop()
 {
@@ -336,6 +341,22 @@ void loop()
   // Serial.println(digitalRead(hall_inbound));
   // Serial.println("huh");
   // delay(1000);
+}
+
+// Wave Mode
+#elif MODE == 4
+int shift_o;
+void loop() {
+  shift_o = actuator.fully_shift(true, 10000);
+  Serial.println("Shifted in, status: " + String(shift_o));
+  Serial.println("Estop pressed: " + String(estop_pressed));
+  estop_pressed = 0;
+  actuator.diagnostic(true, true);
+  shift_o = actuator.fully_shift(false, 10000);
+  Serial.println("Shifted out, status: " + String(shift_o));
+  Serial.println("Estop pressed: " + String(estop_pressed));
+  estop_pressed = 0;
+  actuator.diagnostic(true, true);
 }
 
 #endif
