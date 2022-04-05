@@ -39,13 +39,13 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 4
+#define MODE 0
 
 // Startup
 #define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
 #define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
-#define ESTOP_PIN 35
+#define ESTOP_PIN 34
 // Logging
 // NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
 #define LOG_LEVEL LOG_LEVEL_NOTICE
@@ -87,8 +87,8 @@ Cooling cooler_o;
 // PINS CAR
 #define ENC_A_PIN 2
 #define ENC_B_PIN 3
-#define HALL_INBOUND_PIN 22
-#define HALL_OUTBOUND_PIN 23
+#define HALL_INBOUND_PIN 23
+#define HALL_OUTBOUND_PIN 22
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
@@ -103,7 +103,6 @@ void external_count_eg_tooth()
 
 
 
-// NOTE: May want to test expanding this function to take in a file object to save
 void save_log()
 {
   // Closes and then opens the file stream
@@ -113,13 +112,17 @@ void save_log()
 
 bool estop_pressed = 0;
 
+// Set flag and turn on LED if the estop is ever pressed
 void odrive_estop()
 {
   estop_pressed = 1;
+  digitalWrite(LED_BUILTIN, HIGH);
+  Serial.println("ESTOP PRESSED" + String(millis()));
 }
 
 void setup()
 {
+  Serial.println("Starting...");
   //-------------Attach E-Stop interrupt-----------------//
   interrupts();
   attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
@@ -203,7 +206,6 @@ void setup()
   cooler_o.init();
 
   //-------------Actuator-----------------//
-  // TODO: handle duplicate logs
   // General Init
   int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth);
   if (o_actuator_init)
@@ -224,6 +226,7 @@ void setup()
   {
     int o_homing[3];
     actuator.homing_sequence(o_homing);
+    Serial.println("Homing sequence: " + String(o_homing[0]) + " " + String(o_homing[1]) + " " + String(o_homing[2]));
     if (o_homing[0] != 0)
     {
       Log.error("Homing Failed code: %d" CR, o_homing[0]);
@@ -237,6 +240,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   save_log();
+  Serial.println("Starting mode " + String(MODE));
 }
 
 // OPERATING MODE
@@ -311,7 +315,7 @@ void loop()
 
 // SERIAL DIAGNOSTIC MODE
 #elif MODE == 2
-bool is_main_power = false;
+bool is_main_power = true;
 
 void loop()
 {

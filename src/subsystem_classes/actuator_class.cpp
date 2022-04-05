@@ -74,7 +74,7 @@ int* Actuator::homing_sequence(int* out)
   delay(1000);
 
   // Home outbound
-  digitalWrite(LED_BUILTIN, HIGH);
+  // digitalWrite(LED_BUILTIN, HIGH);
   int start = millis();
 
   odrive.set_velocity(k_motor_number, 2);
@@ -97,7 +97,7 @@ int* Actuator::homing_sequence(int* out)
   }
   odrive.set_velocity(k_motor_number, 0);         // Stop spinning after homing
   odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
-  digitalWrite(LED_BUILTIN, LOW);
+  // digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - k_encoder_count_shift_length;
 
@@ -298,7 +298,7 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   output += "Inbound reading: " + String(digitalReadFast(m_hall_inbound_pin)) + "\n";
   output += "Engine Gear Tooth Count: " + String(m_eg_tooth_count) + "\n";
   output += "Current rpm: " + String(m_eg_rpm) + "\n";
-  output += "Estop Signal: " + String(35) + "\n";
+  output += "Estop Signal: " + String(digitalRead(34)) + "\n";
 
   if (print_serial)
   {
