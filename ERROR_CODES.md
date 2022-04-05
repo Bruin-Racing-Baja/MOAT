@@ -46,3 +46,8 @@ Control Function
         <000XXX00>
     0006 - Error set to 0 as shifted all the way out
  ** 0007 - Error set to 0 as shifted all the way in
+
+New Control Function Status Codes
+    0 - Nominal, shifting in
+    1 - Engine speed less than engage, shifting to right before engage
+

@@ -266,7 +266,7 @@ int Actuator::control_function_two(int* out){
     float dt = millis() - m_last_control_execution;
     m_eg_rpm = calc_engine_rpm(dt);
 
-    // update encoder inbound if we weren't quiet right
+    // update encoder inbound if we weren't quite right
     if(digitalReadFast(m_hall_inbound_pin) == 0) m_encoder_inbound = encoder.read();
 
 
