@@ -13,7 +13,7 @@ public:
   const static int k_enc_ppr = 88;
 
   const static int k_motor_number = 0;       // odrive axis
-  const static int k_homing_timeout = 50e3;  // ms
+  const static int k_homing_timeout = 50e6;  // ms
   const static int k_min_rpm = 1000;         // rpm
   const static int k_cycle_period = 10;      // ms
   const int k_rpm_allowance = 30;

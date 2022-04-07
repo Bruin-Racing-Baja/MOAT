@@ -42,8 +42,8 @@ General code to oversee all functions of the Teensy
 #define MODE 0
 
 // Startup
-#define WAIT_SERIAL_STARTUP 1  // Set headless mode or not
-#define HOME_ON_STARTUP 0
+#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
+#define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
 #define ESTOP_PIN 34
 // Logging
@@ -271,7 +271,7 @@ void loop()
     //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
     //   o_control[8]);
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
                o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
                cooler_o.get_temperature(), o_control[11], estop_pressed);
     estop_pressed = 0;
@@ -336,7 +336,7 @@ int temp = 0;
 
 void loop()
 {
-  temp = cooler_o.thermo_check();
+  // temp = cooler_o.thermo_check();
   Serial.println(temp);
   delay(100);
 
