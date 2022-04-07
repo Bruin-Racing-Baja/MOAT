@@ -16,6 +16,9 @@ class Cooling
   static const int k_cooling_rpm = 500;        // rpm
   static const int k_cycle_period = 10;        // ms
   const int k_thermistor_pins[3] = {24, 38, 39};  // C
+  // therm 2 - primary
+  // therm 1 - belt
+  // therm 3 - secondary
 
 public:
   void init();

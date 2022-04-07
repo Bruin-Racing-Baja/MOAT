@@ -290,8 +290,9 @@ void loop()
 {
   // Assumes main power isnt connected as connected to serial
   Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
-  Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
-  Serial.println(cooler_o.get_temperature());
+  Log.notice("Thermocouple temp: %d" CR, cooler_o.get_temperature());
+  Serial.println("Therm1: " + String(cooler_o.get_thermistor(0)) + "\n Therm2: " + String(cooler_o.get_thermistor(1)) + "\n Therm3: " + String(cooler_o.get_thermistor(2)));
+  Serial.println("Thermocouple: " + String(cooler_o.get_temperature()));
   // Serial.println(analogRead(38));
   delay(1000);
 }
