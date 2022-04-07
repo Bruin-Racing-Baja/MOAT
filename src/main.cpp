@@ -39,7 +39,7 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 2
+#define MODE 0
 
 // Startup
 #define WAIT_SERIAL_STARTUP 1  // Set headless mode or not
@@ -249,7 +249,7 @@ void setup()
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[11];
+int o_control[15];
 int save_count = 0;
 int last_save = 0;
 void loop()
@@ -273,7 +273,7 @@ void loop()
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
     Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
                o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature(), estop_pressed);
+               cooler_o.get_temperature(), o_control[11], estop_pressed);
     estop_pressed = 0;
   }
 
