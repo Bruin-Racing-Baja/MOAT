@@ -33,7 +33,7 @@ float Cooling::get_temperature()
 
 float Cooling::get_thermistor(int thermistor_num)
 {
-  if (thermistor_num < 0 || thermistor_num > 2)
+  if (thermistor_num < 0 || thermistor_num > sizeof(k_thermistor_pins))
   {
     return 4242;
   }

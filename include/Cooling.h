@@ -15,7 +15,7 @@ class Cooling
   static const float k_voltage = 3.3;          // volts
   static const int k_cooling_rpm = 500;        // rpm
   static const int k_cycle_period = 10;        // ms
-  static const int k_thermistor_pins[3] = {39, 40, 41};  // C
+  const int k_thermistor_pins[3] = {24, 38, 39};  // C
 
 public:
   void init();

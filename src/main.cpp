@@ -101,8 +101,6 @@ void external_count_eg_tooth()
   actuator.count_eg_tooth();
 }
 
-
-
 void save_log()
 {
   // Closes and then opens the file stream
@@ -178,35 +176,19 @@ void setup()
 
   Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started" CR);
+  // This is for the data analysis tool to be able to change the log order easily
+  Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_cur, couple, therm1, therm2, therm3, estop_flag" CR);
   Log.verbose("Time: %d" CR, millis());
 
   save_log();
 
   //------------------ODrive------------------//
 
-  // At this time the following code is depricated, but until we make final decisions about the odrive class, we will
-  // leave it in
-
-  // int odrive_init = actuator.odrive.init(1000);
-  // if (odrive_init) {
-  //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
-  // }
-  // else {
-  //   Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
-  // }
-  // Serial.println("ODrive init: " + String(odrive_init));
-  // for (int i = 0; i < 20; i++) {
-  //   Serial.println(odrive.get_voltage());
-  // }
-  // log_file.close();
-  // log_file = SD.open("log.txt", FILE_WRITE);
-
   //------------------Cooling------------------//
 
   cooler_o.init();
 
   //-------------Actuator-----------------//
-  // General Init
   int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth);
   if (o_actuator_init)
   {
@@ -253,24 +235,13 @@ void loop()
 {
   // Main control loop, with actuator
   actuator.control_function(o_control);
-  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
   // Report output with log
-  if (o_control[0] == 3)
+  if (o_control[0] != 3)
   {
-    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-                o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5],
-                o_control[6]);
-  }
-  else
-  {
-    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,
-    // Voltage: %d" CR,
-    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
-    //   o_control[8]);
-    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+    // For log output format check log statement after log begins in init
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %F, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
                o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature(), estop_pressed);
+               cooler_o.get_temperature(), cooler_o.get_thermistor(24), cooler_o.get_thermistor(37), cooler_o.get_thermistor(39), estop_pressed);
     estop_pressed = 0;
   }
 
@@ -282,8 +253,6 @@ void loop()
     // Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    // Log.verbose("Battery level ok? %d", o_control[8] > 20);
-    // digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
     // Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
