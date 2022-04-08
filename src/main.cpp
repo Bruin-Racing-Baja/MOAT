@@ -45,7 +45,7 @@ General code to oversee all functions of the Teensy
 #define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
 #define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
-#define ESTOP_PIN 34
+#define ESTOP_PIN 36
 // Logging
 // NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
 #define LOG_LEVEL LOG_LEVEL_NOTICE
