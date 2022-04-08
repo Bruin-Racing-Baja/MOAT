@@ -242,8 +242,27 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
+  Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_curr, couple, wheel_speed, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
+// "status", 
+// "rpm", 
+// "act_vel", 
+// "enc_pos", 
+// "in_trig", 
+// "out_trig", 
+// "s_time", 
+// "f_time", 
+// "o_vol", 
+// "o_curr",
+// "couple",
+// "therm1",
+// "therm2",
+// "therm3",
+// "estop",
+// "wheel_count",
+// "wheel_rpm",
+
 }
 
 // OPERATING MODE
@@ -271,7 +290,7 @@ void loop()
     //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
     //   o_control[8]);
     // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
                o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
                cooler_o.get_temperature(), o_control[11], estop_pressed);
     estop_pressed = 0;
