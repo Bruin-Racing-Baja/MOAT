@@ -71,11 +71,9 @@ int* Actuator::homing_sequence(int* out)
   out[0] = 0;
 
   odrive.run_state(k_motor_number, 8, false, 0);  // Enter velocity control mode
-  // TODO: Enums for IDLE, VELOCITY_CONTROL
   delay(1000);
 
   // Home outbound
-  digitalWrite(LED_BUILTIN, HIGH);
   int start = millis();
 
   odrive.set_velocity(k_motor_number, 2);
@@ -99,31 +97,9 @@ int* Actuator::homing_sequence(int* out)
   }
   odrive.set_velocity(k_motor_number, 0);         // Stop spinning after homing
   odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
-  digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - k_encoder_count_shift_length;
   m_encoder_engage = m_encoder_outbound - k_encoder_engage_dist;
-
-  // Home inbound - [IN PURGATORY]
-  //  set_velocity(-10);
-  //  while (digitalReadFast(m_hall_inbound) == 1) {
-  //      m_encoder_inbound = encoder.read();
-  //  }
-
-  // //Testing encoder reading by shifting all the way back to the inbound
-  // delay(500);
-  // odrive.run_state(motor_number, 8, false, 0);
-  // odrive.set_velocity(motor_number, -2);
-  // digitalWrite(LED_BUILTIN, HIGH);
-  // while(encoder.read() > m_encoder_inbound){
-  //     Serial.print("encoder inbound: ");
-  //     Serial.println(m_encoder_inbound);
-  //     Serial.print("current encoder position");
-  //     Serial.println(encoder.read());
-  // }
-  // digitalWrite(LED_BUILTIN, LOW);
-  // odrive.set_velocity(motor_number, 0); //Stop spinning after homing
-  // odrive.run_state(motor_number, 1, false, 0); //Idle state
 
   out[1] = m_encoder_inbound;
   out[2] = m_encoder_outbound;
