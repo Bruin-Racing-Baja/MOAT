@@ -159,6 +159,7 @@ int* Actuator::control_function(int* out)
 
     out[1] = m_eg_rpm;
     out[11] = m_gb_rpm;
+    out[12] = m_gb_tooth_count;
     // currentrpm_eg = analogRead(A2)*4;
     m_last_control_execution = millis();
 
