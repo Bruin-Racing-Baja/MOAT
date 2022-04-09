@@ -322,7 +322,7 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   output += "Inbound reading: " + String(digitalReadFast(m_hall_inbound_pin)) + "\n";
   output += "Engine Gear Tooth Count: " + String(m_eg_tooth_count) + "\n";
   output += "Current rpm: " + String(m_eg_rpm) + "\n";
-  output += "Estop Signal: " + String(digitalRead(34)) + "\n";
+  output += "Estop Signal: " + String(digitalRead(36)) + "\n";
   output += "Wheel gear tooth count: " + String(m_gb_tooth_count) + "\n";
   output += "Current wheel rpm: " + String(m_gb_rpm) + "\n";
 
