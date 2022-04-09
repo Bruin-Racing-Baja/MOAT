@@ -92,7 +92,7 @@ Cooling cooler_o;
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
+Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, GEARTOOTH_GEARBOX_PIN ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
@@ -100,8 +100,9 @@ void external_count_eg_tooth()
 {
   actuator.count_eg_tooth();
 }
-
-
+void external_count_gb_tooth(){
+  actuator.count_gb_tooth();
+}
 
 void save_log()
 {
@@ -117,7 +118,7 @@ void odrive_estop()
 {
   estop_pressed = 1;
   digitalWrite(LED_BUILTIN, HIGH);
-  Serial.println("ESTOP PRESSED" + String(millis()));
+  // Serial.println("ESTOP PRESSED" + String(millis()));
 }
 
 void setup()
@@ -178,28 +179,12 @@ void setup()
 
   Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started" CR);
+  // This is for the data analysis tool to be able to change the log order easily
   Log.verbose("Time: %d" CR, millis());
 
   save_log();
 
   //------------------ODrive------------------//
-
-  // At this time the following code is depricated, but until we make final decisions about the odrive class, we will
-  // leave it in
-
-  // int odrive_init = actuator.odrive.init(1000);
-  // if (odrive_init) {
-  //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
-  // }
-  // else {
-  //   Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
-  // }
-  // Serial.println("ODrive init: " + String(odrive_init));
-  // for (int i = 0; i < 20; i++) {
-  //   Serial.println(odrive.get_voltage());
-  // }
-  // log_file.close();
-  // log_file = SD.open("log.txt", FILE_WRITE);
 
   //------------------Cooling------------------//
 
@@ -207,7 +192,7 @@ void setup()
 
   //-------------Actuator-----------------//
   // General Init
-  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth);
+  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth, external_count_gb_tooth);
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -239,38 +224,46 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
+  Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_cur, couple, therm1, therm2, therm3, wheel_speed, wheel_count, estop_flag" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
+// "status", 
+// "rpm", 
+// "act_vel", 
+// "enc_pos", 
+// "in_trig", 
+// "out_trig", 
+// "s_time", 
+// "f_time", 
+// "o_vol", 
+// "o_curr",
+// "couple",
+// "therm1",
+// "therm2",
+// "therm3",
+// "estop",
+// "wheel_count",
+// "wheel_rpm",
+
 }
 
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[10];
+int o_control[15];
 int save_count = 0;
 int last_save = 0;
 void loop()
 {
   // Main control loop, with actuator
   actuator.control_function(o_control);
-  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
   // Report output with log
-  if (o_control[0] == 3)
+  if (o_control[0] != 3)
   {
-    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-                o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5],
-                o_control[6]);
-  }
-  else
-  {
-    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,
-    // Voltage: %d" CR,
-    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
-    //   o_control[8]);
-    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
-               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature(), estop_pressed);
+    // For log output format check log statement after log begins in init
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], o_control[9],
+               cooler_o.get_temperature(), cooler_o.get_thermistor(0), cooler_o.get_thermistor(1), cooler_o.get_thermistor(2), o_control[11], o_control[12], estop_pressed);
     estop_pressed = 0;
   }
 
@@ -282,8 +275,6 @@ void loop()
     // Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    // Log.verbose("Battery level ok? %d", o_control[8] > 20);
-    // digitalWrite(LED_BUILTIN, !(o_control[8] > 20));  // TURN LED ON IF BATTERY TOO LOW
     // Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
@@ -321,8 +312,9 @@ void loop()
 {
   // Assumes main power isnt connected as connected to serial
   Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
-  Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
-  Serial.println(cooler_o.get_temperature());
+  Log.notice("Thermocouple temp: %d" CR, cooler_o.get_temperature());
+  Serial.println("Therm1: " + String(cooler_o.get_thermistor(0)) + "\n Therm2: " + String(cooler_o.get_thermistor(1)) + "\n Therm3: " + String(cooler_o.get_thermistor(2)));
+  Serial.println("Thermocouple: " + String(cooler_o.get_temperature()));
   // Serial.println(analogRead(38));
   delay(1000);
 }
@@ -333,7 +325,7 @@ int temp = 0;
 
 void loop()
 {
-  temp = cooler_o.thermo_check();
+  // temp = cooler_o.thermo_check();
   Serial.println(temp);
   delay(100);
 

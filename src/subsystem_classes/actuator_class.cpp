@@ -19,11 +19,12 @@ inline Print& operator<<(Print& obj, float arg)
   return obj;
 }
 
-Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin,
+Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin, const int gb_tooth_pin,
                    const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial)
   : encoder(enc_a_pin, enc_b_pin), odrive(serial)
 {
   // Save pin values
+  m_gb_tooth_pin = gb_tooth_pin;
   m_eg_tooth_pin = eg_tooth_pin;
   m_hall_inbound_pin = hall_inbound_pin;
   m_hall_outbound_pin = hall_outbound_pin;
@@ -31,6 +32,9 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_
   m_print_to_serial = print_to_serial;
 
   // initialize count vairables
+  m_gb_rpm = 0;
+  m_gb_tooth_count = 0;
+  m_last_gb_tooth_count = 0;
   m_eg_tooth_count = 0;
   m_last_eg_tooth_count = 0;
   m_last_control_execution = 0;
@@ -44,12 +48,12 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_
   m_encoder_inbound = -666;
 }
 
-int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)())
+int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)(), void (*external_count_gb_tooth)())
 {
   // Attaches geartooth sensor to interrupt
   interrupts();  // allows interupts
   attachInterrupt(m_eg_tooth_pin, external_count_eg_tooth, FALLING);
-
+  attachInterrupt(m_gb_tooth_pin, external_count_gb_tooth, FALLING);
   // Initialize Odrive object
   int o_init = odrive.init(odrive_timeout);
   if (o_init != 0)
@@ -143,14 +147,19 @@ int* Actuator::control_function(int* out)
     // Calculate Engine Speed + Filter Engine Speed
     float dt = millis() - m_last_control_execution;
     m_eg_rpm = calc_engine_rpm(dt);
-
+    m_gb_rpm = calc_wheel_rpm(dt);
     m_eg_rpm = (k_exp_filt_alpha * m_eg_rpm) + (1 - k_exp_filt_alpha) * m_currentrpm_eg_accum;
     m_currentrpm_eg_accum = m_eg_rpm;
+
+    m_gb_rpm = (k_exp_filt_alpha * m_gb_rpm) + (1 - k_exp_filt_alpha) * m_currentrpm_gb_accum;
+    m_currentrpm_gb_accum = m_gb_rpm;
     // this is an exponential moving average
     //"averages" the last 1/EXP_FILTER_CONST data points
     // chosen because very simple to implement - use better filters in the future?
 
     out[1] = m_eg_rpm;
+    out[11] = m_gb_rpm;
+    out[12] = m_gb_tooth_count;
     // currentrpm_eg = analogRead(A2)*4;
     m_last_control_execution = millis();
 
@@ -165,7 +174,7 @@ int* Actuator::control_function(int* out)
         out[2] = 0;                                     // Report velocity
         out[4] = 1;
         out[8] = odrive.get_voltage();
-        out[9] = odrive.get_cur();
+        out[9] = 1e6 * odrive.get_cur();
         out[7] = encoder.read();
         out[6] = millis();
         return out;
@@ -177,7 +186,7 @@ int* Actuator::control_function(int* out)
         out[0] = 5;
         out[2] = 3;
         out[8] = odrive.get_voltage();
-        out[9] = odrive.get_cur();
+        out[9] = 1e6 * odrive.get_cur();
         out[7] = encoder.read();
         out[6] = millis();
         return out;
@@ -236,7 +245,7 @@ int* Actuator::control_function(int* out)
       odrive.run_state(k_motor_number, 8, false, 0);
     }
     out[8] = odrive.get_voltage();
-    out[9] = odrive.get_cur();
+    out[9] = 1e6 * odrive.get_cur();
     out[7] = encoder.read();
     out[6] = millis();
     return out;
@@ -252,6 +261,21 @@ int* Actuator::control_function(int* out)
 void Actuator::count_eg_tooth()
 {
   m_eg_tooth_count++;
+}
+
+void Actuator::count_gb_tooth()
+{
+  m_gb_tooth_count++;
+}
+
+float Actuator::calc_wheel_rpm(float dt)
+{
+  noInterrupts();
+  float rps = float(m_gb_tooth_count - m_last_gb_tooth_count) / dt;
+  float rpm = rps * 1000.0 * 60.0;
+  m_last_gb_tooth_count = m_gb_tooth_count;
+  interrupts();
+  return rpm;
 }
 
 float Actuator::calc_engine_rpm(float dt)
@@ -299,6 +323,8 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   output += "Engine Gear Tooth Count: " + String(m_eg_tooth_count) + "\n";
   output += "Current rpm: " + String(m_eg_rpm) + "\n";
   output += "Estop Signal: " + String(digitalRead(36)) + "\n";
+  output += "Wheel gear tooth count: " + String(m_gb_tooth_count) + "\n";
+  output += "Current wheel rpm: " + String(m_gb_rpm) + "\n";
 
   if (print_serial)
   {
