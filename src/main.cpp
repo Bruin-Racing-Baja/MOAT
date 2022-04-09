@@ -45,7 +45,7 @@ General code to oversee all functions of the Teensy
 #define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
 #define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
-#define ESTOP_PIN 34
+#define ESTOP_PIN 36
 // Logging
 // NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
 #define LOG_LEVEL LOG_LEVEL_NOTICE
@@ -118,7 +118,7 @@ void odrive_estop()
 {
   estop_pressed = 1;
   digitalWrite(LED_BUILTIN, HIGH);
-  Serial.println("ESTOP PRESSED" + String(millis()));
+  // Serial.println("ESTOP PRESSED" + String(millis()));
 }
 
 void setup()
@@ -261,9 +261,9 @@ void loop()
   if (o_control[0] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
-               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature(), cooler_o.get_thermistor(24), cooler_o.get_thermistor(37), cooler_o.get_thermistor(39), o_control[11], o_control[12], estop_pressed);
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], o_control[9],
+               cooler_o.get_temperature(), cooler_o.get_thermistor(0), cooler_o.get_thermistor(1), cooler_o.get_thermistor(2), o_control[11], o_control[12], estop_pressed);
     estop_pressed = 0;
   }
 
