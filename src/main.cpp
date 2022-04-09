@@ -92,13 +92,16 @@ Cooling cooler_o;
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
+Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, GEARTOOTH_GEARBOX_PIN ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
 void external_count_eg_tooth()
 {
   actuator.count_eg_tooth();
+}
+void external_count_gb_tooth(){
+  actuator.count_gb_tooth();
 }
 
 void save_log()
@@ -177,7 +180,6 @@ void setup()
   Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started" CR);
   // This is for the data analysis tool to be able to change the log order easily
-  Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_cur, couple, therm1, therm2, therm3, estop_flag" CR);
   Log.verbose("Time: %d" CR, millis());
 
   save_log();
@@ -189,7 +191,8 @@ void setup()
   cooler_o.init();
 
   //-------------Actuator-----------------//
-  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth);
+  // General Init
+  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth, external_count_gb_tooth);
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -221,14 +224,33 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
+  Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_cur, couple, therm1, therm2, therm3, wheel_speed, wheel_count, estop_flag" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
+// "status", 
+// "rpm", 
+// "act_vel", 
+// "enc_pos", 
+// "in_trig", 
+// "out_trig", 
+// "s_time", 
+// "f_time", 
+// "o_vol", 
+// "o_curr",
+// "couple",
+// "therm1",
+// "therm2",
+// "therm3",
+// "estop",
+// "wheel_count",
+// "wheel_rpm",
+
 }
 
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[10];
+int o_control[15];
 int save_count = 0;
 int last_save = 0;
 void loop()
@@ -239,9 +261,9 @@ void loop()
   if (o_control[0] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %F, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
                o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature(), cooler_o.get_thermistor(24), cooler_o.get_thermistor(37), cooler_o.get_thermistor(39), estop_pressed);
+               cooler_o.get_temperature(), cooler_o.get_thermistor(24), cooler_o.get_thermistor(37), cooler_o.get_thermistor(39), o_control[11], o_control[12], estop_pressed);
     estop_pressed = 0;
   }
 
@@ -303,7 +325,7 @@ int temp = 0;
 
 void loop()
 {
-  temp = cooler_o.thermo_check();
+  // temp = cooler_o.thermo_check();
   Serial.println(temp);
   delay(100);
 
