@@ -103,8 +103,8 @@ private:
 
 
   // running control terms
-  int error = 0;
-  int prev_error = 0;
+  float error = 0.;
+  float prev_error = 0.;
 };
 
 #endif

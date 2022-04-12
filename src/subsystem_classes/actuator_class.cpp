@@ -197,8 +197,8 @@ int* Actuator::control_function(int* out)
 
     // If error is within a certain deviation from the desired value, do not shift
     error = k_desired_rpm - m_eg_rpm;
-    int error_deriv = (error - prev_error) / dt;  // 16ms in between runs rn
-    int motor_velocity = k_proportional_gain * error + k_derivative_gain * error_deriv;
+    float error_deriv = (error - prev_error) / dt;  // 16ms in between runs rn
+    float motor_velocity = k_proportional_gain * error + k_derivative_gain * error_deriv;
     prev_error = error;
     // if (abs(error) <= rpm_allowance) {
     //     error = 0;
@@ -217,26 +217,35 @@ int* Actuator::control_function(int* out)
     if (digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)
     {
       // Shifted out completely
-      if (motor_velocity > 0)
-        motor_velocity = 0;
+      motor_velocity = min(motor_velocity, 0);
       out[0] = 6;
       out[4] = 1;
     }
     else if (digitalReadFast(m_hall_inbound_pin) == 0 || encoder.read() <= m_encoder_inbound)
     {
       // Shifted in completely
-      if (motor_velocity < 0)
-        motor_velocity = 0;
+      motor_velocity = max(motor_velocity, 0);
       out[0] = 7;
       out[3] = 1;
     }
-
+    /*
+    else if ((encoder.read() - m_encoder_inbound) < 4096){
+      // TODO adjust distance(?)
+      float max_vel = -(encoder.read() - m_encoder_inbound) * 20./4096.;
+      motor_velocity = max(max_vel, motor_velocity);
+    }
+  
+    if(abs(motor_velocity) < 1){
+      motor_velocity = 0;
+    }
+    */
     // Multiply by gain and set new motor velocity.
 
     out[2] = motor_velocity;
 
-    if (motor_velocity == 0)
+    if (motor_velocity == 0 && false)
     {
+      // TODO remove(?)
       odrive.run_state(k_motor_number, 1, false, 0);
     }
     else
@@ -260,12 +269,12 @@ int* Actuator::control_function(int* out)
 //----------------Geartooth Functions----------------//
 void Actuator::count_eg_tooth()
 {
-  m_eg_tooth_count++;
+  ++m_eg_tooth_count;
 }
 
 void Actuator::count_gb_tooth()
 {
-  m_gb_tooth_count++;
+  ++m_gb_tooth_count;
 }
 
 float Actuator::calc_wheel_rpm(float dt)
