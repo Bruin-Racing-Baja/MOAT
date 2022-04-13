@@ -3,12 +3,11 @@
 # are saved in a different folder in the directory
 
 from json import load
+from multiprocessing.connection import wait
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 from analysis_functions import *
-
-test_status = [2, 4, 4, 4, 4, 4, 4, 4, 4, 5, 8, 4, 7, 9, 4, 4, 4, 4, 4, 4, 4]
 
 # Outputs
 graphs = [
@@ -67,6 +66,10 @@ while run_continuously:
     # Get target file from target directory
     available_files = os.listdir(target_directory)
     available_files.remove('Output') # Ignore output file
+    if not available_files:
+        # If it can't find a file wait for 10 seconds before checking again
+        wait(10000)
+        continue
     current_file = available_files[0] # Select first file in list, doesn't matter the order
     
     #Intake file
@@ -90,7 +93,9 @@ while run_continuously:
     for graph in graphs:
         create_graph(data = normalized_data, x_axis = graph[0], y_axis = graph[1:], title = graph[0] + ' vs ' + graph[1], cropping = cropping, file_path = output_dir + '/' + graph[0] + '_vs_' + graph[1] + '.png')
 
-    # Save file as JSON in output and delete from target
+    # Save file to output and delete from target
+    # os.popen("copy " + target_directory + '/' + current_file + " " + output_dir + '/' + current_file)
+    # os.remove(target_directory + '/' + current_file)
     
     
     
