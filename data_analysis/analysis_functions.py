@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def create_data_dict(file_path, available_properties):
+def load_in_file(file_path, available_properties):
     """
     Creates a dictionary of data from a file path and array of available properties
-    Will return the data dictionary as well as an array containing all properties not available
+    Will return the data dictionary as well as arrays containing the data order and all properties not available
     """
     with open(file_path) as f:
         data_order = f.readlines()[4].rstrip().split(', ')
@@ -14,19 +14,24 @@ def create_data_dict(file_path, available_properties):
 
     data = {}
     not_available = []
+
     for i, property in enumerate(data_order):
         if property in available_properties:
             data[property] = raw_data[:,i]
         else:
             not_available.append(property)
-    return data, not_available
+
+    return data, data_order, not_available
 
 def normalize_data(data, to_normalize):
     """
     Normalizes and returns a data dictionary when passed a data dict and an array of properties to normalize
     """
+    normalized_data = data # Start with the original data to preserve non-normalized data
+    
     for property in to_normalize:
-        data[property] = (data[property] - np.mean(data[property])) / np.std(data[property])
+        normalized_data[property] = (data[property] - np.mean(data[property])) / np.std(data[property])
+    
     return data
 
 def auto_crop(data_set, leading_indices = 0, following_indices = 0):
@@ -35,6 +40,7 @@ def auto_crop(data_set, leading_indices = 0, following_indices = 0):
     """
     first_val = data_set[0]
     last_val = data_set[-1]
+
     for i, value in enumerate(data_set):
         if value != first_val and i >= leading_indices:
             first_index = i
@@ -58,8 +64,10 @@ def create_graph(data, x_axis, title = None, cropping = None, file_path = None, 
     If a file path is given, the graph will be saved to that file
     """
     f = plt.figure()
-    for y_axis_data in y_axis:
-        plt.plot(x_axis[cropping[0]:cropping[1]], y_axis_data[cropping[0]:cropping[1]], label=y_axis_data)
+
+    for y_axis_name in y_axis:
+        plt.plot(data[x_axis][cropping[0]:cropping[1]], data[y_axis_name][cropping[0]:cropping[1]], label=y_axis_name)
+    
     plt.xlabel(x_axis)
     plt.ylabel(y_axis[0])
     plt.title(title)
@@ -67,8 +75,8 @@ def create_graph(data, x_axis, title = None, cropping = None, file_path = None, 
 
     if file_path:
         f.savefig(file_path)
-        
+
     return f
 
-# if program.name == '__main__':
-#     print("This is a module, what are you doing")
+if __name__ == '__main__':
+    print("This is a module, what are you doing")
