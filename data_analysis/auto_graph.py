@@ -51,8 +51,6 @@ properties = [
 
 properties_to_normalize = ["rpm", "act_vel", "enc_pos", "o_vol", "o_curr", "couple", "therm1", "therm2", "therm3"]
 
-
-
 # Settings
 target_directory = 'Data_Hopper'
 run_continuously = True
@@ -74,12 +72,13 @@ while run_continuously:
     #Intake file
     print('Processing file: ' + current_file)
     data, data_order, not_recognized = load_in_file(target_directory + '/' + current_file, properties)
+    print(data)
     if not_recognized:
         print('Not recognized: ' + str(not_recognized))
 
     normalized_data = normalize_data(data, properties_to_normalize)
 
-    cropping = auto_crop(data, leading_indices, following_indices)
+    cropping = auto_crop(data['status'], leading_indices, following_indices)
 
     # Create output directory
     output_dir = target_directory + '/' + current_file + '_output'
@@ -89,7 +88,10 @@ while run_continuously:
 
     # Create and output all graphs
     for graph in graphs:
-        create_graph(normalize_data, graph[0], graph[0] + ' vs ' + graph[1:], cropping, output_dir, graph[1:])
+        create_graph(data = normalized_data, x_axis = graph[0], y_axis = graph[1:], title = graph[0] + ' vs ' + graph[1], cropping = cropping, file_path = output_dir + '/' + graph[0] + '_vs_' + graph[1] + '.png')
+
+    # Save file as JSON in output and delete from target
+    
     
     
 

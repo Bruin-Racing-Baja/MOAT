@@ -32,7 +32,7 @@ def normalize_data(data, to_normalize):
     for property in to_normalize:
         normalized_data[property] = (data[property] - np.mean(data[property])) / np.std(data[property])
     
-    return data
+    return normalized_data
 
 def auto_crop(data_set, leading_indices = 0, following_indices = 0):
     """
@@ -58,15 +58,17 @@ def auto_crop(data_set, leading_indices = 0, following_indices = 0):
     
     return (first_index, last_index)
 
-def create_graph(data, x_axis, title = None, cropping = None, file_path = None, *y_axis):
+def create_graph(data, x_axis, y_axis, title = None, cropping = None, file_path = None):
     """
     Creates a graph of the given data, as well as however many y_axis are given
     If a file path is given, the graph will be saved to that file
     """
     f = plt.figure()
-
+    print(data[x_axis])
+    x_data = data[x_axis]
     for y_axis_name in y_axis:
-        plt.plot(data[x_axis][cropping[0]:cropping[1]], data[y_axis_name][cropping[0]:cropping[1]], label=y_axis_name)
+        y_data = data[y_axis_name]
+        plt.plot(x_data[cropping[0]:cropping[1]], y_data[cropping[0]:cropping[1]], label=y_axis_name)
     
     plt.xlabel(x_axis)
     plt.ylabel(y_axis[0])
