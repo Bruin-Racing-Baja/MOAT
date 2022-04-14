@@ -39,11 +39,11 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 0
+#define MODE 2
 
 // Startup
-#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
-#define HOME_ON_STARTUP 1
+#define WAIT_SERIAL_STARTUP 1  // Set headless mode or not
+#define HOME_ON_STARTUP 0
 //#define RUN_DIAGNOSTIC_STARTUP 0
 #define ESTOP_PIN 36
 // Logging
@@ -86,6 +86,8 @@ unsigned int HALL_IN = 10;
 unsigned int HALL_OUT = 11;
 unsigned int WHL_RPM = 12;
 unsigned int WHL_COUNT = 13;
+unsigned int RPM_COUNT = 14;
+unsigned int DT = 15;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
@@ -240,7 +242,7 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
-  Log.notice("status, rpm, act_vel, enc_pos, hall_in, enc_in, hall_out, enc_out, s_time, f_time, o_vol, o_curr, therm1, therm2, therm3, estop" CR);
+  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, enc_in, hall_out, enc_out, s_time, f_time, o_vol, o_curr, therm1, therm2, therm3, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
 // "status", 
@@ -266,7 +268,7 @@ void setup()
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[15];
+int o_control[20];
 int save_count = 0;
 int last_save = 0;
 
@@ -279,9 +281,11 @@ void loop()
   {
     // Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_curr, couple, therm1, therm2, therm3, wheel_rpm, wheel_count, estop" CR);
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
     o_control[STATUS], 
     o_control[RPM],
+    o_control[RPM_COUNT],
+    o_control[DT],
     o_control[ACT_VEL], 
     o_control[ENC_POS],
     o_control[HALL_IN], 

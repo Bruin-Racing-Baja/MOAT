@@ -48,6 +48,8 @@ public:
   unsigned int HALL_OUT = 11;
   unsigned int WHL_RPM = 12;
   unsigned int WHL_COUNT = 13;
+  unsigned int RPM_COUNT = 14;
+  unsigned int DT = 15;
 
   // reference signals form tyler
   const unsigned int k_eg_idle = 1750;      // rpm

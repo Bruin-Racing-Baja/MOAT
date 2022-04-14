@@ -244,12 +244,16 @@ int Actuator::control_function_two(int* out){
     //  what happens to derivative term in calc engine rpm if it hasn't been called for awhile
     //  what happens when encoder inbound is re read --> how should we tell ourselves what the actual
     //  between in and outbound is?
-    out[T_START] = millis();
+    uint32_t timestamp = millis();
+    out[T_START] = timestamp;
     out[STATUS] = 0;
-    if (millis() - m_last_control_execution < k_cycle_period) return 3; //return 3 if control function was called too soon
+    uint32_t dt = timestamp - m_last_control_execution;
+    if (dt < k_cycle_period) return 3; //return 3 if control function was called too soon
+    m_last_control_execution = timestamp;
 
     // Calculate Engine Speed + Filter Engine Speed
-    float dt = millis() - m_last_control_execution;
+    out[DT] = dt;
+    out[RPM_COUNT] = m_eg_tooth_count;
     m_eg_rpm = calc_engine_rpm(dt);
     out[RPM] = m_eg_rpm;
 
@@ -357,7 +361,7 @@ int Actuator::control_function_two(int* out){
     out[ACT_VEL] = motor_velocity;
     out[ENC_POS] = encoder.read();
     out[ODRV_VOLT] = odrive.get_voltage();
-    out[ODRV_CUR] = odrive.get_cur();
+    out[ODRV_CUR] =  1e6 * odrive.get_cur();
     out[T_STOP] = millis();
     return 0; // Also need to think about this with getty
 }
