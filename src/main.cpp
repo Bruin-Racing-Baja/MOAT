@@ -83,8 +83,8 @@ Cooling cooler_o;
 // PINS CAR
 #define ENC_A_PIN 2
 #define ENC_B_PIN 3
-#define HALL_INBOUND_PIN 22
-#define HALL_OUTBOUND_PIN 23
+#define HALL_INBOUND_PIN 23
+#define HALL_OUTBOUND_PIN 22
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 

@@ -300,7 +300,7 @@ int Actuator::control_function_two(int* out){
         if(encoder.read() > m_encoder_engage){
             //if engine speed is less than engage rpm & not engaged position p control to just before engage
             position_error = ( m_encoder_engage + k_encoder_engage_buffer - encoder.read()); //enc greater than buffer error is negative 
-            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain;
+            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
             //TODO Update STATUS
         } else  {
             //if engine speed is less than engage rpm & fork is between engage and inbound vel pid control out
@@ -313,13 +313,10 @@ int Actuator::control_function_two(int* out){
         if(encoder.read() > m_encoder_engage){
             //if engine speed is less than desired rpm & position is less than Engage position p control to just before engage
             position_error = (m_encoder_engage - encoder.read()); //enc greater than engage error is negative 
-            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain;
+            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
             //TODO Update STATUS
         }
-        else if (encoder.read() > m_encoder_engage - k_encoder_engage_buffer){
-            motor_velocity = 0; //if engine wants to shift out just before engage stop it from shifing to avoid oscillations
-            //TODO update STATUS
-        }
+        
         else{
             //if engine rpm is less than engage rpm and fork is between engage and inbound vel pid control out
             motor_velocity = calc_motor_rps(dt);
@@ -329,19 +326,10 @@ int Actuator::control_function_two(int* out){
     //Collumn 3: engine rpm greater than desired rpm
     else{
         motor_velocity = calc_motor_rps(dt);
-        if(encoder.read() > m_encoder_inbound + k_encoder_engage_buffer){
+        if(encoder.read() < m_encoder_inbound && motor_velocity < 0){
+            motor_velocity = 0;
             //if engine rpm is above desired rpm & shift fork not near inbound vel pid control in
             //TODO update STATUS 
-        }
-        else if(encoder.read() > m_encoder_inbound){
-            //if engine rpm is above desired rpm & shift fork close to inbound constrain motor_velocity
-            if(motor_velocity < -1) motor_velocity = -1;
-            //TODO update STATUS
-        }
-        else{
-            //if engine rpm is above desired rpm & shift fork at outbound constrain motor_velocity to 0
-            motor_velocity = 0;
-            //TODO update STATUS
         }
     }
 

@@ -57,7 +57,7 @@ public:
   const float k_p_gain = 0.015;
 
   const float k_proportional_gain = .015;  // gain of the p controller
-  const float k_derivative_gain = .0;      //.005;
+  const float k_derivative_gain = .0;      //
   const float k_integral_gain = .0001;
   const float k_exp_filt_alpha = 0.5;
 
