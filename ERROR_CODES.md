@@ -46,3 +46,17 @@ Control Function
         <000XXX00>
     0006 - Error set to 0 as shifted all the way out
  ** 0007 - Error set to 0 as shifted all the way in
+
+New Control Function Status Codes
+    Current rpm < Engage rpm
+        21 - Engine speed less than engage, shifting to right before engage
+        22 - Engine speed less than engage, fork is at or past engage distance (??)
+    Engage rpm < Current rpm < Desired rpm
+        23 - Pos < engage --> shifting to engage
+        24 - Prevent engine from shifting out when close to engage
+        25 - Engage < Position < Desired
+    Desired rpm < Current rpm
+        26 - Shift fork not near inbound, PID in
+        27 - Shift fork near inbound, small velocity in
+        28 - Shift fork at 
+

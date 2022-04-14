@@ -221,29 +221,40 @@ void setup()
 int o_control[10];
 int save_count = 0;
 int last_save = 0;
+
 void loop()
 {
-  // Main control loop, with actuator
-  actuator.control_function(o_control);
-  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
-  // Report output with log
-  if (o_control[0] == 3)
-  {
-    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-                o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5],
-                o_control[6]);
-  }
-  else
-  {
-    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,
-    // Voltage: %d" CR,
-    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
-    //   o_control[8]);
-    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
-               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
-               cooler_o.get_temperature());
-  }
+
+  // Main control loop with new control function
+  actuator.control_function_two(o_control);
+  if (o_control[0] != 3)
+    {
+      Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[3],
+                 o_control[4], o_control[5], o_control[6], o_control[7], o_control[8], o_control[9]);
+    }
+
+
+  // // Main control loop, with actuator
+  // actuator.control_function(o_control);
+  // //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
+  // // Report output with log
+  // if (o_control[0] == 3)
+  // {
+  //   Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
+  //               o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5],
+  //               o_control[6]);
+  // }
+  // else
+  // {
+  //   // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d,
+  //   // Voltage: %d" CR,
+  //   //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6],
+  //   //   o_control[8]);
+  //   // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
+  //   Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
+  //              o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0),
+  //              cooler_o.get_temperature());
+  // }
 
   // Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD)

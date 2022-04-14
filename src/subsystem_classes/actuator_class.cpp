@@ -71,11 +71,9 @@ int* Actuator::homing_sequence(int* out)
   out[0] = 0;
 
   odrive.run_state(k_motor_number, 8, false, 0);  // Enter velocity control mode
-  // TODO: Enums for IDLE, VELOCITY_CONTROL
   delay(1000);
 
   // Home outbound
-  digitalWrite(LED_BUILTIN, HIGH);
   int start = millis();
 
   odrive.set_velocity(k_motor_number, 2);
@@ -92,37 +90,16 @@ int* Actuator::homing_sequence(int* out)
     {
       out[0] = 2;
       odrive.run_state(k_motor_number, 0, false, 0);
-      out[1], out[2] = -1;
+      out[1] = -1;
+      out[2] = -1;
       return out;
     }
   }
   odrive.set_velocity(k_motor_number, 0);         // Stop spinning after homing
   odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
-  digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - k_encoder_count_shift_length;
   m_encoder_engage = m_encoder_outbound - k_encoder_engage_dist;
-
-  // Home inbound - [IN PURGATORY]
-  //  set_velocity(-10);
-  //  while (digitalReadFast(m_hall_inbound) == 1) {
-  //      m_encoder_inbound = encoder.read();
-  //  }
-
-  // //Testing encoder reading by shifting all the way back to the inbound
-  // delay(500);
-  // odrive.run_state(motor_number, 8, false, 0);
-  // odrive.set_velocity(motor_number, -2);
-  // digitalWrite(LED_BUILTIN, HIGH);
-  // while(encoder.read() > m_encoder_inbound){
-  //     Serial.print("encoder inbound: ");
-  //     Serial.println(m_encoder_inbound);
-  //     Serial.print("current encoder position");
-  //     Serial.println(encoder.read());
-  // }
-  // digitalWrite(LED_BUILTIN, LOW);
-  // odrive.set_velocity(motor_number, 0); //Stop spinning after homing
-  // odrive.run_state(motor_number, 1, false, 0); //Idle state
 
   out[1] = m_encoder_inbound;
   out[2] = m_encoder_outbound;
@@ -258,15 +235,15 @@ int Actuator::control_function_two(int* out){
     //  what happens to derivative term in calc engine rpm if it hasn't been called for awhile
     //  what happens when encoder inbound is re read --> how should we tell ourselves what the actual
     //  between in and outbound is?
-
     out[T_START] = millis();
+    out[STATUS] = 0;
     if (millis() - m_last_control_execution < k_cycle_period) return 3; //return 3 if control function was called too soon
 
     // Calculate Engine Speed + Filter Engine Speed
     float dt = millis() - m_last_control_execution;
     m_eg_rpm = calc_engine_rpm(dt);
 
-    // update encoder inbound if we weren't quiet right
+    // update encoder inbound if we weren't quite right
     if(digitalReadFast(m_hall_inbound_pin) == 0) m_encoder_inbound = encoder.read();
 
 
@@ -302,10 +279,11 @@ int Actuator::control_function_two(int* out){
             position_error = ( m_encoder_engage + k_encoder_engage_buffer - encoder.read()); //enc greater than buffer error is negative 
             motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
             //TODO Update STATUS
+            out[STATUS] = 21;
         } else  {
             //if engine speed is less than engage rpm & fork is between engage and inbound vel pid control out
             motor_velocity = calc_motor_rps(dt);
-            //TODO Update STATUS
+            out[STATUS] = 22;
         }
     }
     //Collumn 2: engine rpm between desired and engage rpm
@@ -314,13 +292,16 @@ int Actuator::control_function_two(int* out){
             //if engine speed is less than desired rpm & position is less than Engage position p control to just before engage
             position_error = (m_encoder_engage - encoder.read()); //enc greater than engage error is negative 
             motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
-            //TODO Update STATUS
+            out[STATUS] = 23;
         }
-        
+        else if (encoder.read() > m_encoder_engage - k_encoder_engage_buffer){
+            motor_velocity = 0; //if engine wants to shift out just before engage stop it from shifing to avoid oscillations
+            out[STATUS] = 24;
+        }
         else{
             //if engine rpm is less than engage rpm and fork is between engage and inbound vel pid control out
             motor_velocity = calc_motor_rps(dt);
-            //TODO update STATUS
+            out[STATUS] = 25;
         }
     }
     //Collumn 3: engine rpm greater than desired rpm
@@ -329,7 +310,17 @@ int Actuator::control_function_two(int* out){
         if(encoder.read() < m_encoder_inbound && motor_velocity < 0){
             motor_velocity = 0;
             //if engine rpm is above desired rpm & shift fork not near inbound vel pid control in
-            //TODO update STATUS 
+            out[STATUS] = 26;
+        }
+        else if(encoder.read() > m_encoder_inbound){
+            //if engine rpm is above desired rpm & shift fork close to inbound constrain motor_velocity
+            if(motor_velocity < -1) motor_velocity = -1;
+            out[STATUS] = 27;
+        }
+        else{
+            //if engine rpm is above desired rpm & shift fork at outbound constrain motor_velocity to 0
+            motor_velocity = 0;
+            out[STATUS] = 28;
         }
     }
 
@@ -337,8 +328,7 @@ int Actuator::control_function_two(int* out){
     odrive.run_state(k_motor_number, 8, false, 0); //maybe we should always be in state 8 as to be faster
     odrive.set_velocity(k_motor_number, motor_velocity);
     
-    out[STATUS] = 0;//TODO fix this
-    out[ACT_VEL]=motor_velocity;
+    out[ACT_VEL] = motor_velocity;
     out[ENC_IN] = digitalRead(m_hall_inbound_pin);
     out[ENC_OUT] = digitalRead(m_hall_outbound_pin);
     out[ENC_POS] = encoder.read();
