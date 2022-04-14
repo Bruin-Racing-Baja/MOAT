@@ -43,6 +43,11 @@ public:
   unsigned int ENC_POS = 6;
   unsigned int ODRV_VOLT = 7;
   unsigned int ODRV_CUR = 8; 
+  unsigned int RPM = 9;
+  unsigned int HALL_IN = 10;
+  unsigned int HALL_OUT = 11;
+  unsigned int WHL_RPM = 12;
+  unsigned int WHL_COUNT = 13;
 
   // reference signals form tyler
   const unsigned int k_eg_idle = 1750;      // rpm

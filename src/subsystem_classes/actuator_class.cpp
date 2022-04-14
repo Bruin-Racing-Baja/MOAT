@@ -251,6 +251,7 @@ int Actuator::control_function_two(int* out){
     // Calculate Engine Speed + Filter Engine Speed
     float dt = millis() - m_last_control_execution;
     m_eg_rpm = calc_engine_rpm(dt);
+    out[RPM] = m_eg_rpm;
 
     // update encoder inbound if we weren't quite right
     if(digitalReadFast(m_hall_inbound_pin) == 0) m_encoder_inbound = encoder.read();
@@ -333,17 +334,30 @@ int Actuator::control_function_two(int* out){
         }
     }
 
-
     odrive.run_state(k_motor_number, 8, false, 0); //maybe we should always be in state 8 as to be faster
+    
+    // Check to see if shifted all the way in or out
+    out[HALL_IN] = digitalReadFast(m_hall_inbound_pin) == 0;
+    out[HALL_OUT] = digitalReadFast(m_hall_outbound_pin) == 0;
+    out[ENC_IN] = encoder.read() <= m_encoder_inbound;
+    out[ENC_OUT] = encoder.read() >= m_encoder_outbound;
+
+    // Shifted in all the way
+    if (out[HALL_IN] || out[ENC_IN]) {
+      if (motor_velocity < 0) motor_velocity = 0;
+    }
+
+    // Shifted out all the way
+    if (out[HALL_OUT] || out[ENC_OUT]) {
+      if (motor_velocity > 0) motor_velocity = 0;
+    }
+
     odrive.set_velocity(k_motor_number, motor_velocity);
     
     out[ACT_VEL] = motor_velocity;
-    out[ENC_IN] = digitalRead(m_hall_inbound_pin);
-    out[ENC_OUT] = digitalRead(m_hall_outbound_pin);
     out[ENC_POS] = encoder.read();
     out[ODRV_VOLT] = odrive.get_voltage();
     out[ODRV_CUR] = odrive.get_cur();
-
     out[T_STOP] = millis();
     return 0; // Also need to think about this with getty
 }

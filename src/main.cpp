@@ -71,6 +71,22 @@ String log_name = "log.txt";
 // Create constant control object to read from sd
 Constant constant;
 
+// Logging titles
+unsigned int STATUS = 0;
+unsigned int ACT_VEL = 1;
+unsigned int ENC_IN = 2;
+unsigned int ENC_OUT = 3;
+unsigned int T_START = 4;
+unsigned int T_STOP = 5;
+unsigned int ENC_POS = 6;
+unsigned int ODRV_VOLT = 7;
+unsigned int ODRV_CUR = 8; 
+unsigned int RPM = 9;
+unsigned int HALL_IN = 10;
+unsigned int HALL_OUT = 11;
+unsigned int WHL_RPM = 12;
+unsigned int WHL_COUNT = 13;
+
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
 
@@ -125,8 +141,8 @@ void setup()
 {
   Serial.println("Starting...");
   //-------------Attach E-Stop interrupt-----------------//
-  interrupts();
-  attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
+  // interrupts();
+  // attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
 
   //-------------Wait for serial-----------------//
   if (WAIT_SERIAL_STARTUP)
@@ -224,7 +240,7 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
-  Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_cur, couple, therm1, therm2, therm3, wheel_speed, wheel_count, estop_flag" CR);
+  Log.notice("status, rpm, act_vel, enc_pos, hall_in, enc_in, hall_out, enc_out, s_time, f_time, o_vol, o_curr, therm1, therm2, therm3, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
 // "status", 
@@ -257,15 +273,30 @@ int last_save = 0;
 void loop()
 {
   // Main control loop, with actuator
-  actuator.control_function(o_control);
+  // actuator.control_function_two(o_control);
   // Report output with log
-  if (o_control[0] != 3)
+  if (actuator.control_function_two(o_control) != 3)
   {
+    // Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_curr, couple, therm1, therm2, therm3, wheel_rpm, wheel_count, estop" CR);
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
-               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], o_control[9],
-               cooler_o.get_temperature(), cooler_o.get_thermistor(0), cooler_o.get_thermistor(1), cooler_o.get_thermistor(2), o_control[11], o_control[12], estop_pressed);
-    estop_pressed = 0;
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
+    o_control[STATUS], 
+    o_control[RPM],
+    o_control[ACT_VEL], 
+    o_control[ENC_POS],
+    o_control[HALL_IN], 
+    o_control[ENC_IN],
+    o_control[HALL_OUT],
+    o_control[ENC_OUT], 
+    o_control[T_START], 
+    o_control[T_STOP], 
+    o_control[ODRV_VOLT], 
+    o_control[ODRV_CUR], 
+    cooler_o.get_thermistor(0), 
+    cooler_o.get_thermistor(1), 
+    cooler_o.get_thermistor(2), 
+    digitalRead(ESTOP_PIN)
+    );
   }
 
   // Save data to sd every SAVE_THRESHOLD
