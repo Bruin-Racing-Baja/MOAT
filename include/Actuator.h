@@ -13,13 +13,13 @@ public:
   const static int k_enc_ppr = 88;
 
   const static int k_motor_number = 0;       // odrive axis
-  const static int k_homing_timeout = 50e3;  // ms
+  const static int k_homing_timeout = 50e6;  // ms
   const static int k_min_rpm = 1000;         // rpm
   const static int k_cycle_period = 10;      // ms
   const int k_rpm_allowance = 30;
 
   constexpr static float k_linear_distance_per_rotation = 0.125;  // inches/rotation
-  constexpr static float k_linear_shift_length = 3.5;             // inches
+  constexpr static float k_linear_shift_length = 3;             // inches
   constexpr static int32_t k_encoder_count_shift_length =
       (k_linear_shift_length / k_linear_distance_per_rotation) * 4 * 2048; //encoder count
   constexpr static float k_linear_engage_length = 1;  //inches
@@ -61,13 +61,12 @@ public:
   const float k_integral_gain = .0001;
   const float k_exp_filt_alpha = 0.5;
 
-  // position pid constants
   const float k_position_p_gain = .015;
 
-  Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin,
-           const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial);
+  Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin, const int gb_tooth_pin,
+                   const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial);
 
-  int init(int odrive_timeout, void (*external_count_eg_tooth)());
+  int init(int odrive_timeout, void (*external_count_eg_tooth)(), void (*external_count_gb_tooth)());
   int* control_function(int* out);
   int control_function_two(int* out);
   int* homing_sequence(int* out);
@@ -77,9 +76,11 @@ public:
   float get_p_value();
   float communication_speed();
   void count_eg_tooth();
+  void count_gb_tooth();
   String odrive_errors();
 
   String diagnostic(bool is_mainpower_on, bool serial_out);
+  int fully_shift(bool direction, int timeout);
 
 private:
   int target_rpm();
@@ -98,11 +99,13 @@ private:
   //Functions that help calculate motor speed
   int calc_motor_rps(int dt);
 
+  float calc_wheel_rpm(float dt);
   // Const
   bool m_print_to_serial;
 
   // member variables for sensor pins
   int m_eg_tooth_pin;
+  int m_gb_tooth_pin;
   int m_hall_inbound_pin;
   int m_hall_outbound_pin;
 
@@ -118,8 +121,13 @@ private:
   // running gear tooth sensor counts
   volatile unsigned long m_eg_tooth_count;
   unsigned long m_last_eg_tooth_count;
+  volatile unsigned long m_gb_tooth_count;
+  unsigned long m_last_gb_tooth_count;
   float m_eg_rpm = 0;
   float m_currentrpm_eg_accum = 0;
+  float m_gb_rpm = 0;
+  float m_currentrpm_gb_accum = 0;
+
 
   // running control terms
   int error = 0;

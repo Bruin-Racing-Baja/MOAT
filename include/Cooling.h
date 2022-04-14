@@ -15,12 +15,17 @@ class Cooling
   static const float k_voltage = 3.3;          // volts
   static const int k_cooling_rpm = 500;        // rpm
   static const int k_cycle_period = 10;        // ms
+  const int k_thermistor_pins[3] = {24, 38, 39};  // C
+  // therm 1 - belt
+  // therm 2 - secondary
+  // therm 3 - primary
 
 public:
   void init();
   void control_function();
 
   float get_temperature();
+  float get_thermistor(int thermistor_num);
   void stop_fan();
   void set_fan_speed(int rpm);
 
