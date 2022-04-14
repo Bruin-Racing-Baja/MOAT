@@ -317,8 +317,8 @@ int Actuator::control_function_two(int* out){
             motor_velocity = calc_motor_rps(dt);
             out[STATUS] = 25;
         }
-    }
-    //Collumn 3: engine rpm greater than desired rpm
+      }
+    // Collumn 3: engine rpm greater than desired rpm
     else{
         motor_velocity = calc_motor_rps(dt);
         if(encoder.read() < m_encoder_inbound && motor_velocity < 0){
@@ -373,7 +373,6 @@ int Actuator::calc_motor_rps(int dt){
     prev_error = error; //TODO error and prev_error need m_ added to them
     return motor_velocity;
 }
-
 
 
 //----------------Geartooth Functions----------------//

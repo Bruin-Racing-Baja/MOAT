@@ -39,11 +39,11 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 2
+#define MODE 0
 
 // Startup
-#define WAIT_SERIAL_STARTUP 1  // Set headless mode or not
-#define HOME_ON_STARTUP 0
+#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
+#define HOME_ON_STARTUP 1
 //#define RUN_DIAGNOSTIC_STARTUP 0
 #define ESTOP_PIN 36
 // Logging
@@ -271,15 +271,21 @@ void setup()
 int o_control[20];
 int save_count = 0;
 int last_save = 0;
+int o_return = 0;
 
 void loop()
 {
   // Main control loop, with actuator
   // actuator.control_function_two(o_control);
+  // if (o_control[0] != 3) {
+  //   Log.notice("ran control function" CR);
+  // }
+
   // Report output with log
-  if (actuator.control_function_two(o_control) != 3)
+  o_return = actuator.control_function_two(o_control);
+  
+  if (o_return != 3)
   {
-    // Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_curr, couple, therm1, therm2, therm3, wheel_rpm, wheel_count, estop" CR);
     // For log output format check log statement after log begins in init
     Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
     o_control[STATUS], 
@@ -306,12 +312,8 @@ void loop()
   // Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD)
   {
-    // int save_start = millis();
-    // // Log.notice(actuator.odrive_errors().c_str());
-    // Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    // Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
 }
