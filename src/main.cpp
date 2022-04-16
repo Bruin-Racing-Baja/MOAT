@@ -34,7 +34,9 @@ General code to oversee all functions of the Teensy
  * This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up.
  * NOTE: Recommend disabling logging object in its include
  *
+ * Diagnostic Test Mode (4): Guided real-time test procedure to avoid easily-preventable problems that often take us a long time to debug. It takes a decent amount of time to get the car set up to run, so we want to make each run count.
  */
+#define RUN_DIAGNOSTIC 1
 #define MODE 0
 
 // Startup
@@ -121,6 +123,49 @@ void setup()
 
   save_log();
 
+  #if RUN_DIAGNOSTIC == 1
+    int state = 0;
+
+    const int INIT = 0;
+    const int IN_HALL = 1;
+    const int OUT_HALL = 2;
+    const int ENC_TEENSY = 3;
+    const int GT_SENSOR = 4;
+    const int WS_SENSOR = 5;
+    const int E_STOP = 6;
+    const int ODRIVE = 7;
+    const int TESTING_SUMMARY = 8; //also where we go when we have critical errors
+    const int END = 9;
+
+    switch(state) {
+      case INIT:
+        Serial.println("BEGIN DIAGNOSTIC");
+        state = IN_HALL;
+      break;
+      case IN_HALL:
+
+      break;
+      case OUT_HALL:
+
+      break;
+      case ENC_TEENSY:
+      break;
+      case GT_SENSOR:
+      break;
+      case WS_SENSOR:
+      break;
+      case E_STOP:
+      break;
+      case ODRIVE:
+      break;
+      case TESTING_SUMMARY:
+      break;
+      case END:
+      break;
+    }
+
+  #endif
+
   //------------------ODrive------------------//
 
   // At this time the following code is depricated, but until we make final decisions about the odrive class, we will leave it in
@@ -178,7 +223,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   save_log();
-}
+} //end void setup()
 
 // OPERATING MODE
 #if MODE == 0
@@ -277,7 +322,6 @@ void loop()
 }
 
 #endif
-
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
 //                             __...------------._
