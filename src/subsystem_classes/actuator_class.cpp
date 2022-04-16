@@ -277,6 +277,49 @@ int Actuator::target_rpm()
 }
 //-----------------Diagnostic Functions--------------//
 
+void Actuator::run_test_sequence() 
+{
+    int state = 0;
+
+    const int INIT = 0;
+    const int IN_HALL = 1;
+    const int OUT_HALL = 2;
+    const int ENC_TEENSY = 3;
+    const int GT_SENSOR = 4;
+    const int WS_SENSOR = 5;
+    const int E_STOP = 6;
+    const int ODRIVE = 7;
+    const int TESTING_SUMMARY = 8; //also where we go when we have critical errors
+    const int END = 9;
+
+    switch(state) {
+      case INIT:
+        Serial.println("BEGIN DIAGNOSTIC");
+        state = IN_HALL;
+      break;
+      case IN_HALL:
+        
+      break;
+      case OUT_HALL:
+
+      break;
+      case ENC_TEENSY:
+      break;
+      case GT_SENSOR:
+      break;
+      case WS_SENSOR:
+      break;
+      case E_STOP:
+      break;
+      case ODRIVE:
+      break;
+      case TESTING_SUMMARY:
+      break;
+      case END:
+      break;
+    }
+}
+
 String Actuator::diagnostic(bool main_power, bool print_serial = true)
 {
     // General diagnostic tool to record sensor readings as well as some odrive info

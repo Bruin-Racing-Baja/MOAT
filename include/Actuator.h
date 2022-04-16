@@ -55,6 +55,7 @@ public:
     String odrive_errors();
 
     String diagnostic(bool is_mainpower_on, bool serial_out);
+    void run_test_sequence();
 
 private:
     int target_rpm();

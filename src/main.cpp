@@ -36,8 +36,7 @@ General code to oversee all functions of the Teensy
  *
  * Diagnostic Test Mode (4): Guided real-time test procedure to avoid easily-preventable problems that often take us a long time to debug. It takes a decent amount of time to get the car set up to run, so we want to make each run count.
  */
-#define RUN_DIAGNOSTIC 1
-#define MODE 0
+#define MODE 4
 
 // Startup
 #define WAIT_SERIAL_STARTUP 0 // Set headless mode or not
@@ -122,49 +121,6 @@ void setup()
   Log.verbose("Time: %d" CR, millis());
 
   save_log();
-
-  #if RUN_DIAGNOSTIC == 1
-    int state = 0;
-
-    const int INIT = 0;
-    const int IN_HALL = 1;
-    const int OUT_HALL = 2;
-    const int ENC_TEENSY = 3;
-    const int GT_SENSOR = 4;
-    const int WS_SENSOR = 5;
-    const int E_STOP = 6;
-    const int ODRIVE = 7;
-    const int TESTING_SUMMARY = 8; //also where we go when we have critical errors
-    const int END = 9;
-
-    switch(state) {
-      case INIT:
-        Serial.println("BEGIN DIAGNOSTIC");
-        state = IN_HALL;
-      break;
-      case IN_HALL:
-
-      break;
-      case OUT_HALL:
-
-      break;
-      case ENC_TEENSY:
-      break;
-      case GT_SENSOR:
-      break;
-      case WS_SENSOR:
-      break;
-      case E_STOP:
-      break;
-      case ODRIVE:
-      break;
-      case TESTING_SUMMARY:
-      break;
-      case END:
-      break;
-    }
-
-  #endif
 
   //------------------ODrive------------------//
 
@@ -321,6 +277,10 @@ void loop()
   // delay(1000);
 }
 
+#elif MODE == 4
+  void loop() {
+    actuator.run_test_sequence(); //TODO: actuator does not name a type??
+  }
 #endif
 /*
 //"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
