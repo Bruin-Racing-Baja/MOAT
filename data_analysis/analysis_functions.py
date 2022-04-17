@@ -64,7 +64,7 @@ def create_graph(data, x_axis, y_axis, title = None, cropping = None, file_path 
     If a file path is given, the graph will be saved to that file
     """
     f = plt.figure()
-    print(data[x_axis])
+    print("Graphing " + title)
     x_data = data[x_axis]
     for y_axis_name in y_axis:
         y_data = data[y_axis_name]
@@ -78,7 +78,8 @@ def create_graph(data, x_axis, y_axis, title = None, cropping = None, file_path 
     if file_path:
         f.savefig(file_path)
 
-    return f
+    plt.close(f)
+    return 0
 
 if __name__ == '__main__':
     print("This is a module, what are you doing")

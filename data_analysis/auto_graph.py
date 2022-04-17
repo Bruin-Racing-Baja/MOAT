@@ -2,12 +2,12 @@
 # analysis tools very quickly. Once it starts running, any files placed in the target directory are processed and the results
 # are saved in a different folder in the directory
 
-from json import load
-from multiprocessing.connection import wait
 import os
+from time import sleep
 import numpy as np
 import matplotlib.pyplot as plt
 from analysis_functions import *
+import shutil
 
 # Outputs
 graphs = [
@@ -64,18 +64,17 @@ following_indices = 40
 # Main Loop
 while run_continuously:
     # Get target file from target directory
-    available_files = os.listdir(target_directory)
-    available_files.remove('Output') # Ignore output file
+    available_files = [x for x in os.listdir(target_directory) if x.endswith('.txt')]
+    print(available_files)
     if not available_files:
         # If it can't find a file wait for 10 seconds before checking again
-        wait(10000)
+        sleep(10)
         continue
     current_file = available_files[0] # Select first file in list, doesn't matter the order
     
     #Intake file
     print('Processing file: ' + current_file)
     data, data_order, not_recognized = load_in_file(target_directory + '/' + current_file, properties)
-    print(data)
     if not_recognized:
         print('Not recognized: ' + str(not_recognized))
 
@@ -94,8 +93,8 @@ while run_continuously:
         create_graph(data = normalized_data, x_axis = graph[0], y_axis = graph[1:], title = graph[0] + ' vs ' + graph[1], cropping = cropping, file_path = output_dir + '/' + graph[0] + '_vs_' + graph[1] + '.png')
 
     # Save file to output and delete from target
-    # os.popen("copy " + target_directory + '/' + current_file + " " + output_dir + '/' + current_file)
-    # os.remove(target_directory + '/' + current_file)
+    shutil.copy(target_directory + '/' + current_file, output_dir + '/' + current_file)
+    os.remove(target_directory + '/' + current_file)
     
     
     
