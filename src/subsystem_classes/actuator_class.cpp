@@ -281,60 +281,59 @@ int Actuator::control_function_two(int* out){
     int motor_velocity;         //rps
 
 
-    // //Collumn 1: engine rpm less than engage rpm
-    // if (m_eg_rpm < k_eg_engage ){
+    //Collumn 1: engine rpm less than engage rpm
+    if (m_eg_rpm < k_eg_engage ){
         
-    //     if(encoder.read() > m_encoder_engage){
-    //         //if engine speed is less than engage rpm & not engaged position p control to just before engage
-    //         position_error = ( m_encoder_engage + k_encoder_engage_buffer - encoder.read()); //enc greater than buffer error is negative 
-    //         motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
-    //         //TODO Update STATUS
-    //         out[STATUS] = 21;
-    //     } else  {
-    //         //if engine speed is less than engage rpm & fork is between engage and inbound vel pid control out
-    //         motor_velocity = calc_motor_rps(dt);
-    //         out[STATUS] = 22;
-    //     }
-    // }
-    // //Collumn 2: engine rpm between desired and engage rpm
-    // else if(m_eg_rpm < k_desired_rpm){
-    //     if(encoder.read() > m_encoder_engage){
-    //         //if engine speed is less than desired rpm & position is less than Engage position p control to just before engage
-    //         position_error = (m_encoder_engage - encoder.read()); //enc greater than engage error is negative 
-    //         motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
-    //         out[STATUS] = 23;
-    //     }
-    //     else if (encoder.read() > m_encoder_engage - k_encoder_engage_buffer){
-    //         motor_velocity = 0; //if engine wants to shift out just before engage stop it from shifing to avoid oscillations
-    //         out[STATUS] = 24;
-    //     }
-    //     else{
-    //         //if engine rpm is less than engage rpm and fork is between engage and inbound vel pid control out
-    //         motor_velocity = calc_motor_rps(dt);
-    //         out[STATUS] = 25;
-    //     }
-    // }
-    // //Collumn 3: engine rpm greater than desired rpm
-    // else{
-    //     motor_velocity = calc_motor_rps(dt);
-    //     if(encoder.read() < m_encoder_inbound && motor_velocity < 0){
-    //         motor_velocity = 0;
-    //         //if engine rpm is above desired rpm & shift fork not near inbound vel pid control in
-    //         out[STATUS] = 26;
-    //     }
-    //     else if(encoder.read() > m_encoder_inbound){
-    //         //if engine rpm is above desired rpm & shift fork close to inbound constrain motor_velocity
-    //         if(motor_velocity < -1) motor_velocity = -1;
-    //         out[STATUS] = 27;
-    //     }
-    //     else{
-    //         //if engine rpm is above desired rpm & shift fork at outbound constrain motor_velocity to 0
-    //         motor_velocity = 0;
-    //         out[STATUS] = 28;
-    //     }
-    // }
+        if(encoder.read() > m_encoder_engage){
+            //if engine speed is less than engage rpm & not engaged position p control to just before engage
+            position_error = ( m_encoder_engage + k_encoder_engage_buffer - encoder.read()); //enc greater than buffer error is negative 
+            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
+            //TODO Update STATUS
+            out[STATUS] = 21;
+        } else  {
+            //if engine speed is less than engage rpm & fork is between engage and inbound vel pid control out
+            motor_velocity = calc_motor_rps(dt);
+            out[STATUS] = 22;
+        }
+    }
+    //Collumn 2: engine rpm between desired and engage rpm
+    else if(m_eg_rpm < k_desired_rpm){
+        if(encoder.read() > m_encoder_engage){
+            //if engine speed is less than desired rpm & position is less than Engage position p control to just before engage
+            position_error = (m_encoder_engage - encoder.read()); //enc greater than engage error is negative 
+            motor_velocity = position_error*k_linear_distance_per_rotation*k_position_p_gain; //TODO convert to linear distance
+            out[STATUS] = 23;
+        }
+        else if (encoder.read() > m_encoder_engage - k_encoder_engage_buffer){
+            motor_velocity = 0; //if engine wants to shift out just before engage stop it from shifing to avoid oscillations
+            out[STATUS] = 24;
+        }
+        else{
+            //if engine rpm is less than engage rpm and fork is between engage and inbound vel pid control out
+            motor_velocity = calc_motor_rps(dt);
+            out[STATUS] = 25;
+        }
+    }
+    //Collumn 3: engine rpm greater than desired rpm
+    else{
+        motor_velocity = calc_motor_rps(dt);
+        if(encoder.read() < m_encoder_inbound && motor_velocity < 0){
+            motor_velocity = 0;
+            //if engine rpm is above desired rpm & shift fork not near inbound vel pid control in
+            out[STATUS] = 26;
+        }
+        else if(encoder.read() > m_encoder_inbound){
+            //if engine rpm is above desired rpm & shift fork close to inbound constrain motor_velocity
+            if(motor_velocity < -1) motor_velocity = -1;
+            out[STATUS] = 27;
+        }
+        else{
+            //if engine rpm is above desired rpm & shift fork at outbound constrain motor_velocity to 0
+            motor_velocity = 0;
+            out[STATUS] = 28;
+        }
+    }
 
-    odrive.run_state(k_motor_number, 8, false, 0); //maybe we should always be in state 8 as to be faster
     
     // Check to see if shifted all the way in or out
     out[HALL_IN] = digitalReadFast(m_hall_inbound_pin) == 0;
@@ -352,7 +351,15 @@ int Actuator::control_function_two(int* out){
       if (motor_velocity > 0) motor_velocity = 0;
     }
 
-    odrive.set_velocity(k_motor_number, motor_velocity);
+    if (motor_velocity == 0)
+    {
+      odrive.run_state(k_motor_number, 1, false, 0);
+    }
+    else
+    {
+      odrive.set_velocity(k_motor_number, motor_velocity);
+      odrive.run_state(k_motor_number, 8, false, 0); //maybe we should always be in state 8 as to be faster
+    }
     
     out[ACT_VEL] = motor_velocity;
     out[ENC_POS] = encoder.read();
