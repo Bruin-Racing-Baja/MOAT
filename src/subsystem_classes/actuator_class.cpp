@@ -24,22 +24,19 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_
   : encoder(enc_a_pin, enc_b_pin), odrive(serial)
 {
   // Save pin values
-  m_gb_tooth_count = eg_tooth_count;
-  m_eg_tooth_count = gb_tooth_count;
   m_hall_inbound_pin = hall_inbound_pin;
   m_hall_outbound_pin = hall_outbound_pin;
 
   m_print_to_serial = print_to_serial;
 
   // initialize count vairables
+  m_gb_tooth_count = gb_tooth_count;
+  m_eg_tooth_count = eg_tooth_count;
   m_gb_rpm = 0;
+  m_eg_rpm = 0;
   m_last_gb_tooth_count = 0;
   m_last_eg_tooth_count = 0;
   m_last_control_execution = 0;
-  m_eg_rpm = 0;
-
-  // Test variable
-  m_has_run = false;
 
   // limit variables
   m_encoder_outbound = encoder.read();
@@ -49,8 +46,8 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_
 
 int Actuator::init(int odrive_timeout)
 {
-  // Attaches geartooth sensor to interrupt
-  interrupts();  // allows interupts
+  interrupts();
+
   // Initialize Odrive object
   int o_init = odrive.init(odrive_timeout);
   if (o_init != 0)
@@ -240,6 +237,7 @@ int Actuator::control_function_two(int* out){
     //  what happens to derivative term in calc engine rpm if it hasn't been called for awhile
     //  what happens when encoder inbound is re read --> how should we tell ourselves what the actual
     //  between in and outbound is?
+
     uint32_t timestamp = millis();
     out[T_START] = timestamp;
     out[STATUS] = 0;
@@ -255,7 +253,6 @@ int Actuator::control_function_two(int* out){
 
     // update encoder inbound if we weren't quite right
     if(digitalReadFast(m_hall_inbound_pin) == 0) m_encoder_inbound = encoder.read();
-
 
     //  My state? diagram that describes what the actuator should be doing given
     //  its shift fork position and engine rpm
@@ -400,19 +397,6 @@ float Actuator::calc_engine_rpm(float dt)
   return rpm;
 }
 
-int Actuator::target_rpm()
-{
-  // if (currentrpm_eg<EG_ENGAGE){
-  //     return EG_ENGAGE;
-  // }
-  // if (currentrpm_eg>EG_POWER){
-  //     return EG_POWER;
-  // }
-  // int target = RPM_TARGET_MULTIPLIER*(currentrpm_eg)+ EG_ENGAGE;
-  // if(target > EG_POWER) return EG_POWER;
-  // return target;
-  return 0;
-}
 //-----------------Diagnostic Functions--------------//
 
 String Actuator::diagnostic(bool main_power, bool print_serial = true)
@@ -433,10 +417,8 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   output += "Outbound reading: " + String(digitalReadFast(m_hall_outbound_pin)) + "\n";
   output += "Inbound reading: " + String(digitalReadFast(m_hall_inbound_pin)) + "\n";
   output += "Engine Gear Tooth Count: " + String(*m_eg_tooth_count) + "\n";
-  output += "Current rpm: " + String(m_eg_rpm) + "\n";
-  output += "Estop Signal: " + String(digitalRead(36)) + "\n";
   output += "Wheel gear tooth count: " + String(*m_gb_tooth_count) + "\n";
-  output += "Current wheel rpm: " + String(m_gb_rpm) + "\n";
+  output += "Estop Signal: " + String(digitalRead(36)) + "\n";
 
   if (print_serial)
   {

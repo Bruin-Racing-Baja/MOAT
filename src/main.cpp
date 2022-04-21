@@ -107,21 +107,21 @@ Cooling cooler_o;
 #define ENC_B_PIN 3
 #define HALL_INBOUND_PIN 23
 #define HALL_OUTBOUND_PIN 22
-#define GEARTOOTH_ENGINE_PIN 40
-#define GEARTOOTH_GEARBOX_PIN 41
+#define GEARTOOTH_ENGINE_PIN 41
+#define GEARTOOTH_GEARBOX_PIN 40
 
-volatile unsigned long m_eg_tooth_count = 0;
-volatile unsigned long m_gb_tooth_count = 0;
+volatile unsigned long ext_eg_tooth_count = 0;
+volatile unsigned long ext_gb_tooth_count = 0;
 
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, &m_eg_tooth_count, &m_gb_tooth_count ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
+Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, &ext_eg_tooth_count, &ext_gb_tooth_count ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
 void external_count_eg_tooth(){
-  m_eg_tooth_count++;
+  ext_eg_tooth_count++;
 }
 void external_count_gb_tooth(){
-  m_gb_tooth_count++;
+  ext_gb_tooth_count++;
 }
 
 void save_log()
