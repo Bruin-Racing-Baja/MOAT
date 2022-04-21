@@ -42,8 +42,8 @@ General code to oversee all functions of the Teensy
 #define MODE 0
 
 // Startup
-#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
-#define HOME_ON_STARTUP 1
+#define WAIT_SERIAL_STARTUP 1 // Set headless mode or not
+#define HOME_ON_STARTUP 0
 //#define RUN_DIAGNOSTIC_STARTUP 0
 #define ESTOP_PIN 36
 // Logging
@@ -107,19 +107,21 @@ Cooling cooler_o;
 #define ENC_B_PIN 3
 #define HALL_INBOUND_PIN 23
 #define HALL_OUTBOUND_PIN 22
-#define GEARTOOTH_ENGINE_PIN 41
-#define GEARTOOTH_GEARBOX_PIN 40
+#define GEARTOOTH_ENGINE_PIN 40
+#define GEARTOOTH_GEARBOX_PIN 41
 
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, GEARTOOTH_GEARBOX_PIN ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
+volatile unsigned long m_eg_tooth_count = 0;
+volatile unsigned long m_gb_tooth_count = 0;
+
+Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, &m_eg_tooth_count, &m_gb_tooth_count ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
-void external_count_eg_tooth()
-{
-  actuator.count_eg_tooth();
+void external_count_eg_tooth(){
+  m_eg_tooth_count++;
 }
 void external_count_gb_tooth(){
-  actuator.count_gb_tooth();
+  m_gb_tooth_count++;
 }
 
 void save_log()
@@ -210,7 +212,7 @@ void setup()
 
   //-------------Actuator-----------------//
   // General Init
-  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth, external_count_gb_tooth);
+  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT);
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -223,6 +225,12 @@ void setup()
     Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
   save_log();
+
+  //gear tooth interupts
+  pinMode(GEARTOOTH_ENGINE_PIN, INPUT_PULLUP);
+  pinMode(GEARTOOTH_GEARBOX_PIN, INPUT_PULLUP);
+  attachInterrupt(GEARTOOTH_ENGINE_PIN, external_count_eg_tooth, FALLING);
+  attachInterrupt(GEARTOOTH_GEARBOX_PIN, external_count_gb_tooth, FALLING);
 
   // Homing if enabled
   if (HOME_ON_STARTUP)
