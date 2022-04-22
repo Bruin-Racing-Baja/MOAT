@@ -42,34 +42,25 @@ General code to oversee all functions of the Teensy
 #define MODE 0
 
 // Startup
-#define WAIT_SERIAL_STARTUP 1 // Set headless mode or not
+#define WAIT_SERIAL_STARTUP 1
 #define HOME_ON_STARTUP 0
-//#define RUN_DIAGNOSTIC_STARTUP 0
-#define ESTOP_PIN 36
+// NOTE: To set model 20 / 21 check the Constant.h file
+
+// Constants Object
+Constant constant;
+
 // Logging
-// NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
 #define LOG_LEVEL LOG_LEVEL_NOTICE
 #define SAVE_THRESHOLD 1000  // Sets how often the log object will save to SD when in operating mode
-
-// Actuator
 
 // Diagnostic Mode
 #define DIAGNOSTIC_MODE_SHOTS 100  // Number of times diagnostic mode is run
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
-// ODrive Settings
-#define ODRIVE_STARTING_TIMEOUT 1000  // [ms]
 
-// Pins
-
-// Create objects
-// ODrive odrive(Serial1);
-
-// LOGGING AND SD SETTINGS
+// Logging and SD
 File log_file;
 String log_name = "log.txt";
-// Create constant control object to read from sd
-Constant constant;
 
 // Logging titles
 unsigned int STATUS = 0;
@@ -92,15 +83,8 @@ unsigned int DT = 15;
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
 
-// Acuator settings
+// Actuator settings
 #define PRINT_TO_SERIAL false
-
-// Pins test bed
-//#define ENC_A_PIN 20
-//#define ENC_B_PIN 21
-//#define HALL_INBOUND_PIN 12
-//#define HALL_OUTBOUND_PIN 11
-//#define GEARTOOTH_ENGINE_PIN 15
 
 // PINS CAR
 #define ENC_A_PIN 2
@@ -113,7 +97,7 @@ Cooling cooler_o;
 volatile unsigned long ext_eg_tooth_count = 0;
 volatile unsigned long ext_gb_tooth_count = 0;
 
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, &ext_eg_tooth_count, &ext_gb_tooth_count ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
+Actuator actuator(Serial1, constant.encoder_a_pin, constant.encoder_b_pin, &ext_eg_tooth_count, &ext_gb_tooth_count ,constant.hall_inbound_pin, constant.hall_outbound_pin,
                   PRINT_TO_SERIAL);
 
 // externally declared for interrupt
@@ -212,7 +196,7 @@ void setup()
 
   //-------------Actuator-----------------//
   // General Init
-  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT);
+  int o_actuator_init = actuator.init(constant.homing_timeout);
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -226,13 +210,13 @@ void setup()
   }
   save_log();
 
-  //gear tooth interupts
-  pinMode(GEARTOOTH_ENGINE_PIN, INPUT_PULLUP);
-  pinMode(GEARTOOTH_GEARBOX_PIN, INPUT_PULLUP);
-  attachInterrupt(GEARTOOTH_ENGINE_PIN, external_count_eg_tooth, FALLING);
-  attachInterrupt(GEARTOOTH_GEARBOX_PIN, external_count_gb_tooth, FALLING);
+  // Geartooth Interrupts
+  pinMode(constant.engine_geartooth_pin, INPUT_PULLUP);
+  pinMode(constant.gearbox_geartooth_pin, INPUT_PULLUP);
+  attachInterrupt(constant.engine_geartooth_pin, external_count_eg_tooth, FALLING);
+  attachInterrupt(constant.gearbox_geartooth_pin, external_count_gb_tooth, FALLING);
 
-  // Homing if enabled
+  // Homing
   if (HOME_ON_STARTUP)
   {
     int o_homing[3];
@@ -250,27 +234,10 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
+  // This message is critical as it sets the order that the analysis script will read the data in
   Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, enc_in, hall_out, enc_out, s_time, f_time, o_vol, o_curr, therm1, therm2, therm3, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
-// "status", 
-// "rpm", 
-// "act_vel", 
-// "enc_pos", 
-// "in_trig", 
-// "out_trig", 
-// "s_time", 
-// "f_time", 
-// "o_vol", 
-// "o_curr",
-// "couple",
-// "therm1",
-// "therm2",
-// "therm3",
-// "estop",
-// "wheel_count",
-// "wheel_rpm",
-
 }
 
 // OPERATING MODE
@@ -313,7 +280,7 @@ void loop()
     cooler_o.get_thermistor(0), 
     cooler_o.get_thermistor(1), 
     cooler_o.get_thermistor(2), 
-    digitalRead(ESTOP_PIN)
+    digitalRead(constant.estop_pin)
     );
   }
 

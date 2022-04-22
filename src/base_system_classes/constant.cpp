@@ -1,7 +1,7 @@
 #include <Constant.h>
 #include <SD.h>
 
-void Constant::init(File settingsFile_i, int defaultValueMode = 0)
+void Constant::read_sd_settings(File settingsFile_i, int defaultValueMode = 0)
 {
   /*
   Passed settings file to read from
