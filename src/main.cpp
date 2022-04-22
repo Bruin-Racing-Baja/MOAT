@@ -19,6 +19,7 @@ General code to oversee all functions of the Teensy
 #include <Constant.h>
 #include <Cooling.h>
 #include <Radio.h>
+#include <Oled.h>
 
 // Modes
 /*
@@ -245,6 +246,9 @@ void setup()
 // "wheel_count",
 // "wheel_rpm",
 
+  Oled o;
+  std::map<String,int> cons=o.createMap();
+  o.init(cons);
 }
 
 // OPERATING MODE
