@@ -55,9 +55,24 @@ public:
     String odrive_errors();
 
     String diagnostic(bool is_mainpower_on, bool serial_out);
-    void run_test_sequence();
+    void run_test_sequence(int LED_1, int LED_2, int LED_3, int LED_4, int BTN_LEFT, int BTN_RIGHT, int BTN_TOP, int BTN_BOTTOM, int BTN_CENTER);
 
 private:
+
+    //Diagnostic test
+    int state = 0;
+    int init_enc_val; //for enc testing
+    const static int INIT = 0; //compiler wanted "static" so I added it
+    const static int IN_HALL = 1;
+    const static int OUT_HALL = 2;
+    const static int ENC_TEENSY = 3;
+    const static int GT_SENSOR = 4;
+    const static int WS_SENSOR = 5;
+    const static int E_STOP = 6;
+    const static int ODRIVE = 7;
+    const static int TEST_ALL = 8;
+    const static int END = 9;
+
     int target_rpm();
     void test_voltage();
     int status;

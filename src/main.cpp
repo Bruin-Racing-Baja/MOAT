@@ -86,6 +86,18 @@ Cooling cooler_o;
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
+//DIAGNOSTIC PINS
+#define LED_1 999
+#define LED_2 999
+#define LED_3 999
+#define LED_4 999
+
+#define BTN_LEFT 999
+#define BTN_RIGHT 999
+#define BTN_TOP 999
+#define BTN_BOTTOM 999
+#define BTN_CENTER 999
+
 Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN, PRINT_TO_SERIAL);
 
 // externally declared for interrupt
@@ -111,6 +123,18 @@ void setup()
     {
     }
   }
+
+  //Diagnostic components
+  pinMode(BTN_LEFT, INPUT_PULLUP); //active low
+  pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pinMode(BTN_TOP, INPUT_PULLUP);
+  pinMode(BTN_BOTTOM, INPUT_PULLUP);
+  pinMode(BTN_CENTER, INPUT_PULLUP);
+
+  pinMode(LED_1, OUTPUT); //active low
+  pinMode(LED_2, OUTPUT);
+  pinMode(LED_3, OUTPUT);
+  pinMode(LED_4, OUTPUT);
 
   //-------------Logging and SD Card-----------------//
   SD.begin(BUILTIN_SDCARD);
@@ -279,7 +303,7 @@ void loop()
 
 #elif MODE == 4
   void loop() {
-    actuator.run_test_sequence(); //TODO: actuator does not name a type??
+    actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
   }
 #endif
 /*

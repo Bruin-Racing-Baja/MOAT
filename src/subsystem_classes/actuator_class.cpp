@@ -277,47 +277,100 @@ int Actuator::target_rpm()
 }
 //-----------------Diagnostic Functions--------------//
 
-void Actuator::run_test_sequence() 
+//TODO: Convert all the serial prints to OLED prints. Or keep both, for redundancy? Also log everything, for redundancy?
+//Note: The LED feedback will be kept for now, as OLED redundancy.
+//This function is run after we have already established connection with the odrive (that's a pretty fundamental/crucial thing that should be tested before anything else).
+void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LED_4, int m_BTN_LEFT, int m_BTN_RIGHT, int m_BTN_UP, int m_BTN_DOWN, int m_BTN_CENTER) //not sure how we want to get these variables from main.cpp
 {
-    int state = 0;
-
-    const int INIT = 0;
-    const int IN_HALL = 1;
-    const int OUT_HALL = 2;
-    const int ENC_TEENSY = 3;
-    const int GT_SENSOR = 4;
-    const int WS_SENSOR = 5;
-    const int E_STOP = 6;
-    const int ODRIVE = 7;
-    const int TESTING_SUMMARY = 8; //also where we go when we have critical errors
-    const int END = 9;
+    //need to add logic so that each button press only triggers once
+    //BTN_LEFT and BTN_RIGHT are always "live"/"active" and they control the state machine flow
+    if (~digitalRead(m_BTN_RIGHT) && (state < END)) { //things are good
+        state++;
+    } else if (~digitalRead(m_BTN_LEFT) && (state > INIT)) { //wait, go back
+        state--;
+    }
 
     switch(state) {
       case INIT:
-        Serial.println("BEGIN DIAGNOSTIC");
-        state = IN_HALL;
+        Serial.println("BEGIN DIAGNOSTIC: PRESS BTN_RIGHT TO ADVANCE TO THE NEXT TEST, PRESS BTN_LEFT TO RETURN TO THE PREVIOUS TEST"); //until we have OLED code @paige
+        init_enc_val = encoder.read(); //we zero the encoder in init state. this means we can't re-zero it unless we go back to init state. 
+        digitalWrite(m_LED_1, ~LOW);
+        digitalWrite(m_LED_2, ~LOW);
+        digitalWrite(m_LED_3, ~LOW);
+        digitalWrite(m_LED_4, ~LOW);
       break;
       case IN_HALL:
-        
+        Serial.println("IN HALL: LED 1 IS ON WHENEVER THE INBOUND HALL IS TRIGGERED."); //could also print to the oled
+        digitalWrite(m_LED_1, ~digitalReadFast(m_hall_inbound_pin));
+        digitalWrite(m_LED_2, ~LOW);
+        digitalWrite(m_LED_3, ~LOW);
+        digitalWrite(m_LED_4, ~LOW);
       break;
       case OUT_HALL:
-
+        Serial.println("OUT HALL: LED 1 IS ON WHENEVER THE OUTBOUND HALL IS TRIGGERED.");
+        digitalWrite(m_LED_1, ~LOW);
+        digitalWrite(m_LED_2, ~digitalReadFast(m_hall_outbound_pin));
+        digitalWrite(m_LED_3, ~LOW);
+        digitalWrite(m_LED_4, ~LOW);
       break;
       case ENC_TEENSY:
+        //make sure odrive is in idle state (how do we perform this check? is this worth doing?)
+        Serial.println("ENC TEENSY: TURN BALL SCREW. POSITIVE TURN LIGHTS UP LED 2 AND LED 1, NEGATIVE TURN LIGHTS UP LED 3 AND LED 4.");
+        int enc_val = encoder.read() - init_enc_val;
+        Serial.println(enc_val);
+        digitalWrite(m_LED_1, ~(enc_val > 8000));
+        digitalWrite(m_LED_2, ~(enc_val > 4000));
+        digitalWrite(m_LED_3, ~(enc_val < -4000));
+        digitalWrite(m_LED_4, ~(enc_val < -8000));
       break;
       case GT_SENSOR:
+        Serial.println("GEAR TOOTH SENSOR: ROTATE THE PRIMARY BY HAND.");
+        Serial.println(m_eg_rpm);
+        digitalWrite(m_LED_1, ~(m_eg_rpm > 6));
+        digitalWrite(m_LED_2, ~(m_eg_rpm > 3));
+        digitalWrite(m_LED_3, ~LOW);
+        digitalWrite(m_LED_4, ~LOW);
       break;
       case WS_SENSOR:
+        Serial.println("WHEEL SPEED SENSOR: ROTATE THE WHEEL (which wheel?) BY HAND.");
+        //Serial.println(m_ws_rpm); once we get the wss working
+        // digitalWrite(m_LED_1, ~(m_ws_rpm > 10));
+        // digitalWrite(m_LED_2, ~(m_ws_rpm > 5));
+        // digitalWrite(m_LED_3, ~LOW);
+        // digitalWrite(m_LED_4, ~LOW);
       break;
       case E_STOP:
+         Serial.println("E STOP: WHEN E STOP IS ON, ALL LED'S ARE ON.");
+        //Serial.println(is_estop_on);
+        // digitalWrite(m_LED_1, ~(is_estop_on)); @drew which pin do we look at to know if the estop is on? 
+        // digitalWrite(m_LED_2, ~(is_estop_on));
+        // digitalWrite(m_LED_3, ~(is_estop_on));
+        // digitalWrite(m_LED_4, ~(is_estop_on));
       break;
-      case ODRIVE:
+      case ODRIVE:  //assumes odrive is connected
+        Serial.println("ODRIVE: TEST CONNECTION. PRESS AND HOLD BTN_UP or BTN_DOWN TO SET ACTUATOR VELOCITY.");
+      
+        if (~digitalRead(m_BTN_UP)) { //press AND HOLD
+            odrive.set_velocity(k_motor_number, 10); //some small number
+        } else if (~digitalRead(m_BTN_DOWN)) {
+            odrive.set_velocity(k_motor_number, -10); 
+        } else {
+            odrive.set_velocity(k_motor_number, 0); 
+        }
+
+        digitalWrite(m_LED_1, ~LOW); //look at the motor not the LED's lol
+        digitalWrite(m_LED_2, ~LOW);
+        digitalWrite(m_LED_3, ~LOW);
+        digitalWrite(m_LED_4, ~LOW);
       break;
-      case TESTING_SUMMARY:
+      case TEST_ALL: //test all together now!
+        //will write this later, once I validate my code for the individual tests above
       break;
       case END:
+        //go to homing sequence? return to main code?
       break;
     }
+
 }
 
 String Actuator::diagnostic(bool main_power, bool print_serial = true)
