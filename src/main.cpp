@@ -87,16 +87,16 @@ Cooling cooler_o;
 #define GEARTOOTH_GEARBOX_PIN 40
 
 //DIAGNOSTIC PINS
-#define LED_1 999
-#define LED_2 999
-#define LED_3 999
-#define LED_4 999
+#define LED_1 28
+#define LED_2 29
+#define LED_3 30
+#define LED_4 31
 
-#define BTN_LEFT 999
-#define BTN_RIGHT 999
-#define BTN_TOP 999
-#define BTN_BOTTOM 999
-#define BTN_CENTER 999
+#define BTN_LEFT 8
+#define BTN_RIGHT 9
+#define BTN_TOP 10
+#define BTN_BOTTOM 11
+#define BTN_CENTER 12
 
 Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN, PRINT_TO_SERIAL);
 
@@ -124,6 +124,8 @@ void setup()
     }
   }
 
+  Serial.begin(9600); //for testing my code
+
   //Diagnostic components
   pinMode(BTN_LEFT, INPUT_PULLUP); //active low
   pinMode(BTN_RIGHT, INPUT_PULLUP);
@@ -135,7 +137,7 @@ void setup()
   pinMode(LED_2, OUTPUT);
   pinMode(LED_3, OUTPUT);
   pinMode(LED_4, OUTPUT);
-
+/*
   //-------------Logging and SD Card-----------------//
   SD.begin(BUILTIN_SDCARD);
   log_file = SD.open("log.txt", FILE_WRITE);
@@ -202,7 +204,7 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
-  save_log();
+  save_log(); */
 } //end void setup()
 
 // OPERATING MODE
@@ -303,7 +305,12 @@ void loop()
 
 #elif MODE == 4
   void loop() {
-    actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
+    Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
+  //  actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
+    digitalWrite(LED_1, ~LOW);
+    digitalWrite(LED_2, ~HIGH);
+    digitalWrite(LED_3, ~LOW);
+    digitalWrite(LED_4, ~HIGH);
   }
 #endif
 /*

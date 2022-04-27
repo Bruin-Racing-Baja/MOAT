@@ -282,6 +282,9 @@ int Actuator::target_rpm()
 //This function is run after we have already established connection with the odrive (that's a pretty fundamental/crucial thing that should be tested before anything else).
 void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LED_4, int m_BTN_LEFT, int m_BTN_RIGHT, int m_BTN_UP, int m_BTN_DOWN, int m_BTN_CENTER) //not sure how we want to get these variables from main.cpp
 {
+
+    //TODO: maybe for readability purposes, make it so that within each state, we change proxy variables that determine what we'll set the led's to. then at the end we actually set the led's.
+   // Serial.println("run");
     //need to add logic so that each button press only triggers once
     //BTN_LEFT and BTN_RIGHT are always "live"/"active" and they control the state machine flow
     if (~digitalRead(m_BTN_RIGHT) && (state < END)) { //things are good
