@@ -92,11 +92,11 @@ Cooling cooler_o;
 #define LED_3 30
 #define LED_4 31
 
-#define BTN_LEFT 8
-#define BTN_RIGHT 9
-#define BTN_TOP 10
-#define BTN_BOTTOM 11
-#define BTN_CENTER 12
+#define BTN_TOP 8
+#define BTN_LEFT 9
+#define BTN_CENTER 10
+#define BTN_RIGHT 11
+#define BTN_BOTTOM 12
 
 Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN, PRINT_TO_SERIAL);
 
@@ -305,12 +305,11 @@ void loop()
 
 #elif MODE == 4
   void loop() {
-    Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
-  //  actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
-    digitalWrite(LED_1, ~LOW);
-    digitalWrite(LED_2, ~HIGH);
-    digitalWrite(LED_3, ~LOW);
-    digitalWrite(LED_4, ~HIGH);
+   // Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
+    actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
+    // digitalWrite(LED_2, HIGH);
+    // digitalWrite(LED_3, LOW);
+    // digitalWrite(LED_4, HIGH);
   }
 #endif
 /*

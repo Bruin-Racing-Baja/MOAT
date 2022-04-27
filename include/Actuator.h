@@ -60,7 +60,6 @@ public:
 private:
 
     //Diagnostic test
-    int init_enc_val; //for enc testing
     const static int INIT = 0; //compiler wanted "static" so I added it
     const static int IN_HALL = 1;
     const static int OUT_HALL = 2;
@@ -71,7 +70,10 @@ private:
     const static int ODRIVE = 7;
     const static int TEST_ALL = 8;
     const static int END = 9;
+
     int state = INIT;
+    int init_enc_val; //for enc testing
+    bool btn_left_val, btn_right_val, prev_btn_left_val, prev_btn_right_val;
 
     int target_rpm();
     void test_voltage();
