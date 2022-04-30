@@ -118,7 +118,7 @@ int* Actuator::control_function(int* out)
     // Calculate Engine Speed + Filter Engine Speed
     float dt = millis() - m_last_control_execution;
     m_eg_rpm = calc_engine_rpm(dt);
-    m_gb_rpm = calc_wheel_rpm(dt);
+    m_gb_rpm = calc_gearbox_rpm(dt);
     m_eg_rpm = (constant.exponential_filter_alpha * m_eg_rpm) + (1 - constant.exponential_filter_alpha) * m_currentrpm_eg_accum;
     m_currentrpm_eg_accum = m_eg_rpm;
 
@@ -376,7 +376,7 @@ int Actuator::calc_motor_rps(int dt){
 
 //----------------Geartooth Functions----------------//
 
-float Actuator::calc_wheel_rpm(float dt)
+float Actuator::calc_gearbox_rpm(float dt)
 {
   noInterrupts();
   float rps = float(*m_gb_tooth_count - m_last_gb_tooth_count) / dt;
@@ -384,6 +384,12 @@ float Actuator::calc_wheel_rpm(float dt)
   m_last_gb_tooth_count = *m_gb_tooth_count;
   interrupts();
   return rpm;
+}
+
+float Actuator::calc_gearbox_rpm_rolling(float dt)
+{
+  m_gearbox_rpm_frames[m_control_function_count % constant.gearbox_rolling_frames] = calc_gearbox_rpm(dt);
+  
 }
 
 float Actuator::calc_engine_rpm(float dt)
@@ -394,6 +400,28 @@ float Actuator::calc_engine_rpm(float dt)
   m_last_eg_tooth_count = *m_eg_tooth_count;
   interrupts();
   return rpm;
+}
+
+float Actuator::calc_reference_rpm(float gearbox_rpm)
+// Implemented according to a reference drawing John drew up
+{
+  float output;
+  // Region 1: Before belt slip, so hold at engage rpm
+  if (gearbox_rpm < constant.gearbox_engage_rpm)
+  {
+    output = constant.engage_rpm;
+  }
+  // Region 2: Acceleration zone
+  else if (gearbox_rpm < constant.gearbox_target_rpm)
+  {
+    output = constant.ecvt_max_ratio * (gearbox_rpm - constant.gearbox_engage_rpm) + constant.engage_rpm;
+  }
+  // Region 3: Overdrive zone
+  else
+  {
+    output = constant.overdrive_ratio * (gearbox_rpm - constant.gearbox_target_rpm) + constant.target_rpm;
+  }
+  return output;
 }
 
 //-----------------Diagnostic Functions--------------//

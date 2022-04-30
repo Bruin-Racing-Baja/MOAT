@@ -68,10 +68,17 @@ private:
   unsigned long m_last_control_execution;
   float calc_engine_rpm(float dt);
 
+  // Members to handle rolling frame gearbox rpm
+  float calc_gearbox_rpm(float dt);
+  float calc_gearbox_rpm_rolling(float dt);
+  int m_gearbox_rpm_frames[5] = { 0 };
+
+  // For reference scheduling
+  float calc_reference_rpm(float gearbox_rpm);
+
   //Functions that help calculate motor speed
   int calc_motor_rps(int dt);
 
-  float calc_wheel_rpm(float dt);
   // Const
   bool m_print_to_serial;
 
@@ -81,7 +88,7 @@ private:
   int32_t m_encoder_engage;    // when belt enganged
 
   // Debugging vars
-  int m_control_function_count;
+  long m_control_function_count = 0;
   bool m_has_run;
 
   // running gear tooth sensor counts

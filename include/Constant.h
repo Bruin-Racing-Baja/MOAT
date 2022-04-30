@@ -30,6 +30,8 @@ struct Constant
   const int homing_timeout = int_constants["homing_timeout"];                   // ms
   const int cycle_period = int_constants["cycle_period"];                       // ms
 
+  const int gearbox_rolling_frames = int_constants["gearbox_rolling_frames"];     // number of frames
+
   const float proportional_gain = float_constants["proportional_gain"];
   const float integral_gain = float_constants["integral_gain"];
   const float derivative_gain = float_constants["derivative_gain"];
@@ -99,6 +101,8 @@ struct Constant
     {"cooling_motor_number", 1},
     {"homing_timeout", 50e6}, // ms
     {"cycle_period", 10},     // ms
+    // This also has to be changed in actuator header
+    {"gearbox_rolling_frames", 5}
   };
   // void init(File settingsFile, bool m21, int defaultValueMode = 0);
   int mode;
