@@ -39,11 +39,11 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 0
+#define MODE 2
 
 // Startup
-#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
-#define HOME_ON_STARTUP 1
+#define WAIT_SERIAL_STARTUP 1  // Set headless mode or not
+#define HOME_ON_STARTUP 0
 //#define RUN_DIAGNOSTIC_STARTUP 0
 #define ESTOP_PIN 36
 // Logging

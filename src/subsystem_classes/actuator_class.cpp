@@ -1,5 +1,4 @@
 #include <Actuator.h>
-#include <Encoder.h>
 #include <HardwareSerial.h>
 #include <ODrive.h>
 #include <SoftwareSerial.h>
@@ -19,9 +18,8 @@ inline Print& operator<<(Print& obj, float arg)
   return obj;
 }
 
-Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin, const int gb_tooth_pin,
+Actuator::Actuator(HardwareSerial& serial, const int eg_tooth_pin, const int gb_tooth_pin,
                    const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial)
-  : encoder(enc_a_pin, enc_b_pin), odrive(serial)
 {
   // Save pin values
   m_gb_tooth_pin = gb_tooth_pin;
@@ -62,7 +60,8 @@ int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)(), void (
     return status;
   }
 
-  odrive.run_state(k_motor_number, 1, true, 0);  // Sets ODrive to IDLE
+
+  if(!odrive.run_state(k_motor_number, 6, true, 5)) odrive.run_state(k_motor_number, 1, true, 1);  // Runs encoder index search, if  Sets ODrive to IDLE
 
   status = 0;
   return status;

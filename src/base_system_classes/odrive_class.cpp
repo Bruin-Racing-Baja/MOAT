@@ -79,6 +79,11 @@ float ODrive::get_voltage()
   return ODrive::read_float();
 }
 
+float ODrive::get_encoder_pos(){
+  OdriveSerial << "r axis" << motor_number << ".encoder.shadow_count\n";
+  return Odrive::read_float();
+}
+
 float ODrive::get_cur()
 {
   OdriveSerial << "r ibus\n";
