@@ -13,7 +13,6 @@ public:
   int init(int timeout);
   bool run_state(int axis, int requested_state, bool wait_for_idle, float timeout);
   void set_velocity(int motor_number, float velocity);
-  void set_encoder_index_search(int motor_number);
 
   float get_encoder_pos(int motor_number);
   float get_vel(int motor_number);
