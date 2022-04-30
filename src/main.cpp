@@ -114,9 +114,33 @@ OneButton btn_bottom = OneButton(
   true         // Enable internal pull-up resistor
 );
 
+//clicked
+bool is_top_click, is_left_click, is_center_click, is_right_click, is_bottom_click;
+
 // Handler function for a single click:
-static void handleClick() {
-  Serial.println("Clicked!");
+static void handleClick_t() {
+  is_top_click = true;
+//  Serial.println("is_top_click");
+}
+
+static void handleClick_l() {
+  is_left_click = true;
+//  Serial.println("is_left_click");
+}
+
+static void handleClick_c() {
+  is_center_click = true;
+ // Serial.println("is_center_click");
+}
+
+static void handleClick_r() {
+  is_right_click = true;
+ // Serial.println("is_right_click");
+}
+
+static void handleClick_b() {
+  is_bottom_click = true;
+ // Serial.println("is_bottom_click");
 }
 
 void setup()
@@ -131,18 +155,12 @@ void setup()
 
   Serial.begin(9600); //for testing my code
 
-  // pinMode(BTN_LEFT, INPUT_PULLUP); //active low
-  // pinMode(BTN_RIGHT, INPUT_PULLUP);
-  // pinMode(BTN_TOP, INPUT_PULLUP);
-  // pinMode(BTN_BOTTOM, INPUT_PULLUP);
-  // pinMode(BTN_CENTER, INPUT_PULLUP);
-
 // Single Click event attachment
-  btn_top.attachClick(handleClick);
-  btn_left.attachClick(handleClick);
-  btn_center.attachClick(handleClick);
-  btn_right.attachClick(handleClick);
-  btn_bottom.attachClick(handleClick);
+  btn_top.attachClick(handleClick_t);
+  btn_left.attachClick(handleClick_l);
+  btn_center.attachClick(handleClick_c);
+  btn_right.attachClick(handleClick_r);
+  btn_bottom.attachClick(handleClick_b);
 
   pinMode(LED_1, OUTPUT); //active low
   pinMode(LED_2, OUTPUT);
@@ -151,24 +169,19 @@ void setup()
 }
 
 void loop() {
-  btn_top.tick();
+  btn_top.tick(); //TODO: find out if these calls slow the rest of the code down significantly
   btn_left.tick();
   btn_center.tick();
   btn_right.tick();
   btn_bottom.tick();
 
-  //Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
+  actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, is_top_click, is_left_click, is_center_click, is_right_click, is_bottom_click); //TODO: actuator does not name a type??
 
-  /* T — doesn’t trigger
-  L — good
-  C — good
-  R — triggers twice
-  B — good */
-  
-  // Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
-  // actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
-  // digitalWrite(LED_2, HIGH);
-  // digitalWrite(LED_3, LOW);
-  // digitalWrite(LED_4, HIGH);
-
+  //if the buttons aren't triggered, set the buttons to false 
+  //TODO: find a less hack-y and more robust solution. could pass by reference to the actuator.run_test_sequence
+  is_top_click = false;
+  is_left_click = false;
+  is_center_click = false;
+  is_right_click = false;
+  is_bottom_click = false;
 }

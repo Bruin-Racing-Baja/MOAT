@@ -280,32 +280,21 @@ int Actuator::target_rpm()
 //TODO: Convert all the serial prints to OLED prints. Or keep both, for redundancy? Also log everything, for redundancy?
 //Note: The LED feedback will be kept for now, as OLED redundancy.
 //This function is run after we have already established connection with the odrive (that's a pretty fundamental/crucial thing that should be tested before anything else).
-void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LED_4, int m_BTN_LEFT, int m_BTN_RIGHT, int m_BTN_UP, int m_BTN_DOWN, int m_BTN_CENTER) //not sure how we want to get these variables from main.cpp
+void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LED_4, bool btn_top, bool btn_left, bool btn_center, bool btn_right, bool btn_bottom) //not sure how we want to get these variables from main.cpp
 {
-   // Serial.println("state: " + String(state));
-  // Serial.println("R: " + String(digitalRead(m_BTN_RIGHT)));
-  // Serial.println("L: " + String(digitalRead(m_BTN_LEFT)));
-    //TODO: maybe for readability purposes, make it so that within each state, we change proxy variables that determine what we'll set the led's to. then at the end we actually set the led's.
-   // Serial.println("run");
+   //Serial.println("state: " + String(state));
 
-   //TODO: use this library https://github.com/mathertel/OneButton
-   btn_left_val = !digitalRead(m_BTN_LEFT);
-   btn_right_val = !digitalRead(m_BTN_RIGHT);
-    //need to add logic so that each button press only triggers once
-    //BTN_LEFT and BTN_RIGHT are always "live"/"active" and they control the state machine flow
-    if ((!prev_btn_left_val && btn_left_val)) { //things are good
-        //state++;
-        Serial.println("l btn pressed");
+    //TODO: maybe for readability purposes, make it so that within each state, we change proxy variables that determine what we'll set the led's to. then at the end we actually set the led's.
+
+    if (btn_left && (state > INIT)) { //wait, things are questionable; return to the previous testing state
+        state--;
+       // Serial.println("l btn pressed");
     } 
-    if ((!prev_btn_right_val && btn_right_val)) { //things are good
-        //state++;
-        Serial.println("r btn pressed");
+    if (btn_right && (state < END)) {  //things are good; advance to the next testing state
+        state++;
+       // Serial.println("r btn pressed");
     } 
-    //else if (!digitalRead(m_BTN_LEFT) && (state > INIT)) { //wait, go back
-    //    // Serial.println("prev state: " + String(state));
-    //     state--;
-    // }
-/*
+
     switch(state) {
       case INIT:
         Serial.println("BEGIN DIAGNOSTIC: PRESS BTN_RIGHT TO ADVANCE TO THE NEXT TEST, PRESS BTN_LEFT TO RETURN TO THE PREVIOUS TEST"); //until we have OLED code @paige
@@ -333,7 +322,7 @@ void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LE
         //make sure odrive is in idle state (how do we perform this check? is this worth doing?)
         Serial.println("ENC TEENSY: TURN BALL SCREW. POSITIVE TURN LIGHTS UP LED 2 AND LED 1, NEGATIVE TURN LIGHTS UP LED 3 AND LED 4.");
         int enc_val = encoder.read() - init_enc_val;
-        Serial.println(enc_val);
+        Serial.println("ENC VAL: " + String(enc_val));
         digitalWrite(m_LED_1, ~(enc_val > 8000));
         digitalWrite(m_LED_2, ~(enc_val > 4000));
         digitalWrite(m_LED_3, ~(enc_val < -4000));
@@ -341,7 +330,7 @@ void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LE
       break;
       case GT_SENSOR:
         Serial.println("GEAR TOOTH SENSOR: ROTATE THE PRIMARY BY HAND.");
-        Serial.println(m_eg_rpm);
+        Serial.println("GT RPM: " + String(m_eg_rpm));
         digitalWrite(m_LED_1, ~(m_eg_rpm > 6));
         digitalWrite(m_LED_2, ~(m_eg_rpm > 3));
         digitalWrite(m_LED_3, ~LOW);
@@ -366,12 +355,10 @@ void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LE
       case ODRIVE:  //assumes odrive is connected
         Serial.println("ODRIVE: TEST CONNECTION. PRESS AND HOLD BTN_UP or BTN_DOWN TO SET ACTUATOR VELOCITY.");
       
-        if (~digitalRead(m_BTN_UP)) { //press AND HOLD
-            odrive.set_velocity(k_motor_number, 10); //some small number
-        } else if (~digitalRead(m_BTN_DOWN)) {
-            odrive.set_velocity(k_motor_number, -10); 
-        } else {
-            odrive.set_velocity(k_motor_number, 0); 
+        if (btn_top) { //adjust speed
+            odrive.set_velocity(k_motor_number, odrv_test_speed + 10); //some small number
+        } else if (btn_bottom) {
+            odrive.set_velocity(k_motor_number, odrv_test_speed - 10); 
         }
 
         digitalWrite(m_LED_1, ~LOW); //look at the motor not the LED's lol
@@ -380,13 +367,15 @@ void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LE
         digitalWrite(m_LED_4, ~LOW);
       break;
       case TEST_ALL: //test all together now!
+        Serial.println("TEST ALL: ???");
+
         //will write this later, once I validate my code for the individual tests above
       break;
       case END:
+        Serial.println("END: ???");
         //go to homing sequence? return to main code?
       break;
     }
-*/
 
 }
 

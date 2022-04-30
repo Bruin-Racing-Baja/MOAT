@@ -55,7 +55,7 @@ public:
     String odrive_errors();
 
     String diagnostic(bool is_mainpower_on, bool serial_out);
-    void run_test_sequence(int LED_1, int LED_2, int LED_3, int LED_4, int BTN_LEFT, int BTN_RIGHT, int BTN_TOP, int BTN_BOTTOM, int BTN_CENTER);
+    void run_test_sequence(int LED_1, int LED_2, int LED_3, int LED_4, bool btn_top, bool btn_left, bool btn_center, bool btn_right, bool btn_bottom);
 
 private:
 
@@ -73,8 +73,8 @@ private:
 
     int state = INIT;
     int init_enc_val; //for enc testing
-    bool btn_left_val, btn_right_val, prev_btn_left_val, prev_btn_right_val;
-
+    int odrv_test_speed;
+   
     int target_rpm();
     void test_voltage();
     int status;
