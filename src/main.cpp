@@ -13,30 +13,14 @@ General code to oversee all functions of the Teensy
 #include <SD.h>
 #include <SoftwareSerial.h>
 #include <string>
+#include <OneButton.h>
 
 // Classes
 #include <Actuator.h>
 #include <Cooling.h>
 #include <Radio.h>
 
-// Modes
-/*
- * Operating (0): For normal operation. Initializes then runs main control function in loop.
- * May disable logging object in its library config to free up memory.
- *
- * Headless Diagnostic (1): Runs diagnostic test 100 times, then stops, saves to SD card.
- * This is used for testing in sitations where the main power is on, and data will be retrieved from SD.
- * NOTE: DO NOT CONNECT TO TEENSY WHEN MAIN POWER IS ON OR IT COULD DAMAGE YOUR LAPTOP
- *
- * Serial Diagnostic (2): Runs diagnostic test continuously, prints to serial.
- *
- * Headless Horseman (3): For operation where data is not recorded.
- * This *may* increase performance, but at least helps to ensure SD card doesnt fill and mess thing up.
- * NOTE: Recommend disabling logging object in its include
- *
- * Diagnostic Test Mode (4): Guided real-time test procedure to avoid easily-preventable problems that often take us a long time to debug. It takes a decent amount of time to get the car set up to run, so we want to make each run count.
- */
-#define MODE 4
+// #define MODE 4
 
 // Startup
 #define WAIT_SERIAL_STARTUP 0 // Set headless mode or not
@@ -100,18 +84,39 @@ Cooling cooler_o;
 
 Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN, PRINT_TO_SERIAL);
 
-// externally declared for interrupt
-void external_count_eg_tooth()
-{
-  actuator.count_eg_tooth();
-}
+OneButton btn_top = OneButton(
+  BTN_LEFT,  // Input pin for the button
+  true,        // Button is active LOW
+  true         // Enable internal pull-up resistor
+);
 
-// NOTE: May want to test expanding this function to take in a file object to save
-void save_log()
-{
-  // Closes and then opens the file stream
-  log_file.close();
-  log_file = SD.open("log.txt", FILE_WRITE);
+OneButton btn_left = OneButton(
+  BTN_RIGHT,  // Input pin for the button
+  true,        // Button is active LOW
+  true         // Enable internal pull-up resistor
+);
+
+OneButton btn_center = OneButton(
+  BTN_CENTER,  // Input pin for the button
+  true,        // Button is active LOW
+  true         // Enable internal pull-up resistor
+);
+
+OneButton btn_right = OneButton(
+  BTN_RIGHT,  // Input pin for the button
+  true,        // Button is active LOW
+  true         // Enable internal pull-up resistor
+);
+
+OneButton btn_bottom = OneButton(
+  BTN_BOTTOM,  // Input pin for the button
+  true,        // Button is active LOW
+  true         // Enable internal pull-up resistor
+);
+
+// Handler function for a single click:
+static void handleClick() {
+  Serial.println("Clicked!");
 }
 
 void setup()
@@ -126,232 +131,30 @@ void setup()
 
   Serial.begin(9600); //for testing my code
 
-  //Diagnostic components
-  pinMode(BTN_LEFT, INPUT_PULLUP); //active low
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_TOP, INPUT_PULLUP);
-  pinMode(BTN_BOTTOM, INPUT_PULLUP);
-  pinMode(BTN_CENTER, INPUT_PULLUP);
+// Single Click event attachment
+  btn_top.attachClick(handleClick);
+  btn_left.attachClick(handleClick);
+  btn_center.attachClick(handleClick);
+  btn_right.attachClick(handleClick);
+  btn_bottom.attachClick(handleClick);
 
   pinMode(LED_1, OUTPUT); //active low
   pinMode(LED_2, OUTPUT);
   pinMode(LED_3, OUTPUT);
   pinMode(LED_4, OUTPUT);
-/*
-  //-------------Logging and SD Card-----------------//
-  SD.begin(BUILTIN_SDCARD);
-  log_file = SD.open("log.txt", FILE_WRITE);
-
-  Log.begin(LOG_LEVEL, &log_file, false);
-  Log.notice("Initialization Started" CR);
-  Log.verbose("Time: %d" CR, millis());
-
-  save_log();
-
-  //------------------ODrive------------------//
-
-  // At this time the following code is depricated, but until we make final decisions about the odrive class, we will leave it in
-
-  // int odrive_init = actuator.odrive.init(1000);
-  // if (odrive_init) {
-  //   Log.error("ODrive Init Failed code: %d" CR, odrive_init);
-  // }
-  // else {
-  //   Log.verbose("ODrive Init Success code: %d" CR, odrive_init);
-  // }
-  // Serial.println("ODrive init: " + String(odrive_init));
-  // for (int i = 0; i < 20; i++) {
-  //   Serial.println(odrive.get_voltage());
-  // }
-  // log_file.close();
-  // log_file = SD.open("log.txt", FILE_WRITE);
-
-  //------------------Cooling------------------//
-
-  cooler_o.init();
-
-  //-------------Actuator-----------------//
-  // TODO: handle duplicate logs
-  // General Init
-  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth);
-  if (o_actuator_init)
-  {
-    Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
-    Serial.println("Actuator init failed code: " + String(o_actuator_init));
-  }
-  else
-  {
-    Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
-    Log.notice("Proportional gain (x1000): %d" CR, (1000.0 * actuator.get_p_value()));
-    Serial.println("Actuator init success code: " + String(o_actuator_init));
-  }
-  save_log();
-
-  // Homing if enabled
-  if (HOME_ON_STARTUP)
-  {
-    int o_homing[3];
-    actuator.homing_sequence(o_homing);
-    if (o_homing[0])
-    {
-      Log.error("Homing Failed code: %d" CR, o_homing[0]);
-    }
-    else
-    {
-      Log.verbose("Homing Success code: %d" CR, o_homing[0]);
-      Log.notice("Homing results, inbound: %d, outbound: %d" CR, o_homing[1], o_homing[2]);
-    }
-  }
-  Log.verbose("Initialization Complete" CR);
-  Log.notice("Starting mode %d" CR, MODE);
-  save_log(); */
-} //end void setup()
-
-// OPERATING MODE
-#if MODE == 0
-
-int o_control[10];
-int save_count = 0;
-int last_save = 0;
-void loop()
-{
-  // Main control loop, with actuator
-  actuator.control_function(o_control);
-  //<status, rpm, actuator_velocity, inbound_triggered, outbound_triggered, time_started, time_finished, enc_position>
-
-  // Report output with log
-  if (o_control[0] == 3)
-  {
-    Log.verbose("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d" CR,
-                o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6]);
-  }
-  else
-  {
-    // Log.notice("Status: %d  RPM: %d, Act Vel: %d, Enc Pos: %d, Inb Trig: %d, Otb Trig: %d, Start: %d, End: %d, Voltage: %d" CR,
-    //   o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8]);
-    // Log.notice("Temperature (*C): %d" CR, cooler_o.thermo_check());
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d" CR,
-               o_control[0], o_control[1], o_control[2], o_control[7], o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], (o_control[9] * 1000.0), cooler_o.get_temperature());
-  }
-
-  // Save data to sd every SAVE_THRESHOLD
-  if (save_count > SAVE_THRESHOLD)
-  {
-    int save_start = millis();
-    Log.notice(actuator.odrive_errors().c_str());
-    Log.verbose("Time since last save: %d" CR, save_start - last_save);
-    save_log();
-    save_count = 0;
-    Log.verbose("Battery level ok? %d", o_control[8] > 20);
-    digitalWrite(LED_BUILTIN, !(o_control[8] > 20)); // TURN LED ON IF BATTERY TOO LOW
-    Log.verbose("Saved log in %d ms" CR, millis() - save_start);
-  }
-  save_count++;
 }
 
-// HEADLESS DIAGNOSTIC MODE
-#elif MODE == 1
-bool is_main_power = true;
+void loop() {
+  btn_top.tick();
+  btn_left.tick();
+  btn_center.tick();
+  btn_right.tick();
+  btn_bottom.tick();
+  
+  // Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
+  // actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
+  // digitalWrite(LED_2, HIGH);
+  // digitalWrite(LED_3, LOW);
+  // digitalWrite(LED_4, HIGH);
 
-void loop()
-{
-  Log.notice("DIAGNOSTIC MODE" CR);
-  Log.verbose("Running diagnostic function" CR);
-
-  for (int i = 0; i < DIAGNOSTIC_MODE_SHOTS; i++)
-  {
-    // Serial.println(actuator.diagnostic(false));
-    Log.notice("%d", i);
-    // Assumes main power is connected
-    Log.notice((actuator.diagnostic(is_main_power, false)).c_str());
-    Log.notice("Thermocouple temp: %d", cooler_o.get_temperature());
-    delay(100);
-  }
-
-  Log.verbose("End of diagnostic function" CR);
-  log_file.close();
-  exit(0);
 }
-
-// SERIAL DIAGNOSTIC MODE
-#elif MODE == 2
-bool is_main_power = false;
-
-void loop()
-{
-  // Assumes main power isnt connected as connected to serial
-  Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
-  Log.notice("Thermo temp: %d" CR, cooler_o.get_temperature());
-  Serial.println(cooler_o.get_temperature());
-  // Serial.println(analogRead(38));
-  delay(100);
-}
-
-// HEADLESS HORSEMAN MODE
-#elif MODE == 3
-int temp = 0;
-
-void loop()
-{
-  temp = cooler_o.thermo_check();
-  Serial.println(temp);
-  delay(100);
-
-  // digitalWrite(LED_BUILTIN, digitalRead(hall_inbound));
-  // Serial.println(digitalRead(hall_inbound));
-  // Serial.println("huh");
-  // delay(1000);
-}
-
-#elif MODE == 4
-  void loop() {
-   // Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
-    actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
-    // digitalWrite(LED_2, HIGH);
-    // digitalWrite(LED_3, LOW);
-    // digitalWrite(LED_4, HIGH);
-  }
-#endif
-/*
-//"When you join the MechE club thinking you could escape the annoying CS stuff like pointers and interrupts"
-//                             __...------------._
-//                          ,-'                   `-.
-//                       ,-'                         `.
-//                     ,'                            ,-`.
-//                    ;                              `-' `.
-//                   ;                                 .-. \
-//                  ;                           .-.    `-'  \
-//                 ;                            `-'          \
-//                ;                                          `.
-//                ;                                           :
-//               ;                                            |
-//              ;                                             ;
-//             ;                            ___              ;
-//            ;                        ,-;-','.`.__          |
-//        _..;                      ,-' ;`,'.`,'.--`.        |
-//       ///;           ,-'   `. ,-'   ;` ;`,','_.--=:      /
-//      |'':          ,'        :     ;` ;,;,,-'_.-._`.   ,'
-//      '  :         ;_.-.      `.    :' ;;;'.ee.    \|  /
-//       \.'    _..-'/8o. `.     :    :! ' ':8888)   || /
-//        ||`-''    \\88o\ :     :    :! :  :`""'    ;;/
-//        ||         \"88o\;     `.    \ `. `.      ;,'
-//        /)   ___    `."'/(--.._ `.    `.`.  `-..-' ;--.
-//        \(.="""""==.. `'-'     `.|      `-`-..__.-' `. `.
-//         |          `"==.__      )                    )  ;
-//         |   ||           `"=== '                   .'  .'
-//         /\,,||||  | |           \                .'   .'
-//         | |||'|' |'|'           \|             .'   _.' \
-//         | |\' |  |           || ||           .'    .'    \
-//         ' | \ ' |'  .   ``-- `| ||         .'    .'       \
-//           '  |  ' |  .    ``-.._ |  ;    .'    .'          `.
-//        _.--,;`.       .  --  ...._,'   .'    .'              `.__
-//      ,'  ,';   `.     .   --..__..--'.'    .'                __/_\
-//    ,'   ; ;     |    .   --..__.._.'     .'                ,'     `.
-//   /    ; :     ;     .    -.. _.'     _.'                 /         `
-//  /     :  `-._ |    .    _.--'     _.'                   |
-// /       `.    `--....--''       _.'                      |
-//           `._              _..-'                         |
-//              `-..____...-''                              |
-//                                                          |
-//                                mGk                       |
-*/

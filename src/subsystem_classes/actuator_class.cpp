@@ -387,8 +387,6 @@ void Actuator::run_test_sequence(int m_LED_1, int m_LED_2, int m_LED_3, int m_LE
       break;
     }
 */
-    prev_btn_left_val = btn_left_val;
-    prev_btn_right_val = btn_right_val;
 
 }
 
