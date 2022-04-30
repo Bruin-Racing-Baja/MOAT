@@ -85,13 +85,13 @@ Cooling cooler_o;
 Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, HALL_INBOUND_PIN, HALL_OUTBOUND_PIN, PRINT_TO_SERIAL);
 
 OneButton btn_top = OneButton(
-  BTN_LEFT,  // Input pin for the button
+  BTN_TOP,  // Input pin for the button
   true,        // Button is active LOW
   true         // Enable internal pull-up resistor
 );
 
 OneButton btn_left = OneButton(
-  BTN_RIGHT,  // Input pin for the button
+  BTN_LEFT,  // Input pin for the button
   true,        // Button is active LOW
   true         // Enable internal pull-up resistor
 );
@@ -131,6 +131,12 @@ void setup()
 
   Serial.begin(9600); //for testing my code
 
+  // pinMode(BTN_LEFT, INPUT_PULLUP); //active low
+  // pinMode(BTN_RIGHT, INPUT_PULLUP);
+  // pinMode(BTN_TOP, INPUT_PULLUP);
+  // pinMode(BTN_BOTTOM, INPUT_PULLUP);
+  // pinMode(BTN_CENTER, INPUT_PULLUP);
+
 // Single Click event attachment
   btn_top.attachClick(handleClick);
   btn_left.attachClick(handleClick);
@@ -150,6 +156,14 @@ void loop() {
   btn_center.tick();
   btn_right.tick();
   btn_bottom.tick();
+
+  //Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
+
+  /* T — doesn’t trigger
+  L — good
+  C — good
+  R — triggers twice
+  B — good */
   
   // Serial.println("BUTTONS: " + String(digitalRead(BTN_LEFT)) + String(digitalRead(BTN_RIGHT)) + String(digitalRead(BTN_TOP)) + String(digitalRead(BTN_BOTTOM)) + String(digitalRead(BTN_CENTER)));
   // actuator.run_test_sequence(LED_1, LED_2, LED_3, LED_4, BTN_LEFT, BTN_RIGHT, BTN_TOP, BTN_BOTTOM, BTN_CENTER); //TODO: actuator does not name a type??
