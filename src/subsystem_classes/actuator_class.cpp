@@ -18,8 +18,9 @@ inline Print& operator<<(Print& obj, float arg)
   return obj;
 }
 
-Actuator::Actuator(HardwareSerial& serial, const int eg_tooth_pin, const int gb_tooth_pin,
+Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_pin, const int eg_tooth_pin, const int gb_tooth_pin,
                    const int hall_inbound_pin, const int hall_outbound_pin, bool print_to_serial)
+  : encoder(enc_a_pin, enc_b_pin), odrive(serial)
 {
   // Save pin values
   m_gb_tooth_pin = gb_tooth_pin;
