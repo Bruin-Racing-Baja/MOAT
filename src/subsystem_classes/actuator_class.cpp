@@ -1,4 +1,5 @@
 #include <Actuator.h>
+#include <Constant.h>
 #include <Encoder.h>
 #include <HardwareSerial.h>
 #include <ODrive.h>

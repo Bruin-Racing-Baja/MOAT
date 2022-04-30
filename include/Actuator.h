@@ -7,6 +7,7 @@
 #include <Constant.h>
 #include <Encoder.h>
 #include <ODrive.h>
+
 class Actuator
 {
 public:
