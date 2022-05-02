@@ -6,6 +6,7 @@
 #include <ArduinoLog.h>
 #include <Constant.h>
 #include <Encoder.h>
+#include <queue>
 #include <ODrive.h>
 
 class Actuator
@@ -71,7 +72,8 @@ private:
   // Members to handle rolling frame gearbox rpm
   float calc_gearbox_rpm(float dt);
   float calc_gearbox_rpm_rolling(float dt);
-  int m_gearbox_rpm_frames[5] = { 0 };
+  std::queue<int> m_gearbox_rpm_frames;
+  float m_gearbox_frames_average = 0;
 
   // For reference scheduling
   float calc_reference_rpm(float gearbox_rpm);

@@ -3,6 +3,7 @@
 #include <Encoder.h>
 #include <HardwareSerial.h>
 #include <ODrive.h>
+#include <queue>
 #include <SoftwareSerial.h>
 #include <TimerThree.h>
 
@@ -41,6 +42,12 @@ Actuator::Actuator(HardwareSerial& serial, Constant constant_in, volatile unsign
   m_encoder_outbound = encoder.read();
   m_encoder_inbound = -666;
   m_encoder_engage = -666;
+
+  // Construct rolling frames queue
+  for (int i = 0; i < constant.gearbox_rolling_frames; i++)
+  {
+    m_gearbox_rpm_frames.push(0);
+  }
 }
 
 int Actuator::init(int odrive_timeout)
@@ -387,9 +394,16 @@ float Actuator::calc_gearbox_rpm(float dt)
 }
 
 float Actuator::calc_gearbox_rpm_rolling(float dt)
+// Calculate the avg gearbox rpm
+// Will automatically calculate the new rpm, then calculate the avg with a queue
 {
-  m_gearbox_rpm_frames[m_control_function_count % constant.gearbox_rolling_frames] = calc_gearbox_rpm(dt);
-  
+  m_gearbox_frames_average -= m_gearbox_rpm_frames.front() / constant.gearbox_rolling_frames;
+  m_gearbox_rpm_frames.pop();
+  float new_rpm = calc_gearbox_rpm(dt);
+  m_gearbox_frames_average += new_rpm / constant.gearbox_rolling_frames;
+  m_gearbox_rpm_frames.push(new_rpm);
+
+  return m_gearbox_frames_average;
 }
 
 float Actuator::calc_engine_rpm(float dt)
