@@ -101,13 +101,13 @@ int* Actuator::homing_sequence(int* out)
     if (millis() - start > k_homing_timeout)
     {
       out[0] = 2;
-      odrive.run_state(k_motor_number, 0, false, 0);
+      odrive.run_state(k_motor_number, 1, false, 0);
       out[1], out[2] = -1;
       return out;
     }
   }
   odrive.set_velocity(k_motor_number, 0);         // Stop spinning after homing
-  odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
+  // odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
   // digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - k_encoder_count_shift_length;
@@ -176,7 +176,8 @@ int* Actuator::control_function(int* out)
       if ((digitalReadFast(m_hall_outbound_pin) == 0 || odrive.get_encoder_pos(k_motor_number) >= m_encoder_outbound))
       {
         // If below min rpm and shifted out all the way
-        odrive.run_state(k_motor_number, 1, false, 0);  // SET IDLE
+        odrive.set_velocity(k_motor_number, 0);  // Shift out
+
         out[0] = 4;                                     // Report status
         out[2] = 0;                                     // Report velocity
         out[4] = 1;
@@ -242,15 +243,8 @@ int* Actuator::control_function(int* out)
 
     out[2] = motor_velocity;
 
-    if (motor_velocity == 0)
-    {
-      odrive.run_state(k_motor_number, 1, false, 0);
-    }
-    else
-    {
-      odrive.set_velocity(k_motor_number, motor_velocity);
-      odrive.run_state(k_motor_number, 8, false, 0);
-    }
+    odrive.set_velocity(k_motor_number, motor_velocity);
+    odrive.run_state(k_motor_number, 8, false, 0);
     out[8] = odrive.get_voltage();
     out[9] = 1e6 * odrive.get_cur();
     out[7] = odrive.get_encoder_pos(k_motor_number);
@@ -442,7 +436,7 @@ int Actuator::fully_shift(bool direction, int timeout)
     if (millis() - start > k_homing_timeout)
     {
       status = 1;
-      odrive.run_state(k_motor_number, 0, false, 0);
+      odrive.run_state(k_motor_number, 1, false, 0);
       return status;
     }
   }
