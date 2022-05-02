@@ -428,12 +428,18 @@ float Actuator::calc_reference_rpm(float gearbox_rpm)
   // Region 2: Acceleration zone
   else if (gearbox_rpm < constant.gearbox_target_rpm)
   {
-    output = constant.ecvt_max_ratio * (gearbox_rpm - constant.gearbox_engage_rpm) + constant.engage_rpm;
+    output = constant.ecvt_max_ratio * gearbox_rpm;
   }
-  // Region 3: Overdrive zone
+  // Region 3: Shifting zone
+  else if ()
+  {
+    
+  }
+  // Region 4: Overdrive zone
   else
   {
-    output = constant.overdrive_ratio * (gearbox_rpm - constant.gearbox_target_rpm) + constant.target_rpm;
+    // .85
+    output = constant.overdrive_ratio * gearbox_rpm;
   }
   return output;
 }
