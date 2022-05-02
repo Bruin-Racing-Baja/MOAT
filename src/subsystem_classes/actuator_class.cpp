@@ -50,6 +50,7 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_
 int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)(), void (*external_count_gb_tooth)())
 {
   // Attaches geartooth sensor to interrupt
+  status = 0;
   interrupts();  // allows interupts
   attachInterrupt(m_eg_tooth_pin, external_count_eg_tooth, FALLING);
   attachInterrupt(m_gb_tooth_pin, external_count_gb_tooth, FALLING);
@@ -61,10 +62,16 @@ int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)(), void (
     return status;
   }
 
+  // Runs encoder index search to find z index
+  bool encoder_index_search = odrive.run_state(k_motor_number, 6, true, 5);
 
-  if(!odrive.run_state(k_motor_number, 6, true, 5)) odrive.run_state(k_motor_number, 1, true, 1);  // Runs encoder index search, if  Sets ODrive to IDLE
+  // If successful, set ODRV to idle
+  if(!encoder_index_search) 
+  {
+    odrive.run_state(k_motor_number, 1, true, 1);
+  }
+  else status = 1003;
 
-  status = 0;
   return status;
 }
 
