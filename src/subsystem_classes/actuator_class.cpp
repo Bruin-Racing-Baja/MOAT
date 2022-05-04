@@ -1,5 +1,4 @@
 #include <Actuator.h>
-#include <Encoder.h>
 #include <HardwareSerial.h>
 #include <ODrive.h>
 #include <SoftwareSerial.h>
@@ -44,13 +43,14 @@ Actuator::Actuator(HardwareSerial& serial, const int enc_a_pin, const int enc_b_
   m_has_run = false;
 
   // limit variables
-  m_encoder_outbound = encoder.read();
+  m_encoder_outbound = odrive.get_encoder_pos(k_motor_number);
   m_encoder_inbound = -666;
 }
 
 int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)(), void (*external_count_gb_tooth)())
 {
   // Attaches geartooth sensor to interrupt
+  status = 0;
   interrupts();  // allows interupts
   attachInterrupt(m_eg_tooth_pin, external_count_eg_tooth, FALLING);
   attachInterrupt(m_gb_tooth_pin, external_count_gb_tooth, FALLING);
@@ -62,9 +62,16 @@ int Actuator::init(int odrive_timeout, void (*external_count_eg_tooth)(), void (
     return status;
   }
 
-  odrive.run_state(k_motor_number, 1, true, 0);  // Sets ODrive to IDLE
+  // Runs encoder index search to find z index
+  bool encoder_index_search = odrive.run_state(k_motor_number, 6, true, 5);
 
-  status = 0;
+  // If successful, set ODRV to idle
+  if(!encoder_index_search) 
+  {
+    odrive.run_state(k_motor_number, 1, true, 1);
+  }
+  else status = 1003;
+
   return status;
 }
 
@@ -90,17 +97,17 @@ int* Actuator::homing_sequence(int* out)
     {
       break;
     }
-    m_encoder_outbound = encoder.read();
+    m_encoder_outbound = odrive.get_encoder_pos(k_motor_number);
     if (millis() - start > k_homing_timeout)
     {
       out[0] = 2;
-      odrive.run_state(k_motor_number, 0, false, 0);
+      odrive.run_state(k_motor_number, 1, false, 0);
       out[1], out[2] = -1;
       return out;
     }
   }
   odrive.set_velocity(k_motor_number, 0);         // Stop spinning after homing
-  odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
+  // odrive.run_state(k_motor_number, 1, false, 0);  // Idle state
   // digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - k_encoder_count_shift_length;
@@ -108,7 +115,7 @@ int* Actuator::homing_sequence(int* out)
   // Home inbound - [IN PURGATORY]
   //  set_velocity(-10);
   //  while (digitalReadFast(m_hall_inbound) == 1) {
-  //      m_encoder_inbound = encoder.read();
+  //      m_encoder_inbound = odrive.get_encoder_pos(k_motor_number);
   //  }
 
   // //Testing encoder reading by shifting all the way back to the inbound
@@ -116,11 +123,11 @@ int* Actuator::homing_sequence(int* out)
   // odrive.run_state(motor_number, 8, false, 0);
   // odrive.set_velocity(motor_number, -2);
   // digitalWrite(LED_BUILTIN, HIGH);
-  // while(encoder.read() > m_encoder_inbound){
+  // while(odrive.get_encoder_pos(k_motor_number) > m_encoder_inbound){
   //     Serial.print("encoder inbound: ");
   //     Serial.println(m_encoder_inbound);
   //     Serial.print("current encoder position");
-  //     Serial.println(encoder.read());
+  //     Serial.println(odrive.get_encoder_pos(k_motor_number));
   // }
   // digitalWrite(LED_BUILTIN, LOW);
   // odrive.set_velocity(motor_number, 0); //Stop spinning after homing
@@ -166,16 +173,17 @@ int* Actuator::control_function(int* out)
     // If motor is spinning too slow, then shift all the way out
     if (m_eg_rpm < k_min_rpm)
     {
-      if ((digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound))
+      if ((digitalReadFast(m_hall_outbound_pin) == 0 || odrive.get_encoder_pos(k_motor_number) >= m_encoder_outbound))
       {
         // If below min rpm and shifted out all the way
-        odrive.run_state(k_motor_number, 1, false, 0);  // SET IDLE
+        odrive.set_velocity(k_motor_number, 0);  // Shift out
+
         out[0] = 4;                                     // Report status
         out[2] = 0;                                     // Report velocity
         out[4] = 1;
         out[8] = odrive.get_voltage();
         out[9] = 1e6 * odrive.get_cur();
-        out[7] = encoder.read();
+        out[7] = odrive.get_encoder_pos(k_motor_number);
         out[6] = millis();
         return out;
       }
@@ -187,7 +195,7 @@ int* Actuator::control_function(int* out)
         out[2] = 3;
         out[8] = odrive.get_voltage();
         out[9] = 1e6 * odrive.get_cur();
-        out[7] = encoder.read();
+        out[7] = odrive.get_encoder_pos(k_motor_number);
         out[6] = millis();
         return out;
       }
@@ -214,7 +222,7 @@ int* Actuator::control_function(int* out)
     // HALL TRIGGERED IS 0
 
     // If error will over or under actuate actuator then set error to 0.
-    if (digitalReadFast(m_hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)
+    if (digitalReadFast(m_hall_outbound_pin) == 0 || odrive.get_encoder_pos(k_motor_number) >= m_encoder_outbound)
     {
       // Shifted out completely
       if (motor_velocity > 0)
@@ -222,7 +230,7 @@ int* Actuator::control_function(int* out)
       out[0] = 6;
       out[4] = 1;
     }
-    else if (digitalReadFast(m_hall_inbound_pin) == 0 || encoder.read() <= m_encoder_inbound)
+    else if (digitalReadFast(m_hall_inbound_pin) == 0 || odrive.get_encoder_pos(k_motor_number) <= m_encoder_inbound)
     {
       // Shifted in completely
       if (motor_velocity < 0)
@@ -235,18 +243,11 @@ int* Actuator::control_function(int* out)
 
     out[2] = motor_velocity;
 
-    if (motor_velocity == 0)
-    {
-      odrive.run_state(k_motor_number, 1, false, 0);
-    }
-    else
-    {
-      odrive.set_velocity(k_motor_number, motor_velocity);
-      odrive.run_state(k_motor_number, 8, false, 0);
-    }
+    odrive.set_velocity(k_motor_number, motor_velocity);
+    odrive.run_state(k_motor_number, 8, false, 0);
     out[8] = odrive.get_voltage();
     out[9] = 1e6 * odrive.get_cur();
-    out[7] = encoder.read();
+    out[7] = odrive.get_encoder_pos(k_motor_number);
     out[6] = millis();
     return out;
   }
@@ -314,7 +315,7 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   {
     output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
     output += "Odrive speed: " + String(odrive.get_vel(k_motor_number)) + "\n";
-    output += "Encoder count: " + String(encoder.read()) + "\n";
+    output += "Encoder count: " + String(odrive.get_encoder_pos(k_motor_number)) + "\n";
   }
   output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
   output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
@@ -435,7 +436,7 @@ int Actuator::fully_shift(bool direction, int timeout)
     if (millis() - start > k_homing_timeout)
     {
       status = 1;
-      odrive.run_state(k_motor_number, 0, false, 0);
+      odrive.run_state(k_motor_number, 1, false, 0);
       return status;
     }
   }
