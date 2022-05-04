@@ -403,6 +403,8 @@ float Actuator::calc_gearbox_rpm_rolling(float dt)
   m_gearbox_frames_average += new_rpm / constant.gearbox_rolling_frames;
   m_gearbox_rpm_frames.push(new_rpm);
 
+  Serial.println(m_gearbox_frames_average);
+
   return m_gearbox_frames_average;
 }
 
@@ -416,37 +418,37 @@ float Actuator::calc_engine_rpm(float dt)
   return rpm;
 }
 
-float Actuator::calc_reference_rpm(float gearbox_rpm)
-// Implemented according to a reference drawing John drew up
-{
-  float output;
-  // Region 1: Before belt slip, so hold at engage rpm
-  if (gearbox_rpm < constant.gearbox_engage_rpm)
-  {
-    output = constant.engage_rpm;
-  }
-  // Region 2: Acceleration zone
-  else if (gearbox_rpm < constant.gearbox_target_rpm)
-  {
-    output = constant.ecvt_max_ratio * gearbox_rpm;
-  }
-  // Region 3: Shifting zone
-  else if ()
-  {
+// float Actuator::calc_reference_rpm(float gearbox_rpm)
+// // Implemented according to a reference drawing John drew up
+// {
+//   float output;
+//   // Region 1: Before belt slip, so hold at engage rpm
+//   if (gearbox_rpm < constant.gearbox_engage_rpm)
+//   {
+//     output = constant.engage_rpm;
+//   }
+//   // Region 2: Acceleration zone
+//   else if (gearbox_rpm < constant.gearbox_target_rpm)
+//   {
+//     output = constant.ecvt_max_ratio * gearbox_rpm;
+//   }
+//   // Region 3: Shifting zone
+//   else if ()
+//   {
     
-  }
-  // Region 4: Overdrive zone
-  else
-  {
-    // .85
-    output = constant.overdrive_ratio * gearbox_rpm;
-  }
-  return output;
-}
+//   }
+//   // Region 4: Overdrive zone
+//   else
+//   {
+//     // .85
+//     output = constant.overdrive_ratio * gearbox_rpm;
+//   }
+//   return output;
+// }
 
 //-----------------Diagnostic Functions--------------//
 
-String Actuator::diagnostic(bool main_power, bool print_serial = true)
+String Actuator::diagnostic(bool main_power, int dt, bool print_serial = true)
 {
   // General diagnostic tool to record sensor readings as well as some odrive info
 
@@ -457,14 +459,17 @@ String Actuator::diagnostic(bool main_power, bool print_serial = true)
   {
     output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
     output += "Odrive speed: " + String(odrive.get_vel(constant.actuator_motor_number)) + "\n";
-    output += "Encoder count: " + String(encoder.read()) + "\n";
+    // output += "Encoder count: " + String(encoder.read()) + "\n";
   }
   output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
   output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
   output += "Outbound reading: " + String(digitalReadFast(constant.hall_outbound_pin)) + "\n";
   output += "Inbound reading: " + String(digitalReadFast(constant.hall_inbound_pin)) + "\n";
   output += "Engine Gear Tooth Count: " + String(*m_eg_tooth_count) + "\n";
-  output += "Wheel gear tooth count: " + String(*m_gb_tooth_count) + "\n";
+  output += "Engine RPM" + String(calc_engine_rpm(dt)) + "\n";
+  output += "Gearbox gear tooth count: " + String(*m_gb_tooth_count) + "\n";
+  output += "Gearbox RPM" + String(calc_gearbox_rpm(dt)) + "\n";
+  output += "Gearbox RPM Rolling: " + String(calc_gearbox_rpm_rolling(dt)) + "\n";
   output += "Estop Signal: " + String(digitalRead(36)) + "\n";
 
   if (print_serial)

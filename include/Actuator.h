@@ -51,7 +51,7 @@ public:
   float communication_speed();
   String odrive_errors();
 
-  String diagnostic(bool is_mainpower_on, bool serial_out);
+  String diagnostic(bool is_mainpower_on, int dt, bool serial_out);
   int fully_shift(bool direction, int timeout);
 
 private:
