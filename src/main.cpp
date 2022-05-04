@@ -176,6 +176,7 @@ void setup()
     log_file_number++;
   }
   log_name = "log_" + String(log_file_number) + ".txt";
+  Serial.println(constant.engine_geartooth_pin);
   Serial.println("Logging at: " + log_name);
 
   log_file = SD.open(log_name.c_str(), FILE_WRITE);
@@ -195,7 +196,9 @@ void setup()
 
   //-------------Actuator-----------------//
   // General Init
+  Serial.println("Actuator Init");
   int o_actuator_init = actuator.init(constant.homing_timeout);
+  Serial.println("Past act init");
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -210,6 +213,8 @@ void setup()
   save_log();
 
   // Geartooth Interrupts
+  Serial.println(constant.engine_geartooth_pin);
+  Serial.println(constant.gearbox_geartooth_pin);
   pinMode(constant.engine_geartooth_pin, INPUT_PULLUP);
   pinMode(constant.gearbox_geartooth_pin, INPUT_PULLUP);
   attachInterrupt(constant.engine_geartooth_pin, external_count_eg_tooth, FALLING);
