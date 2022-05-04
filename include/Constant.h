@@ -33,7 +33,9 @@ struct Constant
     {"proportional_gain", 0.015},
     {"integral_gain", 0},
     {"derivative_gain", 0},
-    {"exponential_filter_alpha", 0.5}
+    {"exponential_filter_alpha", 0.5},
+    {"overdrive_ratio", 0.85},
+    {"ecvt_max_ratio", 4.25}
   };
 
   std::map<String, int> int_constants = {
@@ -42,10 +44,23 @@ struct Constant
     {"homing_timeout", 100}, // ms
     {"cycle_period", 10},     // ms
     // This also has to be changed in actuator header
-    {"gearbox_rolling_frames", 5}
+    {"gearbox_rolling_frames", 60}
   };
   
   public:
+  // These constants do not change between models
+
+  // Engine Constants (ty Tyler)
+  const unsigned int engine_idle = 1750;      // rpm
+  const unsigned int engine_engage = 2100;    // rpm
+  const unsigned int engine_launch = 2600;    // rpm
+  const unsigned int engine_torque = 2700;    // rpm
+  const unsigned int engine_power = 3400;     // rpm
+  const unsigned int desired_rpm = 2250;      // rpm
+  const float rpm_target_multiplier = 1.5;
+
+  const static int minimum_rpm = 1000;        // rpm
+
   // These constants change between models
 
   // Pins
@@ -75,18 +90,13 @@ struct Constant
 
   const float position_p_gain = proportional_gain;
 
-  // These constants do not change between models
+  // Physical Constants
+  const float ecvt_max_ratio = float_constants["ecvt_max_ratio"];
+  const float overdrive_ratio = float_constants["overdrive_ratio"];
+  const int gearbox_engage_rpm = engine_engage / ecvt_max_ratio;
+  const int gearbox_power_rpm = engine_power / ecvt_max_ratio;
+  const int gearbox_overdrive_rpm = engine_power / overdrive_ratio;
 
-  // Engine Constants (ty Tyler)
-  const unsigned int engine_idle = 1750;      // rpm
-  const unsigned int engine_engage = 2100;    // rpm
-  const unsigned int engine_launch = 2600;    // rpm
-  const unsigned int engine_torque = 2700;    // rpm
-  const unsigned int engine_power = 3400;     // rpm
-  const unsigned int desired_rpm = 2250;      // rpm
-  const float rpm_target_multiplier = 1.5;
-
-  const static int minimum_rpm = 1000;        // rpm
 
   
 

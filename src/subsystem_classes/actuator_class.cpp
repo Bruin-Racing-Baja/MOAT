@@ -46,7 +46,7 @@ Actuator::Actuator(HardwareSerial& serial, Constant constant_in, volatile unsign
   // Construct rolling frames queue
   for (int i = 0; i < constant.gearbox_rolling_frames; i++)
   {
-    m_gearbox_rpm_frames.push(0);
+    m_gearbox_rpm_frames.push(0.0);
   }
 }
 
@@ -126,6 +126,8 @@ int* Actuator::control_function(int* out)
     float dt = millis() - m_last_control_execution;
     m_eg_rpm = calc_engine_rpm(dt);
     m_gb_rpm = calc_gearbox_rpm(dt);
+    out[ROLLING_FRAME] = calc_gearbox_rpm_rolling(m_gb_rpm);
+    out[EXP_DECAY] = calc_gearbox_rpm_exponential(m_gb_rpm);
     m_eg_rpm = (constant.exponential_filter_alpha * m_eg_rpm) + (1 - constant.exponential_filter_alpha) * m_currentrpm_eg_accum;
     m_currentrpm_eg_accum = m_eg_rpm;
 
@@ -174,8 +176,9 @@ int* Actuator::control_function(int* out)
     // Compute error
 
     // If error is within a certain deviation from the desired value, do not shift
-    error = constant.desired_rpm - m_eg_rpm;
-    int error_deriv = (error - prev_error) / dt;  // 16ms in between runs rn
+    out[REF_RPM] = calc_reference_rpm(out[ROLLING_FRAME]);
+    error = out[REF_RPM] - m_eg_rpm;
+    int error_deriv = (error - prev_error) / dt;
     int motor_velocity = constant.proportional_gain * error + constant.derivative_gain * error_deriv;
     prev_error = error;
     // if (abs(error) <= rpm_allowance) {
@@ -384,28 +387,33 @@ int Actuator::calc_motor_rps(int dt){
 //----------------Geartooth Functions----------------//
 
 float Actuator::calc_gearbox_rpm(float dt)
+// Secondary rpm
 {
   noInterrupts();
   float rps = float(*m_gb_tooth_count - m_last_gb_tooth_count) / dt;
+  rps *= 6.0/17.0;
   float rpm = rps * 1000.0 * 60.0;
   m_last_gb_tooth_count = *m_gb_tooth_count;
   interrupts();
   return rpm;
 }
 
-float Actuator::calc_gearbox_rpm_rolling(float dt)
+float Actuator::calc_gearbox_rpm_rolling(float new_rpm)
 // Calculate the avg gearbox rpm
 // Will automatically calculate the new rpm, then calculate the avg with a queue
 {
-  m_gearbox_frames_average -= m_gearbox_rpm_frames.front() / constant.gearbox_rolling_frames;
+  m_gearbox_frames_average += (new_rpm - m_gearbox_rpm_frames.front()) / constant.gearbox_rolling_frames;
   m_gearbox_rpm_frames.pop();
-  float new_rpm = calc_gearbox_rpm(dt);
-  m_gearbox_frames_average += new_rpm / constant.gearbox_rolling_frames;
   m_gearbox_rpm_frames.push(new_rpm);
-
-  Serial.println(m_gearbox_frames_average);
-
   return m_gearbox_frames_average;
+}
+
+float Actuator::calc_gearbox_rpm_exponential(float new_rpm)
+{
+  float alpha = 0.05;
+  float output = new_rpm * alpha + m_old_rpm * (1 - alpha);
+  m_old_rpm = output;
+  return output;
 }
 
 float Actuator::calc_engine_rpm(float dt)
@@ -418,60 +426,65 @@ float Actuator::calc_engine_rpm(float dt)
   return rpm;
 }
 
-// float Actuator::calc_reference_rpm(float gearbox_rpm)
-// // Implemented according to a reference drawing John drew up
-// {
-//   float output;
-//   // Region 1: Before belt slip, so hold at engage rpm
-//   if (gearbox_rpm < constant.gearbox_engage_rpm)
-//   {
-//     output = constant.engage_rpm;
-//   }
-//   // Region 2: Acceleration zone
-//   else if (gearbox_rpm < constant.gearbox_target_rpm)
-//   {
-//     output = constant.ecvt_max_ratio * gearbox_rpm;
-//   }
-//   // Region 3: Shifting zone
-//   else if ()
-//   {
-    
-//   }
-//   // Region 4: Overdrive zone
-//   else
-//   {
-//     // .85
-//     output = constant.overdrive_ratio * gearbox_rpm;
-//   }
-//   return output;
-// }
+float Actuator::calc_reference_rpm(float gearbox_rpm)
+// Implemented according to a reference drawing John drew up
+{
+  float output;
+  // Region 1: Before belt slip, so hold at engage rpm
+  if (gearbox_rpm < constant.gearbox_engage_rpm)
+  {
+    output = constant.engine_engage;
+  }
+  // Region 2: Acceleration zone
+  else if (gearbox_rpm < constant.gearbox_power_rpm)
+  {
+    output = gearbox_rpm * constant.ecvt_max_ratio;
+  }
+  // Region 3: Shifting zone
+  else if (gearbox_rpm < constant.gearbox_overdrive_rpm)
+  {
+    output = constant.engine_power;
+  }
+  // Region 4: Overdrive zone
+  else
+  {
+    output = gearbox_rpm * constant.overdrive_ratio;
+  }
+
+  return output;
+}
 
 //-----------------Diagnostic Functions--------------//
 
 String Actuator::diagnostic(bool main_power, int dt, bool print_serial = true)
 {
   // General diagnostic tool to record sensor readings as well as some odrive info
-
+  m_serial_dt = millis() - m_last_serial_execution;
+  m_last_serial_execution = millis();
   String output = "";
   output += "-----------------------------\n";
   output += "Time: " + String(millis()) + "\n";
   if (main_power)
   {
-    output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
-    output += "Odrive speed: " + String(odrive.get_vel(constant.actuator_motor_number)) + "\n";
+    // output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
+    // output += "Odrive speed: " + String(odrive.get_vel(constant.actuator_motor_number)) + "\n";
     // output += "Encoder count: " + String(encoder.read()) + "\n";
   }
-  output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
-  output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
-  output += "Outbound reading: " + String(digitalReadFast(constant.hall_outbound_pin)) + "\n";
-  output += "Inbound reading: " + String(digitalReadFast(constant.hall_inbound_pin)) + "\n";
-  output += "Engine Gear Tooth Count: " + String(*m_eg_tooth_count) + "\n";
-  output += "Engine RPM: " + String(calc_engine_rpm(dt)) + "\n";
+  // output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
+  // output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
+  // output += "Outbound reading: " + String(digitalReadFast(constant.hall_outbound_pin)) + "\n";
+  // output += "Inbound reading: " + String(digitalReadFast(constant.hall_inbound_pin)) + "\n";
+  // output += "dt term: " + String(m_serial_dt) + "\n";
+  // output += "Engine Gear Tooth Count: " + String(*m_eg_tooth_count) + "\n";
+  // output += "Engine RPM: " + String(calc_engine_rpm(m_serial_dt)) + "\n";
   output += "Gearbox gear tooth count: " + String(*m_gb_tooth_count) + "\n";
-  output += "Gearbox RPM: " + String(calc_gearbox_rpm(dt)) + "\n";
-  output += "Gearbox RPM Rolling: " + String(calc_gearbox_rpm_rolling(dt)) + "\n";
-  output += "Estop Signal: " + String(digitalRead(36)) + "\n";
-
+  float gearbox_rpm = calc_gearbox_rpm(m_serial_dt);
+  output += "Gearbox RPM: " + String(gearbox_rpm) + "\n";
+  output += "Gearbox RPM Rolling: " + String(calc_gearbox_rpm_rolling(gearbox_rpm)) + "\n";
+  output += "Gearbox RPM Exponential: " + String(calc_gearbox_rpm_exponential(gearbox_rpm)) + "\n";
+  // output += "Estop Signal: " + String(digitalRead(36)) + "\n";
+  output = String(gearbox_rpm) + ", " + String(calc_gearbox_rpm_rolling(gearbox_rpm)) + ", " + String(calc_gearbox_rpm_exponential(gearbox_rpm)) + "\n";
+  output = String(millis()/10.0 - 100) + ", " + String(calc_reference_rpm(millis()/10.0-100)) + "\n";
   if (print_serial)
   {
     Serial.print(output);

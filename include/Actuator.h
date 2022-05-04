@@ -35,6 +35,10 @@ public:
   unsigned int WHL_COUNT = 13;
   unsigned int RPM_COUNT = 14;
   unsigned int DT = 15;
+  unsigned int ROLLING_FRAME = 16;
+  unsigned int EXP_DECAY = 17;
+  unsigned int REF_RPM = 18;
+
 
   Actuator(HardwareSerial& serial, Constant constant, 
           volatile unsigned long* eg_tooth_count,  volatile unsigned long* gb_tooth_count,
@@ -72,8 +76,12 @@ private:
   // Members to handle rolling frame gearbox rpm
   float calc_gearbox_rpm(float dt);
   float calc_gearbox_rpm_rolling(float dt);
-  std::queue<int> m_gearbox_rpm_frames;
+  std::queue<float> m_gearbox_rpm_frames;
   float m_gearbox_frames_average = 0;
+
+  // Handling exponential decay
+  float m_old_rpm = 0;
+  float calc_gearbox_rpm_exponential(float dt);
 
   // For reference scheduling
   float calc_reference_rpm(float gearbox_rpm);
@@ -92,6 +100,8 @@ private:
   // Debugging vars
   long m_control_function_count = 0;
   bool m_has_run;
+  unsigned long m_last_serial_execution = 0;
+  float m_serial_dt;
 
   // running gear tooth sensor counts
   volatile unsigned long* m_gb_tooth_count;

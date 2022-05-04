@@ -39,7 +39,7 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 2
+#define MODE 0
 
 // Startup
 #define WAIT_SERIAL_STARTUP 1
@@ -79,6 +79,9 @@ unsigned int WHL_RPM = 12;
 unsigned int WHL_COUNT = 13;
 unsigned int RPM_COUNT = 14;
 unsigned int DT = 15;
+unsigned int ROLLING_FRAME = 16;
+unsigned int EXP_DECAY = 17;
+unsigned int REF_RPM = 18;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
@@ -178,6 +181,7 @@ void setup()
   log_name = "log_" + String(log_file_number) + ".txt";
   Serial.println(constant.engine_geartooth_pin);
   Serial.println("Logging at: " + log_name);
+  Serial.println(constant.gearbox_overdrive_rpm);
 
   log_file = SD.open(log_name.c_str(), FILE_WRITE);
 
@@ -198,7 +202,6 @@ void setup()
   // General Init
   Serial.println("Actuator Init");
   int o_actuator_init = actuator.init(constant.homing_timeout);
-  Serial.println("Past act init");
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -239,7 +242,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   // This message is critical as it sets the order that the analysis script will read the data in
-  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, enc_in, hall_out, enc_out, s_time, f_time, o_vol, o_curr, therm1, therm2, therm3, estop" CR);
+  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, enc_in, hall_out, enc_out, s_time, f_time, o_vol, o_curr, roll_frame, exp_decay, ref_rpm, therm1, therm2, therm3, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
 }
@@ -247,7 +250,7 @@ void setup()
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[20];
+int o_control[30];
 int save_count = 0;
 int last_save = 0;
 int o_return = 0;
@@ -266,7 +269,7 @@ void loop()
   if (o_return != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
     o_control[STATUS], 
     o_control[RPM],
     o_control[RPM_COUNT],
@@ -281,6 +284,9 @@ void loop()
     o_control[T_STOP], 
     o_control[ODRV_VOLT], 
     o_control[ODRV_CUR], 
+    o_control[ROLLING_FRAME],
+    o_control[EXP_DECAY],
+    o_control[REF_RPM],
     cooler_o.get_thermistor(0), 
     cooler_o.get_thermistor(1), 
     cooler_o.get_thermistor(2), 
