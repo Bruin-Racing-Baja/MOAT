@@ -9,7 +9,43 @@
 
 struct Constant
 {
-  void read_sd_settings(File settingsFile_i, int defaultValueMode = 0);
+  private:
+  
+  // This sets which model number is currently selected
+  std::map<String, int> pins = m_20_pins;
+  std::map<String, float> float_constants = m_20_float_constants;
+  std::map<String, int> int_constants = m_20_int_constants;
+
+  std::map<String, int> m_20_pins = {
+    {"estop", 36},
+    {"enc_a", 2},
+    {"enc_b", 3},
+    {"hall_inbound", 23},
+    {"hall_outbound", 22},
+    {"engine_geartooth", 41},
+    {"gearbox_geartooth", 40},
+    {"thermistor_1", 24},
+    {"thermistor_2", 38},
+    {"thermistor_3", 39}
+  };
+
+  std::map<String, float> m_20_float_constants = {
+    {"proportional_gain", 0.015},
+    {"integral_gain", 0},
+    {"derivative_gain", 0},
+    {"exponential_filter_alpha", 0.5}
+  };
+
+  std::map<String, int> m_20_int_constants = {
+    {"actuator_motor_number", 0},
+    {"cooling_motor_number", 1},
+    {"homing_timeout", 50e6}, // ms
+    {"cycle_period", 10},     // ms
+    // This also has to be changed in actuator header
+    {"gearbox_rolling_frames", 5}
+  };
+  
+  public:
   // These constants change between models
 
   // Pins
@@ -69,57 +105,7 @@ struct Constant
   constexpr static int eg_teeth_per_rotation = 88;
   
 
-  private:
   
-  // This sets which model number is currently selected
-  std::map<String, int> pins = m_20_pins;
-  std::map<String, float> float_constants = m_20_float_constants;
-  std::map<String, int> int_constants = m_20_int_constants;
-
-  std::map<String, int> m_20_pins = {
-    {"estop", 36},
-    {"enc_a", 2},
-    {"enc_b", 3},
-    {"hall_inbound", 23},
-    {"hall_outbound", 22},
-    {"engine_geartooth", 41},
-    {"gearbox_geartooth", 40},
-    {"thermistor_1", 24},
-    {"thermistor_2", 38},
-    {"thermistor_3", 39}
-  };
-
-  std::map<String, float> m_20_float_constants = {
-    {"proportional_gain", 0.015},
-    {"integral_gain", 0},
-    {"derivative_gain", 0},
-    {"exponential_filter_alpha", 0.5}
-  };
-
-  std::map<String, int> m_20_int_constants = {
-    {"actuator_motor_number", 0},
-    {"cooling_motor_number", 1},
-    {"homing_timeout", 50e6}, // ms
-    {"cycle_period", 10},     // ms
-    // This also has to be changed in actuator header
-    {"gearbox_rolling_frames", 5}
-  };
-  // void init(File settingsFile, bool m21, int defaultValueMode = 0);
-  int mode;
-  // int desired_rpm;
-  int log_num;
-
-  float p;
-
-  int isDefault;
-  File settingsFile;
-
-  int read_ints();
-  int read_floats();
-  int int_size = 2;
-  int float_size = 1;
-  int* ints[3] = { &mode, &log_num };
-  float* floats[1] = { &p };
 };
 
 #endif
