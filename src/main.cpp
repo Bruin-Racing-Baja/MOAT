@@ -242,7 +242,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   // This message is critical as it sets the order that the analysis script will read the data in
-  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, enc_in, hall_out, enc_out, s_time, f_time, o_vol, o_curr, roll_frame, exp_decay, ref_rpm, therm1, therm2, therm3, estop" CR);
+  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, hall_out, s_time, f_time, o_vol, o_curr, roll_frame, exp_decay, ref_rpm, therm1, therm2, therm3, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
 }
@@ -269,7 +269,7 @@ void loop()
   if (o_control[STATUS] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
     o_control[STATUS], 
     o_control[RPM],
     o_control[RPM_COUNT],
@@ -277,13 +277,11 @@ void loop()
     o_control[ACT_VEL], 
     o_control[ENC_POS],
     o_control[HALL_IN], 
-    o_control[ENC_IN],
     o_control[HALL_OUT],
-    o_control[ENC_OUT], 
     o_control[T_START], 
     o_control[T_STOP], 
     o_control[ODRV_VOLT], 
-    o_control[ODRV_CUR], 
+    o_control[ODRV_CUR],
     o_control[ROLLING_FRAME],
     o_control[EXP_DECAY],
     o_control[REF_RPM],

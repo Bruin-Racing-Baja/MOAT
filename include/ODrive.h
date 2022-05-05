@@ -24,6 +24,7 @@ public:
   float get_cur();
 
 private:
+  int m_current_state = -1;
   int status;
   HardwareSerial& OdriveSerial;
   float get_voltage_private();

@@ -53,6 +53,7 @@ public:
   int get_encoder_pos();
   float get_p_value();
   float communication_speed();
+  // float get_odrive_current();
   String odrive_errors();
 
   String diagnostic(bool is_mainpower_on, int dt, bool serial_out);
@@ -108,15 +109,20 @@ private:
   volatile unsigned long* m_eg_tooth_count;
   unsigned long m_last_eg_tooth_count;
   unsigned long m_last_gb_tooth_count;
-  float m_eg_rpm = 0;
-  float m_currentrpm_eg_accum = 0;
-  float m_gb_rpm = 0;
-  float m_currentrpm_gb_accum = 0;
+  // float m_eg_rpm = 0;
+  // float m_currentrpm_eg_accum = 0;
+  // float m_gb_rpm = 0;
+  // float m_currentrpm_gb_accum = 0;
 
 
   // running control terms
-  int error = 0;
-  int prev_error = 0;
+  int m_error = 0;
+  float m_gb_rolling;
+  float m_gb_exp_decay;
+  float m_ref_rpm;
+  bool m_outbound_signal;
+  bool m_inbound_signal;
+  float m_motor_velocity;
 };
 
 #endif

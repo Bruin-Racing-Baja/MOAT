@@ -41,7 +41,7 @@ struct Constant
   std::map<String, int> int_constants = {
     {"actuator_motor_number", 1},
     {"cooling_motor_number", 0},
-    {"homing_timeout", 100}, // ms
+    {"homing_timeout", 50e6}, // ms
     {"cycle_period", 10},     // ms
     // This also has to be changed in actuator header
     {"gearbox_rolling_frames", 60}
