@@ -42,8 +42,8 @@ General code to oversee all functions of the Teensy
 #define MODE 0
 
 // Startup
-#define WAIT_SERIAL_STARTUP 1
-#define HOME_ON_STARTUP 0
+#define WAIT_SERIAL_STARTUP 0
+#define HOME_ON_STARTUP 1
 // NOTE: To set model 20 / 21 check the Constant.h file
 
 // Constants Object

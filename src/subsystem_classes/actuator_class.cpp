@@ -467,25 +467,25 @@ String Actuator::diagnostic(bool main_power, int dt, bool print_serial = true)
   output += "Time: " + String(millis()) + "\n";
   if (main_power)
   {
-    // output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
-    // output += "Odrive speed: " + String(odrive.get_vel(constant.actuator_motor_number)) + "\n";
-    // output += "Encoder count: " + String(encoder.read()) + "\n";
+    output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
+    output += "Odrive speed: " + String(odrive.get_vel(constant.actuator_motor_number)) + "\n";
+    output += "Encoder count: " + String(odrive.get_encoder_pos(constant.actuator_motor_number)) + "\n";
   }
-  // output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
-  // output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
-  // output += "Outbound reading: " + String(digitalReadFast(constant.hall_outbound_pin)) + "\n";
-  // output += "Inbound reading: " + String(digitalReadFast(constant.hall_inbound_pin)) + "\n";
-  // output += "dt term: " + String(m_serial_dt) + "\n";
-  // output += "Engine Gear Tooth Count: " + String(*m_eg_tooth_count) + "\n";
-  // output += "Engine RPM: " + String(calc_engine_rpm(m_serial_dt)) + "\n";
+  output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
+  output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
+  output += "Outbound reading: " + String(digitalReadFast(constant.hall_outbound_pin)) + "\n";
+  output += "Inbound reading: " + String(digitalReadFast(constant.hall_inbound_pin)) + "\n";
+  output += "dt term: " + String(m_serial_dt) + "\n";
+  output += "Engine Gear Tooth Count: " + String(*m_eg_tooth_count) + "\n";
+  output += "Engine RPM: " + String(calc_engine_rpm(m_serial_dt)) + "\n";
   output += "Gearbox gear tooth count: " + String(*m_gb_tooth_count) + "\n";
   float gearbox_rpm = calc_gearbox_rpm(m_serial_dt);
   output += "Gearbox RPM: " + String(gearbox_rpm) + "\n";
   output += "Gearbox RPM Rolling: " + String(calc_gearbox_rpm_rolling(gearbox_rpm)) + "\n";
   output += "Gearbox RPM Exponential: " + String(calc_gearbox_rpm_exponential(gearbox_rpm)) + "\n";
-  // output += "Estop Signal: " + String(digitalRead(36)) + "\n";
-  output = String(gearbox_rpm) + ", " + String(calc_gearbox_rpm_rolling(gearbox_rpm)) + ", " + String(calc_gearbox_rpm_exponential(gearbox_rpm)) + "\n";
-  output = String(millis()/10.0 - 100) + ", " + String(calc_reference_rpm(millis()/10.0-100)) + "\n";
+  output += "Estop Signal: " + String(digitalRead(36)) + "\n";
+  // output = String(gearbox_rpm) + ", " + String(calc_gearbox_rpm_rolling(gearbox_rpm)) + ", " + String(calc_gearbox_rpm_exponential(gearbox_rpm)) + "\n";
+  // output = String(millis()/10.0 - 100) + ", " + String(calc_reference_rpm(millis()/10.0-100)) + "\n";
   if (print_serial)
   {
     Serial.print(output);
