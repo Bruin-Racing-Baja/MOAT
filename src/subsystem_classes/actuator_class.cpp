@@ -1,6 +1,5 @@
 #include <Actuator.h>
 #include <Constant.h>
-#include <Encoder.h>
 #include <HardwareSerial.h>
 #include <ODrive.h>
 #include <queue>
@@ -39,7 +38,7 @@ Actuator::Actuator(HardwareSerial& serial, Constant constant_in, volatile unsign
   m_last_control_execution = 0;
 
   // limit variables
-  m_encoder_outbound = encoder.read();
+  m_encoder_outbound = odrive.get_encoder_pos(constant.actuator_motor_number);
   m_encoder_inbound = -666;
   m_encoder_engage = -666;
 
@@ -52,6 +51,7 @@ Actuator::Actuator(HardwareSerial& serial, Constant constant_in, volatile unsign
 
 int Actuator::init(int odrive_timeout)
 {
+  status = 0;
   interrupts();
 
   // Initialize Odrive object
@@ -62,9 +62,16 @@ int Actuator::init(int odrive_timeout)
     return status;
   }
 
-  odrive.run_state(constant.actuator_motor_number, 1, true, 0);  // Sets ODrive to IDLE
+  // Runs encoder index search to find z index
+  bool encoder_index_search = odrive.run_state(constant.actuator_motor_number, 6, true, 5);
 
-  status = 0;
+  // If successful, set ODRV to idle
+  if(!encoder_index_search) 
+  {
+    odrive.run_state(constant.actuator_motor_number, 1, true, 1);
+  }
+  else status = 1003;
+
   return status;
 }
 
@@ -88,21 +95,21 @@ int* Actuator::homing_sequence(int* out)
     {
       break;
     }
-    m_encoder_outbound = encoder.read();
+    m_encoder_outbound = odrive.get_encoder_pos(constant.actuator_motor_number);
     if (millis() - start > constant.homing_timeout)
     {
       out[0] = 2;
-      odrive.run_state(constant.actuator_motor_number, 0, false, 0);
-      out[1] = -1;
-      out[2] = -1;
+      odrive.run_state(constant.actuator_motor_number, 1, false, 0);
+      out[1], out[2] = -1;
       return out;
     }
   }
   odrive.set_velocity(constant.actuator_motor_number, 0);         // Stop spinning after homing
-  odrive.run_state(constant.actuator_motor_number, 1, false, 0);  // Idle state
+  // odrive.run_state(constant.actuator_motor_number, 1, false, 0);  // Idle state
+  // digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - constant.encoder_count_shift_length;
-  m_encoder_engage = m_encoder_outbound - constant.encoder_engage_dist;
+
 
   out[1] = m_encoder_inbound;
   out[2] = m_encoder_outbound;
@@ -146,16 +153,17 @@ int* Actuator::control_function(int* out)
     // If motor is spinning too slow, then shift all the way out
     if (m_eg_rpm < constant.minimum_rpm)
     {
-      if ((digitalReadFast(constant.hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound))
+      if ((digitalReadFast(constant.hall_outbound_pin) == 0 || odrive.get_encoder_pos(constant.actuator_motor_number) >= m_encoder_outbound))
       {
         // If below min rpm and shifted out all the way
-        odrive.run_state(constant.actuator_motor_number, 1, false, 0);  // SET IDLE
+        odrive.set_velocity(constant.actuator_motor_number, 0);  // Shift out
+
         out[0] = 4;                                     // Report status
         out[2] = 0;                                     // Report velocity
         out[4] = 1;
         out[8] = odrive.get_voltage();
         out[9] = 1e6 * odrive.get_cur();
-        out[7] = encoder.read();
+        out[7] = odrive.get_encoder_pos(constant.actuator_motor_number);
         out[6] = millis();
         return out;
       }
@@ -167,7 +175,7 @@ int* Actuator::control_function(int* out)
         out[2] = 3;
         out[8] = odrive.get_voltage();
         out[9] = 1e6 * odrive.get_cur();
-        out[7] = encoder.read();
+        out[7] = odrive.get_encoder_pos(constant.actuator_motor_number);
         out[6] = millis();
         return out;
       }
@@ -195,7 +203,7 @@ int* Actuator::control_function(int* out)
     // HALL TRIGGERED IS 0
 
     // If error will over or under actuate actuator then set error to 0.
-    if (digitalReadFast(constant.hall_outbound_pin) == 0 || encoder.read() >= m_encoder_outbound)
+    if (digitalReadFast(constant.hall_outbound_pin) == 0 || odrive.get_encoder_pos(constant.actuator_motor_number) >= m_encoder_outbound)
     {
       // Shifted out completely
       if (motor_velocity > 0)
@@ -203,7 +211,7 @@ int* Actuator::control_function(int* out)
       out[0] = 6;
       out[4] = 1;
     }
-    else if (digitalReadFast(constant.hall_inbound_pin) == 0 || encoder.read() <= m_encoder_inbound)
+    else if (digitalReadFast(constant.hall_inbound_pin) == 0 || odrive.get_encoder_pos(constant.actuator_motor_number) <= m_encoder_inbound)
     {
       // Shifted in completely
       if (motor_velocity < 0)
@@ -216,18 +224,11 @@ int* Actuator::control_function(int* out)
 
     out[2] = motor_velocity;
 
-    if (motor_velocity == 0)
-    {
-      odrive.run_state(constant.actuator_motor_number, 1, false, 0);
-    }
-    else
-    {
-      odrive.set_velocity(constant.actuator_motor_number, motor_velocity);
-      odrive.run_state(constant.actuator_motor_number, 8, false, 0);
-    }
+    odrive.set_velocity(constant.actuator_motor_number, motor_velocity);
+    odrive.run_state(constant.actuator_motor_number, 8, false, 0);
     out[8] = odrive.get_voltage();
     out[9] = 1e6 * odrive.get_cur();
-    out[7] = encoder.read();
+    out[7] = odrive.get_encoder_pos(constant.actuator_motor_number);
     out[6] = millis();
     return out;
   }
@@ -594,7 +595,7 @@ int Actuator::fully_shift(bool direction, int timeout)
     if (millis() - start > constant.homing_timeout)
     {
       status = 1;
-      odrive.run_state(constant.actuator_motor_number, 0, false, 0);
+      odrive.run_state(constant.actuator_motor_number, 1, false, 0);
       return status;
     }
   }
