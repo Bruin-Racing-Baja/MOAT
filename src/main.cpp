@@ -264,9 +264,9 @@ void loop()
   // }
 
   // Report output with log
-  o_return = actuator.control_function_two(o_control);
+  actuator.control_function(o_control);
   
-  if (o_return != 3)
+  if (o_control[STATUS] != 3)
   {
     // For log output format check log statement after log begins in init
     Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
