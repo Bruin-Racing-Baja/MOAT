@@ -150,27 +150,6 @@ void setup()
     // This behaviour is arbitrary, and may be changed in the future
     // constant.init(nullptr, 3);
   }
-  else
-  {
-    if (SD.exists("settings.txt"))
-    {
-      // This means the settings file exists, so we will load it
-      // This is where the bulk of the development for this feature will occur as we need to read in certain values,
-      // then set them in the program accordingly
-      // File settingFile = SD.open("settings.txt", FILE_READ);
-      // while (settingFile.available())
-      // {
-      //   settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
-      //   // constant.init(settingFile);        // Creates the constant object
-      // }
-    }
-    else
-    {
-      // This means the settings file does not exist, but there is an SD card present
-      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-      // constant.init(nullptr, 1);
-    }
-  }
 
   //-------------Logging and SD Card-----------------
   int log_file_number = 0;
@@ -257,12 +236,6 @@ int o_return = 0;
 
 void loop()
 {
-  // Main control loop, with actuator
-  // actuator.control_function_two(o_control);
-  // if (o_control[0] != 3) {
-  //   Log.notice("ran control function" CR);
-  // }
-
   // Report output with log
   actuator.control_function(o_control);
   
