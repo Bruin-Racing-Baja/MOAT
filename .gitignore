@@ -1,2 +1,5 @@
 .pio
 .vscode
+data_analysis/Data
+data_analysis/__pycache__
+data_analysis/.ipynb_checkpoints
