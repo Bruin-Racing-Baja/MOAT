@@ -42,47 +42,52 @@ General code to oversee all functions of the Teensy
 #define MODE 0
 
 // Startup
-#define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
+#define WAIT_SERIAL_STARTUP 0
 #define HOME_ON_STARTUP 1
-//#define RUN_DIAGNOSTIC_STARTUP 0
-#define ESTOP_PIN 36
+// NOTE: To set model 20 / 21 check the Constant.h file
+
+// Constants Object
+Constant constant;
+
 // Logging
-// NOTE: By default the log requires and outputs to the SD card (can be changed in setup)
 #define LOG_LEVEL LOG_LEVEL_NOTICE
 #define SAVE_THRESHOLD 1000  // Sets how often the log object will save to SD when in operating mode
-
-// Actuator
 
 // Diagnostic Mode
 #define DIAGNOSTIC_MODE_SHOTS 100  // Number of times diagnostic mode is run
 
 //<--><--><--><-->< Base Systems ><--><--><--><--><-->
-// ODrive Settings
-#define ODRIVE_STARTING_TIMEOUT 1000  // [ms]
 
-// Pins
-
-// Create objects
-// ODrive odrive(Serial1);
-
-// LOGGING AND SD SETTINGS
+// Logging and SD
 File log_file;
 String log_name = "log.txt";
-// Create constant control object to read from sd
-Constant constant;
+
+// Logging titles
+unsigned int STATUS = 0;
+unsigned int ACT_VEL = 1;
+unsigned int ENC_IN = 2;
+unsigned int ENC_OUT = 3;
+unsigned int T_START = 4;
+unsigned int T_STOP = 5;
+unsigned int ENC_POS = 6;
+unsigned int ODRV_VOLT = 7;
+unsigned int ODRV_CUR = 8; 
+unsigned int RPM = 9;
+unsigned int HALL_IN = 10;
+unsigned int HALL_OUT = 11;
+unsigned int WHL_RPM = 12;
+unsigned int WHL_COUNT = 13;
+unsigned int RPM_COUNT = 14;
+unsigned int DT = 15;
+unsigned int ROLLING_FRAME = 16;
+unsigned int EXP_DECAY = 17;
+unsigned int REF_RPM = 18;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
 
-// Acuator settings
+// Actuator settings
 #define PRINT_TO_SERIAL false
-
-// Pins test bed
-//#define ENC_A_PIN 20
-//#define ENC_B_PIN 21
-//#define HALL_INBOUND_PIN 12
-//#define HALL_OUTBOUND_PIN 11
-//#define GEARTOOTH_ENGINE_PIN 15
 
 // PINS CAR
 #define ENC_A_PIN 2
@@ -92,16 +97,17 @@ Cooling cooler_o;
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
 
-Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, GEARTOOTH_GEARBOX_PIN ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
-                  PRINT_TO_SERIAL);
+volatile unsigned long ext_eg_tooth_count = 0;
+volatile unsigned long ext_gb_tooth_count = 0;
+
+Actuator actuator(Serial1, constant, &ext_eg_tooth_count, &ext_gb_tooth_count, PRINT_TO_SERIAL);
 
 // externally declared for interrupt
-void external_count_eg_tooth()
-{
-  actuator.count_eg_tooth();
+void external_count_eg_tooth(){
+  ext_eg_tooth_count++;
 }
 void external_count_gb_tooth(){
-  actuator.count_gb_tooth();
+  ext_gb_tooth_count++;
 }
 
 void save_log()
@@ -125,8 +131,8 @@ void setup()
 {
   Serial.println("Starting...");
   //-------------Attach E-Stop interrupt-----------------//
-  interrupts();
-  attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
+  // interrupts();
+  // attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
 
   //-------------Wait for serial-----------------//
   if (WAIT_SERIAL_STARTUP)
@@ -144,27 +150,6 @@ void setup()
     // This behaviour is arbitrary, and may be changed in the future
     // constant.init(nullptr, 3);
   }
-  else
-  {
-    if (SD.exists("settings.txt"))
-    {
-      // This means the settings file exists, so we will load it
-      // This is where the bulk of the development for this feature will occur as we need to read in certain values,
-      // then set them in the program accordingly
-      // File settingFile = SD.open("settings.txt", FILE_READ);
-      // while (settingFile.available())
-      // {
-      //   settingFile.readStringUntil('$');  // This removes the comments in the beginning of the file
-      //   // constant.init(settingFile);        // Creates the constant object
-      // }
-    }
-    else
-    {
-      // This means the settings file does not exist, but there is an SD card present
-      // In this case, we will operate in headless diagnostic mode as we dont know the user intention
-      // constant.init(nullptr, 1);
-    }
-  }
 
   //-------------Logging and SD Card-----------------
   int log_file_number = 0;
@@ -173,7 +158,9 @@ void setup()
     log_file_number++;
   }
   log_name = "log_" + String(log_file_number) + ".txt";
+  Serial.println(constant.engine_geartooth_pin);
   Serial.println("Logging at: " + log_name);
+  Serial.println(constant.gearbox_overdrive_rpm);
 
   log_file = SD.open(log_name.c_str(), FILE_WRITE);
 
@@ -192,7 +179,8 @@ void setup()
 
   //-------------Actuator-----------------//
   // General Init
-  int o_actuator_init = actuator.init(ODRIVE_STARTING_TIMEOUT, external_count_eg_tooth, external_count_gb_tooth);
+  Serial.println("Actuator Init");
+  int o_actuator_init = actuator.init(constant.homing_timeout);
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -206,7 +194,15 @@ void setup()
   }
   save_log();
 
-  // Homing if enabled
+  // Geartooth Interrupts
+  Serial.println(constant.engine_geartooth_pin);
+  Serial.println(constant.gearbox_geartooth_pin);
+  pinMode(constant.engine_geartooth_pin, INPUT_PULLUP);
+  pinMode(constant.gearbox_geartooth_pin, INPUT_PULLUP);
+  attachInterrupt(constant.engine_geartooth_pin, external_count_eg_tooth, FALLING);
+  attachInterrupt(constant.gearbox_geartooth_pin, external_count_gb_tooth, FALLING);
+
+  // Homing
   if (HOME_ON_STARTUP)
   {
     int o_homing[3];
@@ -224,58 +220,56 @@ void setup()
   }
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
-  Log.notice("status, rpm, act_vel, enc_pos, in_trig, out_trig, s_time, f_time, o_vol, o_cur, couple, therm1, therm2, therm3, wheel_speed, wheel_count, estop_flag" CR);
+  // This message is critical as it sets the order that the analysis script will read the data in
+  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, hall_out, s_time, f_time, o_vol, o_curr, roll_frame, exp_decay, ref_rpm, therm1, therm2, therm3, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
-// "status", 
-// "rpm", 
-// "act_vel", 
-// "enc_pos", 
-// "in_trig", 
-// "out_trig", 
-// "s_time", 
-// "f_time", 
-// "o_vol", 
-// "o_curr",
-// "couple",
-// "therm1",
-// "therm2",
-// "therm3",
-// "estop",
-// "wheel_count",
-// "wheel_rpm",
-
 }
 
 // OPERATING MODE
 #if MODE == 0
 
-int o_control[15];
+int o_control[30];
 int save_count = 0;
 int last_save = 0;
+int o_return = 0;
+
 void loop()
 {
-  // Main control loop, with actuator
-  actuator.control_function(o_control);
   // Report output with log
-  if (o_control[0] != 3)
+  actuator.control_function(o_control);
+  
+  if (o_control[STATUS] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F, %d, %d, %d" CR, o_control[0], o_control[1], o_control[2], o_control[7],
-               o_control[3], o_control[4], o_control[5], o_control[6], o_control[8], o_control[9],
-               cooler_o.get_temperature(), cooler_o.get_thermistor(0), cooler_o.get_thermistor(1), cooler_o.get_thermistor(2), o_control[11], o_control[12], estop_pressed);
-    estop_pressed = 0;
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
+    o_control[STATUS], 
+    o_control[RPM],
+    o_control[RPM_COUNT],
+    o_control[DT],
+    o_control[ACT_VEL], 
+    o_control[ENC_POS],
+    o_control[HALL_IN], 
+    o_control[HALL_OUT],
+    o_control[T_START], 
+    o_control[T_STOP], 
+    o_control[ODRV_VOLT], 
+    o_control[ODRV_CUR],
+    o_control[ROLLING_FRAME],
+    o_control[EXP_DECAY],
+    o_control[REF_RPM],
+    cooler_o.get_thermistor(0), 
+    cooler_o.get_thermistor(1), 
+    cooler_o.get_thermistor(2), 
+    digitalRead(constant.estop_pin)
+    );
   }
 
   // Save data to sd every SAVE_THRESHOLD
   if (save_count > SAVE_THRESHOLD)
   {
-    // int save_start = millis();
-    // // Log.notice(actuator.odrive_errors().c_str());
-    // Log.verbose("Time since last save: %d" CR, save_start - last_save);
     save_log();
     save_count = 0;
-    // Log.verbose("Saved log in %d ms" CR, millis() - save_start);
   }
   save_count++;
 }
@@ -310,13 +304,8 @@ bool is_main_power = true;
 
 void loop()
 {
-  // Assumes main power isnt connected as connected to serial
-  Log.notice((actuator.diagnostic(is_main_power, true)).c_str());
-  Log.notice("Thermocouple temp: %d" CR, cooler_o.get_temperature());
-  Serial.println("Therm1: " + String(cooler_o.get_thermistor(0)) + "\n Therm2: " + String(cooler_o.get_thermistor(1)) + "\n Therm3: " + String(cooler_o.get_thermistor(2)));
-  Serial.println("Thermocouple: " + String(cooler_o.get_temperature()));
-  // Serial.println(analogRead(38));
-  delay(1000);
+  Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
+  delay(10);
 }
 
 // HEADLESS HORSEMAN MODE

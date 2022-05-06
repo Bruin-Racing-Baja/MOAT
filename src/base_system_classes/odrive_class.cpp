@@ -44,6 +44,9 @@ int ODrive::init(int timeout)
 //-----------------ODrive Setters--------------//
 bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float timeout)
 {
+  // Dont set odrive to same state again
+  if (requested_state == m_current_state) return false;
+
   int timeout_ctr = (int)(timeout * 10.0f);
   OdriveSerial << "w axis" << axis << ".requested_state " << requested_state << '\n';
   if (wait_for_idle)
@@ -54,8 +57,12 @@ bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float 
       OdriveSerial << "r axis" << axis << ".current_state\n";
     } while (read_int() != 1 && --timeout_ctr > 0);
   }
-
-  return timeout_ctr > 0;
+  if (timeout_ctr > 0)
+  {
+    m_current_state = requested_state;
+    return true;
+  }
+  else return false;
 };
 
 void ODrive::set_velocity(int motor_number, float velocity)
