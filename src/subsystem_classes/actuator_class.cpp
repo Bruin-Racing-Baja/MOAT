@@ -141,8 +141,8 @@ int* Actuator::control_function(int* out)
   // Stop shifting out if shifted out completely
   bool outbound_signal = !digitalReadFast(constant.hall_outbound_pin);
   bool inbound_signal = !digitalReadFast(constant.hall_inbound_pin);
-  if (outbound_signal && error > 0) error = 0;
-  if (inbound_signal && error < 0) error = 0;
+  // if (outbound_signal && error > 0) error = 0;
+  // if (inbound_signal && error < 0) error = 0;
 
   // Calculate control signal
   float motor_velocity = constant.proportional_gain * error;
