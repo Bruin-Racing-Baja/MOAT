@@ -305,7 +305,7 @@ bool is_main_power = true;
 void loop()
 {
   Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
-  delay(10);
+  delay(500);
 }
 
 // HEADLESS HORSEMAN MODE

@@ -61,8 +61,9 @@ int Actuator::init(int odrive_timeout)
   }
 
   // Runs encoder index search to find z index
+  Serial.println("Running encoder index search");
   bool encoder_index_search = odrive.run_state(constant.actuator_motor_number, 6, true, 5);
-
+  Serial.println("Encoder index search complete, code: " + String(encoder_index_search));
   // If successful, set ODRV to idle
   if(!encoder_index_search) 
   {
