@@ -11,13 +11,13 @@
 struct Constant
 {
   private:
-  
-  
+  const int payload_size = 20;  // Bytes
+  const int header_size = 4;    // Bytes
+  const int eeprom_size = 4284; // Bytes
+  const int eeprom_lifecycle = 1e6; // No. Writes
 
-  // This sets which model number is currently selected
-  //std::map<String, int> pins = m_20_pins;
-  // std::map<String, float> float_constants = m_20_float_constants;
-  // std::map<String, int> int_constants = m_20_int_constants;
+  float* read_memory();
+  bool save_constants(float* constants_array);
 
   #if MODELNUMBER == 21
     std::map<String, int> pins = {
@@ -151,6 +151,19 @@ struct Constant
       (linear_engage_buffer) / linear_distance_per_rotation * 4 * 2048;   // encoder count
   const float cycle_period_minutes = (cycle_period / 1e3) / 60;         // minutes
   constexpr static int eg_teeth_per_rotation = 88;
+
+  // Addresses
+  /*
+  Structure contains 24 bytes
+  +0 - Header
+  +0 - p
+  +4 - i
+  +8 - d
+  +12 - alpha
+  +16 - rolling frame
+  Payload size: 20 bytes
+  Header / Count: 4 bytes
+  */
 };
 
 #endif
