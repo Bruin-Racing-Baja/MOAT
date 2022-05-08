@@ -20,54 +20,73 @@ struct Constant
 
   #if MODELNUMBER == 21
     std::map<String, int> pins = {
-        {"estop", 32}, //outbound estop
         {"enc_a", 3},
         {"enc_b", 4},
         {"enc_z", 5},
-        {"hall_inbound", 33}, //actually estop outbound
-        {"hall_outbound", 32}, //actually estop inbound
+        {"estop_inbound", 33},
+        {"estop_outbound", 32},
         {"engine_geartooth", 37},
         {"gearbox_geartooth", 36},
         {"thermistor_1", 40},
         {"thermistor_2", 39},
         {"thermistor_3", 38}
       };
+
+    std::map<String, float> float_constants = {
+      {"proportional_gain", 0.015},
+      {"integral_gain", 0},
+      {"derivative_gain", 0},
+      {"exponential_filter_alpha", 0.5},
+      {"overdrive_ratio", 0.85},
+      {"ecvt_max_ratio", 4.31},
+      {"actuator_velocity_allowance", 0.1}
+    };
+
+    std::map<String, int> int_constants = {
+      {"actuator_motor_number", 1},
+      {"cooling_motor_number", 0},
+      {"homing_timeout", 50e6}, // ms
+      {"cycle_period", 10},     // ms
+      // This also has to be changed in actuator header
+      {"gearbox_rolling_frames", 60}
+    };
   #elif MODELNUMBER == 20
     std::map<String, int> pins = {
-        {"estop", 36},
         {"enc_a", 2},
         {"enc_b", 3},
-        {"hall_inbound", 23},
-        {"hall_outbound", 22},
+        {"estop_inbound", 23},
+        {"estop_outbound", 22},
         {"engine_geartooth", 41},
         {"gearbox_geartooth", 40},
         {"thermistor_1", 24},
         {"thermistor_2", 38},
         {"thermistor_3", 39}
       };
+
+    std::map<String, float> float_constants = {
+      {"proportional_gain", 0.015},
+      {"integral_gain", 0},
+      {"derivative_gain", 0},
+      {"exponential_filter_alpha", 0.5},
+      {"overdrive_ratio", 0.85},
+      {"ecvt_max_ratio", 4.25},
+      {"actuator_velocity_wiggle", 0.1}
+    };
+
+    std::map<String, int> int_constants = {
+      {"actuator_motor_number", 1},
+      {"cooling_motor_number", 0},
+      {"homing_timeout", 50e6}, // ms
+      {"cycle_period", 10},     // ms
+      // This also has to be changed in actuator header
+      {"gearbox_rolling_frames", 60}
+    };
   #else // to fail on compile time if model number not specified
   #endif
 
 
 
-  std::map<String, float> float_constants = {
-    {"proportional_gain", 0.015},
-    {"integral_gain", 0},
-    {"derivative_gain", 0},
-    {"exponential_filter_alpha", 0.5},
-    {"overdrive_ratio", 0.85},
-    {"ecvt_max_ratio", 4.25},
-    {"actuator_velocity_wiggle", 0.1}
-  };
 
-  std::map<String, int> int_constants = {
-    {"actuator_motor_number", 1},
-    {"cooling_motor_number", 0},
-    {"homing_timeout", 50e6}, // ms
-    {"cycle_period", 10},     // ms
-    // This also has to be changed in actuator header
-    {"gearbox_rolling_frames", 60}
-  };
   
   public:
   // These constants do not change between models
@@ -86,11 +105,12 @@ struct Constant
   // These constants change between models
 
   // Pins
-  const int estop_pin = pins["estop"];
   const int encoder_a_pin = pins["enc_a"];
   const int encoder_b_pin = pins["enc_b"];
-  const int hall_inbound_pin = pins["hall_inbound"];
-  const int hall_outbound_pin = pins["hall_outbound"];
+  // const int hall_inbound_pin = pins["estop_inbound"];
+  // const int hall_outbound_pin = pins["estop_outbound"];
+  const int estop_inbound_pin = pins["estop_inbound"];
+  const int estop_outbound_pin = pins["estop_outbound"];
   const int engine_geartooth_pin = pins["engine_geartooth"];
   const int gearbox_geartooth_pin = pins["gearbox_geartooth"];
   const int thermistor_1_pin = pins["thermistor_1"];
@@ -111,9 +131,9 @@ struct Constant
   const float derivative_gain = float_constants["derivative_gain"];
   const float exponential_filter_alpha = float_constants["exponential_filter_alpha"];
 
-  const float position_p_gain = proportional_gain;
+  // const float position_p_gain = proportional_gain;
 
-  const float actuator_velocity_wiggle = float_constants["actuator_velocity_wiggle"];
+  const float actuator_velocity_allowance = float_constants["actuator_velocity_allowance"];
 
   // Physical Constants
   const float ecvt_max_ratio = float_constants["ecvt_max_ratio"];

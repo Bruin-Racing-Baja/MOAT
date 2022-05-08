@@ -15,8 +15,9 @@ inline Print& operator<<(Print& obj, float arg)
   return obj;
 }
 
-ODrive::ODrive(HardwareSerial& serial) : OdriveSerial(serial)
+ODrive::ODrive(HardwareSerial& serial, Constant constant_in) : OdriveSerial(serial)
 {
+  Constant constant = constant_in;
 }
 
 int ODrive::init(int timeout)
@@ -66,11 +67,24 @@ bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float 
 };
 
 void ODrive::set_velocity(int motor_number, float velocity)
+// Sets the velocity of the motor and updates m_current_velocity
 {
   OdriveSerial << "v " << motor_number << " " << velocity << " "
                << "0.0f"
                << "\n";
   ;
+  m_current_velocity = velocity;
+}
+
+float ODrive::update_velocity(int motor_number, float velocity)
+// Updates the velocity of the motor but will not affect it if the change in the velocity is smaller than the tolerance
+{
+  if (abs(velocity - m_current_velocity) > constant.actuator_velocity_allowance)
+  {
+    set_velocity(motor_number, velocity);
+    return velocity;
+  }
+  else return m_current_velocity;
 }
 
 //-----------------ODrive Getters--------------//

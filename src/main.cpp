@@ -39,7 +39,7 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 2
+#define MODE 0
 
 // Startup
 #define WAIT_SERIAL_STARTUP 1
@@ -73,8 +73,8 @@ unsigned int ENC_POS = 6;
 unsigned int ODRV_VOLT = 7;
 unsigned int ODRV_CUR = 8; 
 unsigned int RPM = 9;
-unsigned int HALL_IN = 10;
-unsigned int HALL_OUT = 11;
+unsigned int ESTOP_IN = 10;
+unsigned int ESTOP_OUT = 11;
 unsigned int WHL_RPM = 12;
 unsigned int WHL_COUNT = 13;
 unsigned int RPM_COUNT = 14;
@@ -243,7 +243,7 @@ void loop()
   if (o_control[STATUS] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F" CR, 
     o_control[STATUS], 
     o_control[RPM],
     o_control[RPM_COUNT],
@@ -251,19 +251,18 @@ void loop()
     o_control[ACT_VEL], 
     o_control[ENC_POS],
     o_control[ENC_VEL],
-    o_control[HALL_IN], 
-    o_control[HALL_OUT],
+    o_control[ESTOP_IN], 
+    o_control[ESTOP_OUT],
     o_control[T_START], 
     o_control[T_STOP], 
-    o_control[ODRV_VOLT], 
-    o_control[ODRV_CUR],
     o_control[ROLLING_FRAME],
     o_control[EXP_DECAY],
     o_control[REF_RPM],
+    o_control[ODRV_VOLT], 
+    o_control[ODRV_CUR] / 1000.0,
     cooler_o.get_thermistor(0), 
     cooler_o.get_thermistor(1), 
-    cooler_o.get_thermistor(2), 
-    digitalRead(constant.estop_pin)
+    cooler_o.get_thermistor(2)
     );
   }
 

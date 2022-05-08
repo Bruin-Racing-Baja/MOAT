@@ -29,8 +29,8 @@ public:
   unsigned int ODRV_VOLT = 7;
   unsigned int ODRV_CUR = 8; 
   unsigned int RPM = 9;
-  unsigned int HALL_IN = 10;
-  unsigned int HALL_OUT = 11;
+  unsigned int ESTOP_IN = 10;
+  unsigned int ESTOP_OUT = 11;
   unsigned int WHL_RPM = 12;
   unsigned int WHL_COUNT = 13;
   unsigned int RPM_COUNT = 14;

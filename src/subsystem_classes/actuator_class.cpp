@@ -21,7 +21,7 @@ inline Print& operator<<(Print& obj, float arg)
 }
 
 Actuator::Actuator(HardwareSerial& serial, Constant constant_in, volatile unsigned long* eg_tooth_count,  volatile unsigned long* gb_tooth_count, bool print_to_serial)
-  : encoder(constant_in.encoder_a_pin, constant_in.encoder_b_pin), odrive(serial)
+  : encoder(constant_in.encoder_a_pin, constant_in.encoder_b_pin), odrive(serial, constant_in)
 {
   Constant constant = constant_in;
   // Save pin values
@@ -86,10 +86,10 @@ int* Actuator::homing_sequence(int* out)
 
   odrive.set_velocity(constant.actuator_motor_number, 2);
 
-  while (digitalReadFast(constant.hall_outbound_pin) == 1)
+  while (digitalReadFast(constant.estop_outbound_pin) == 0)
   {
     delay(10);
-    if (digitalReadFast(constant.hall_outbound_pin) == 0)
+    if (digitalReadFast(constant.estop_outbound_pin) == 1)
     {
       break;
     }
@@ -138,21 +138,16 @@ int* Actuator::control_function(int* out)
 
   float error = ref_rpm - eg_rpm;
 
-  // Stop shifting out if shifted out completely
-  bool outbound_signal = !digitalReadFast(constant.hall_outbound_pin);
-  bool inbound_signal = !digitalReadFast(constant.hall_inbound_pin);
+  // Read estop pin values to report
+  bool outbound_signal = digitalReadFast(constant.estop_outbound_pin);
+  bool inbound_signal = digitalReadFast(constant.estop_inbound_pin);
 
   // Calculate control signal
   float new_motor_velocity = constant.proportional_gain * error;
 
-  if (abs(new_motor_velocity - m_past_motor_velocity) > constant.actuator_velocity_wiggle){
-    m_past_motor_velocity = new_motor_velocity;
-    odrive.set_velocity(constant.actuator_motor_number, m_past_motor_velocity);
-  }
+  odrive.update_velocity(constant.actuator_motor_number, new_motor_velocity);
   
-
-
-  odrive.run_state(constant.actuator_motor_number, 8, false, 0);
+  float instructed_actuator_velocity = odrive.run_state(constant.actuator_motor_number, 8, false, 0);
 
 
   // Logging
@@ -164,21 +159,24 @@ int* Actuator::control_function(int* out)
   float voltage, current;
   int encoder_pos;
   float encoder_vel;
+  // Query ODrive for data and report
   odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
+  out[ODRV_VOLT] = voltage;
+  out[ODRV_CUR] = current * 1.0e6;
+  out[ENC_VEL] = encoder_vel;
+  out[ENC_POS] = encoder_pos;
+
+  // Report control function data
   out[RPM] = eg_rpm;
   out[RPM_COUNT] = *m_eg_tooth_count;
   out[DT] = dt;
-  out[ACT_VEL] = m_past_motor_velocity;
-  out[ENC_POS] = encoder_pos;
-  out[HALL_IN] = inbound_signal;
-  out[HALL_OUT] = outbound_signal;
+  out[ACT_VEL] = instructed_actuator_velocity;
+  out[ESTOP_IN] = inbound_signal;
+  out[ESTOP_OUT] = outbound_signal;
   out[T_START] = timestamp;
-  out[ODRV_VOLT] = voltage;
-  out[ODRV_CUR] = current;
   out[ROLLING_FRAME] = gb_rolling;
   out[EXP_DECAY] = gb_exp_decay;
   out[REF_RPM] = ref_rpm;
-  out[ENC_VEL] = encoder_vel;
   out[T_STOP] = millis();
 
   return out;
@@ -272,8 +270,8 @@ String Actuator::diagnostic(bool main_power, int dt, bool print_serial = true)
   }
   output += "Outbound limit: " + String(m_encoder_outbound) + "\n";
   output += "Inbound limit: " + String(m_encoder_inbound) + "\n";
-  output += "Outbound reading: " + String(digitalReadFast(constant.hall_outbound_pin)) + "\n";
-  output += "Inbound reading: " + String(digitalReadFast(constant.hall_inbound_pin)) + "\n";
+  output += "Outbound estop reading: " + String(digitalReadFast(constant.estop_outbound_pin)) + "\n";
+  output += "Inbound estop reading: " + String(digitalReadFast(constant.estop_inbound_pin)) + "\n";
   output += "dt term: " + String(m_serial_dt) + "\n";
   output += "Engine Gear Tooth Count: " + String(*m_eg_tooth_count) + "\n";
   output += "Engine RPM: " + String(calc_engine_rpm(m_serial_dt)) + "\n";
@@ -343,50 +341,50 @@ String Actuator::odrive_errors()
   return odrive.dump_errors();
 }
 
-int Actuator::fully_shift(bool direction, int timeout)
-{
-  // Shifts the motor all the way in or out
-  // direction = true is in, false is out
-  int speed;
-  int software_limit_pin;
-  if (direction) {
-    speed = -2;
-    software_limit_pin = constant.hall_inbound_pin;
-  }
-  else {
-    speed = 2;
-    software_limit_pin = constant.hall_outbound_pin;
-  }
-  int status = 0;
-  // int start_time = millis();
+// int Actuator::fully_shift(bool direction, int timeout)
+// {
+//   // Shifts the motor all the way in or out
+//   // direction = true is in, false is out
+//   int speed;
+//   int software_limit_pin;
+//   if (direction) {
+//     speed = -2;
+//     software_limit_pin = constant.hall_inbound_pin;
+//   }
+//   else {
+//     speed = 2;
+//     software_limit_pin = constant.hall_outbound_pin;
+//   }
+//   int status = 0;
+//   // int start_time = millis();
 
-  odrive.run_state(constant.actuator_motor_number, 8, false, 0);  // Enter velocity control mode
-  delay(1000);
+//   odrive.run_state(constant.actuator_motor_number, 8, false, 0);  // Enter velocity control mode
+//   delay(1000);
 
-  // Home outbound
-  int start = millis();
+//   // Home outbound
+//   int start = millis();
 
-  odrive.set_velocity(constant.actuator_motor_number, speed);
+//   odrive.set_velocity(constant.actuator_motor_number, speed);
 
-  while (digitalReadFast(software_limit_pin) == 1)
-  {
-    delay(10);
-    if (digitalReadFast(constant.hall_outbound_pin) == 0)
-    {
-      break;
-    }
-    if (millis() - start > constant.homing_timeout)
-    {
-      status = 1;
-      odrive.run_state(constant.actuator_motor_number, 1, false, 0);
-      return status;
-    }
-  }
-  odrive.set_velocity(constant.actuator_motor_number, 0);         // Stop spinning after homing
-  odrive.run_state(constant.actuator_motor_number, 1, false, 0);  // Idle state
+//   while (digitalReadFast(software_limit_pin) == 1)
+//   {
+//     delay(10);
+//     if (digitalReadFast(constant.hall_outbound_pin) == 0)
+//     {
+//       break;
+//     }
+//     if (millis() - start > constant.homing_timeout)
+//     {
+//       status = 1;
+//       odrive.run_state(constant.actuator_motor_number, 1, false, 0);
+//       return status;
+//     }
+//   }
+//   odrive.set_velocity(constant.actuator_motor_number, 0);         // Stop spinning after homing
+//   odrive.run_state(constant.actuator_motor_number, 1, false, 0);  // Idle state
 
-  return status;
-}
+//   return status;
+// }
 
 void Actuator::move_back_and_forth_slowly(){
   int period = 3000;
