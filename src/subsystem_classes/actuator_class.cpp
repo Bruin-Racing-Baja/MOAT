@@ -142,9 +142,9 @@ int* Actuator::control_function(int* out)
   // Calculate control signal
   float new_motor_velocity = constant.proportional_gain * error;
 
-  odrive.update_velocity(constant.actuator_motor_number, new_motor_velocity);
+  float instructed_actuator_velocity = odrive.update_velocity(constant.actuator_motor_number, new_motor_velocity);
   
-  float instructed_actuator_velocity = odrive.run_state(constant.actuator_motor_number, 8, false, 0);
+  odrive.run_state(constant.actuator_motor_number, 8, false, 0);
 
   // Logging
   // TODO: calculate status
