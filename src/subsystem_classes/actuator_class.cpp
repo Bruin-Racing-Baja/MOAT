@@ -103,11 +103,8 @@ int* Actuator::homing_sequence(int* out)
     }
   }
   odrive.set_velocity(constant.actuator_motor_number, 0);         // Stop spinning after homing
-  // odrive.run_state(constant.actuator_motor_number, 1, false, 0);  // Idle state
-  // digitalWrite(LED_BUILTIN, LOW);
 
   m_encoder_inbound = m_encoder_outbound - constant.encoder_count_shift_length;
-
 
   out[1] = m_encoder_inbound;
   out[2] = m_encoder_outbound;
@@ -148,7 +145,6 @@ int* Actuator::control_function(int* out)
   odrive.update_velocity(constant.actuator_motor_number, new_motor_velocity);
   
   float instructed_actuator_velocity = odrive.run_state(constant.actuator_motor_number, 8, false, 0);
-
 
   // Logging
   // TODO: calculate status
@@ -330,11 +326,6 @@ float Actuator::communication_speed()
   odrive.run_state(constant.actuator_motor_number, 1, false, 0);
 
   return float(com_total - com_bench) / float(data_points);
-}
-
-float Actuator::get_p_value()
-{
-  return constant.proportional_gain;
 }
 
 String Actuator::odrive_errors()

@@ -159,14 +159,12 @@ void setup()
     log_file_number++;
   }
   log_name = "log_" + String(log_file_number) + ".txt";
-  Serial.println(constant.engine_geartooth_pin);
   Serial.println("Logging at: " + log_name);
-  Serial.println(constant.gearbox_overdrive_rpm);
 
   log_file = SD.open(log_name.c_str(), FILE_WRITE);
 
   Log.begin(LOG_LEVEL, &log_file, false);
-  Log.notice("Initialization Started" CR);
+  Log.notice("Initialization Started - Model: %d " CR, constant.model_number);
   // This is for the data analysis tool to be able to change the log order easily
   Log.verbose("Time: %d" CR, millis());
 
@@ -190,7 +188,7 @@ void setup()
   else
   {
     Log.verbose("Actuator Init Success code: %d" CR, o_actuator_init);
-    Log.notice("Proportional gain (x1000): %d" CR, (1000.0 * actuator.get_p_value()));
+    Log.notice("Proportional gain (x1000): %d" CR, 1000.0 * constant.proportional_gain);
     Serial.println("Actuator init success code: " + String(o_actuator_init));
   }
   save_log();
@@ -233,11 +231,9 @@ void setup()
 int o_control[30];
 int save_count = 0;
 int last_save = 0;
-int o_return = 0;
 
 void loop()
 {
-  // Report output with log
   actuator.control_function(o_control);
   
   if (o_control[STATUS] != 3)
@@ -260,9 +256,9 @@ void loop()
     o_control[REF_RPM],
     o_control[ODRV_VOLT], 
     static_cast < float >(o_control[ODRV_CUR]) / 1000.0,
-    cooler_o.get_thermistor(0), 
-    cooler_o.get_thermistor(1), 
-    cooler_o.get_thermistor(2)
+    cooler_o.get_thermistor(constant.thermistor_1_pin), 
+    cooler_o.get_thermistor(constant.thermistor_2_pin), 
+    cooler_o.get_thermistor(constant.thermistor_3_pin)
     );
   }
 

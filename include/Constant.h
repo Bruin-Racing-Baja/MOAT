@@ -5,7 +5,8 @@
 #include <map>
 
 #define MODELNUMBER 21
-// IF YOU WANT TO CHANGE MODEL NUMBER DO SO IN BEGINNING OF PRIVATE MEMBERS
+
+#define dancing 13
 
 struct Constant
 {
@@ -83,10 +84,6 @@ struct Constant
     };
   #else // to fail on compile time if model number not specified
   #endif
-
-
-
-
   
   public:
   // These constants do not change between models
@@ -104,11 +101,11 @@ struct Constant
 
   // These constants change between models
 
+  const int model_number = MODELNUMBER;
+
   // Pins
   const int encoder_a_pin = pins["enc_a"];
   const int encoder_b_pin = pins["enc_b"];
-  // const int hall_inbound_pin = pins["estop_inbound"];
-  // const int hall_outbound_pin = pins["estop_outbound"];
   const int estop_inbound_pin = pins["estop_inbound"];
   const int estop_outbound_pin = pins["estop_outbound"];
   const int engine_geartooth_pin = pins["engine_geartooth"];
@@ -116,7 +113,6 @@ struct Constant
   const int thermistor_1_pin = pins["thermistor_1"];
   const int thermistor_2_pin = pins["thermistor_2"];
   const int thermistor_3_pin = pins["thermistor_3"];
-  const int thermistor_pins[3] = {thermistor_1_pin, thermistor_2_pin, thermistor_3_pin};  // C
 
   // Actuator Constants
   const int actuator_motor_number = int_constants["actuator_motor_number"];     // odrive axis
@@ -142,9 +138,6 @@ struct Constant
   const int gearbox_power_rpm = engine_power / ecvt_max_ratio;
   const int gearbox_overdrive_rpm = engine_power / overdrive_ratio;
 
-
-  
-
   // Linear Actuator Math
   constexpr static float linear_distance_per_rotation = 0.125;            // inches/rotation
   constexpr static float linear_shift_length = 3;                         // inches
@@ -158,9 +151,6 @@ struct Constant
       (linear_engage_buffer) / linear_distance_per_rotation * 4 * 2048;   // encoder count
   const float cycle_period_minutes = (cycle_period / 1e3) / 60;         // minutes
   constexpr static int eg_teeth_per_rotation = 88;
-  
-
-  
 };
 
 #endif

@@ -54,7 +54,6 @@ public:
 
   int get_status_code();
   int get_encoder_pos();
-  float get_p_value();
   float communication_speed();
   // float get_odrive_current();
   String odrive_errors();
