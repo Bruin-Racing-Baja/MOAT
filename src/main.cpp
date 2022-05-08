@@ -306,8 +306,9 @@ bool is_main_power = true;
 
 void loop()
 {
-  Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
+  //Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
   //Serial.print(cooler_o.diagnostic());
+  actuator.move_back_and_forth_slowly();
   delay(100);
 }
 

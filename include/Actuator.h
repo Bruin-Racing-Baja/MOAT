@@ -50,6 +50,8 @@ public:
   int control_function_two(int* out);
   int* homing_sequence(int* out);
 
+  void move_back_and_forth_slowly();
+
   int get_status_code();
   int get_encoder_pos();
   float get_p_value();

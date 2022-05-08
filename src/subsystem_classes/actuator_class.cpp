@@ -387,3 +387,13 @@ int Actuator::fully_shift(bool direction, int timeout)
 
   return status;
 }
+
+void Actuator::move_back_and_forth_slowly(){
+  int period = 3000;
+  if((millis()/period)%2){
+    odrive.set_velocity(constant.actuator_motor_number, 1);   
+  } else {
+    odrive.set_velocity(constant.actuator_motor_number, -1); 
+  }
+  odrive.run_state(constant.actuator_motor_number, 8, false, 0);
+}
