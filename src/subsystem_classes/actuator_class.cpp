@@ -153,11 +153,11 @@ int* Actuator::control_function(int* out)
   if (inbound_signal) out[STATUS] = 2;  // Inbound
   
   float voltage = -69;
-  float current = -69;
+  float current = -69e-6;
   int encoder_pos = -69;
   float encoder_vel = -69;
   // Query ODrive for data and report
-  //odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
+  odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
   out[ODRV_VOLT] = voltage;
   out[ODRV_CUR] = current * 1.0e6;
   out[ENC_VEL] = encoder_vel;
