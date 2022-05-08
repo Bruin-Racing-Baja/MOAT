@@ -222,7 +222,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   // This message is critical as it sets the order that the analysis script will read the data in
-  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, enc_vel, hall_in, hall_out, s_time, f_time, o_vol, o_curr, roll_frame, exp_decay, ref_rpm, therm1, therm2, therm3, estop" CR);
+  Log.notice("status, rpm, roll_frame, act_vel, enc_vel, estop_in, estop_out, dt, enc_pos, rpm_count, s_time, f_time, exp_decay, ref_rpm, o_vol, o_curr, therm1, therm2, therm3" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
 }
@@ -246,20 +246,20 @@ void loop()
     Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F" CR, 
     o_control[STATUS], 
     o_control[RPM],
-    o_control[RPM_COUNT],
-    o_control[DT],
+    o_control[ROLLING_FRAME],
     o_control[ACT_VEL], 
-    o_control[ENC_POS],
     o_control[ENC_VEL],
     o_control[ESTOP_IN], 
     o_control[ESTOP_OUT],
+    o_control[DT],
+    o_control[ENC_POS],
+    o_control[RPM_COUNT],
     o_control[T_START], 
     o_control[T_STOP], 
-    o_control[ROLLING_FRAME],
     o_control[EXP_DECAY],
     o_control[REF_RPM],
     o_control[ODRV_VOLT], 
-    o_control[ODRV_CUR] / 1000.0,
+    static_cast < float >(o_control[ODRV_CUR]) / 1000.0,
     cooler_o.get_thermistor(0), 
     cooler_o.get_thermistor(1), 
     cooler_o.get_thermistor(2)
@@ -305,9 +305,9 @@ bool is_main_power = true;
 
 void loop()
 {
-  //Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
+  Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
   //Serial.print(cooler_o.diagnostic());
-  actuator.move_back_and_forth_slowly();
+  //actuator.move_back_and_forth_slowly();
   delay(100);
 }
 

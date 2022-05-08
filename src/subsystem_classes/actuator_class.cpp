@@ -265,6 +265,7 @@ String Actuator::diagnostic(bool main_power, int dt, bool print_serial = true)
   if (main_power)
   {
     output += "Odrive voltage: " + String(odrive.get_voltage()) + "\n";
+    output += "Odrive current: " + String(odrive.get_cur()) + "\n";
     output += "Odrive speed: " + String(odrive.get_vel(constant.actuator_motor_number)) + "\n";
     output += "Encoder count: " + String(odrive.get_encoder_pos(constant.actuator_motor_number)) + "\n";
   }
