@@ -15,8 +15,9 @@ inline Print& operator<<(Print& obj, float arg)
   return obj;
 }
 
-ODrive::ODrive(HardwareSerial& serial) : OdriveSerial(serial)
+ODrive::ODrive(HardwareSerial& serial, Constant constant_in) : OdriveSerial(serial)
 {
+  Constant constant = constant_in;
 }
 
 int ODrive::init(int timeout)
@@ -44,6 +45,9 @@ int ODrive::init(int timeout)
 //-----------------ODrive Setters--------------//
 bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float timeout)
 {
+  // Dont set odrive to same state again
+  if (requested_state == m_current_state) return false;
+
   int timeout_ctr = (int)(timeout * 10.0f);
   OdriveSerial << "w axis" << axis << ".requested_state " << requested_state << '\n';
   if (wait_for_idle)
@@ -54,16 +58,33 @@ bool ODrive::run_state(int axis, int requested_state, bool wait_for_idle, float 
       OdriveSerial << "r axis" << axis << ".current_state\n";
     } while (read_int() != 1 && --timeout_ctr > 0);
   }
-
-  return timeout_ctr > 0;
+  if (timeout_ctr > 0)
+  {
+    m_current_state = requested_state;
+    return true;
+  }
+  else return false;
 };
 
 void ODrive::set_velocity(int motor_number, float velocity)
+// Sets the velocity of the motor and updates m_current_velocity
 {
   OdriveSerial << "v " << motor_number << " " << velocity << " "
                << "0.0f"
                << "\n";
   ;
+  m_current_velocity = velocity;
+}
+
+float ODrive::update_velocity(int motor_number, float velocity)
+// Updates the velocity of the motor but will not affect it if the change in the velocity is smaller than the tolerance
+{
+  if (abs(velocity - m_current_velocity) > constant.actuator_velocity_allowance)
+  {
+    set_velocity(motor_number, velocity);
+    return velocity;
+  }
+  else return m_current_velocity;
 }
 
 //-----------------ODrive Getters--------------//
@@ -77,6 +98,28 @@ float ODrive::get_voltage()
 {
   OdriveSerial << "r vbus_voltage\n";
   return ODrive::read_float();
+}
+
+float ODrive::get_encoder_pos(int motor_number){
+  OdriveSerial << "r axis" << motor_number << ".encoder.shadow_count\n";
+  return ODrive::read_float();
+}
+
+void ODrive::get_voltage_current_encoder(int motor_number, float *voltage, float *current, int *encoder_count, float *encoder_vel){
+  OdriveSerial << "?4 vbus_voltage ibus axis" << motor_number << ".encoder.shadow_count axis" << motor_number << ".encoder.vel_estimate\n";
+  String response = ODrive::read_string();
+  int start = 0;
+  int len = response.indexOf(",");
+  *voltage = response.substring(0, len ).toFloat();
+  start = len+1;
+  len = response.indexOf(",", start);
+  *current = response.substring(start, len).toFloat();
+  start = len+1;
+  len = response.indexOf(",", start);
+  *encoder_count = response.substring(start, len).toInt();
+  start = len+1;
+  len = response.indexOf(",", start);
+  *encoder_vel = response.substring(start, len).toFloat();
 }
 
 float ODrive::get_cur()

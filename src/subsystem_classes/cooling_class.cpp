@@ -7,6 +7,10 @@
 //     m_fan_enabled = false;
 // }
 
+Cooling::Cooling(Constant constant_in){
+  Constant constant = constant_in;
+}
+
 void Cooling::init()
 {
 }
@@ -31,13 +35,9 @@ float Cooling::get_temperature()
   return (voltage - 1.25) / 0.005;
 }
 
-float Cooling::get_thermistor(int thermistor_num)
+float Cooling::get_thermistor(int thermistor_pin)
 {
-  if (thermistor_num < 0 || thermistor_num > sizeof(k_thermistor_pins))
-  {
-    return 4242;
-  }
-  int raw = analogRead(k_thermistor_pins[thermistor_num]);
+  int raw = analogRead(thermistor_pin);
   float R2 = 10000 * (1023.0 / raw - 1.0);
   float logR2 = log(R2);
   float T = 1 / (0.001129148 + 0.000234125 * logR2 + 0.0000000876741 * logR2 * logR2 * logR2);
@@ -60,4 +60,12 @@ void Cooling::control_function()
       stop_fan();
     }
   }
+}
+
+String Cooling::diagnostic(){
+  String output = "";
+  output += "Thermistor 1: " + String(get_thermistor(constant.thermistor_1_pin)) + "\n";
+  output += "Thermistor 2: " + String(get_thermistor(constant.thermistor_2_pin)) + "\n";
+  output += "Thermistor 3: " + String(get_thermistor(constant.thermistor_3_pin)) + "\n";
+  return output;
 }
