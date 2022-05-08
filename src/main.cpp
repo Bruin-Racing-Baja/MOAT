@@ -39,10 +39,10 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 0
+#define MODE 2
 
 // Startup
-#define WAIT_SERIAL_STARTUP 0
+#define WAIT_SERIAL_STARTUP 1
 #define HOME_ON_STARTUP 0
 // NOTE: To set model 20 / 21 check the Constant.h file
 
@@ -85,7 +85,7 @@ unsigned int REF_RPM = 18;
 unsigned int ENC_VEL = 19;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
-Cooling cooler_o;
+Cooling cooler_o(constant);
 
 // Actuator settings
 #define PRINT_TO_SERIAL false
@@ -307,7 +307,8 @@ bool is_main_power = true;
 void loop()
 {
   Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
-  delay(10);
+  //Serial.print(cooler_o.diagnostic());
+  delay(100);
 }
 
 // HEADLESS HORSEMAN MODE

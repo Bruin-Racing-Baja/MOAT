@@ -3,24 +3,26 @@
 
 #include <Arduino.h>
 #include <ODrive.h>
+#include <Constant.h>
 
 #define AREF 3.3
 #define ADC_RESOLUTION 10
 
 class Cooling
 {
+  
   static const int k_motor_number = 1;
   static const double k_temp_threshold = 100;  // C
   static const int k_thermocouple_pin = 38;    // C
   static const float k_voltage = 3.3;          // volts
   static const int k_cooling_rpm = 500;        // rpm
   static const int k_cycle_period = 10;        // ms
-  const int k_thermistor_pins[3] = {24, 38, 39};  // C
   // therm 1 - belt
   // therm 2 - secondary
   // therm 3 - primary
 
 public:
+  Cooling(Constant constant_in);
   void init();
   void control_function();
 
@@ -29,10 +31,12 @@ public:
   void stop_fan();
   void set_fan_speed(int rpm);
 
+  String diagnostic();
 private:
   bool m_fan_enabled;
   unsigned long m_last_control_execution;
   unsigned long m_control_execution_count;
+  Constant constant;
 };
 
 #endif  //! COOLING_H

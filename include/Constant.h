@@ -4,30 +4,51 @@
 #include <SD.h>
 #include <map>
 
-#define dancing 13
+#define MODELNUMBER 21
 // IF YOU WANT TO CHANGE MODEL NUMBER DO SO IN BEGINNING OF PRIVATE MEMBERS
 
 struct Constant
 {
   private:
   
+  
+
   // This sets which model number is currently selected
-  // std::map<String, int> pins = m_20_pins;
+  //std::map<String, int> pins = m_20_pins;
   // std::map<String, float> float_constants = m_20_float_constants;
   // std::map<String, int> int_constants = m_20_int_constants;
 
-  std::map<String, int> pins = {
-    {"estop", 36},
-    {"enc_a", 2},
-    {"enc_b", 3},
-    {"hall_inbound", 23},
-    {"hall_outbound", 22},
-    {"engine_geartooth", 41},
-    {"gearbox_geartooth", 40},
-    {"thermistor_1", 24},
-    {"thermistor_2", 38},
-    {"thermistor_3", 39}
-  };
+  #if MODELNUMBER == 21
+    std::map<String, int> pins = {
+        {"estop", 32}, //outbound estop
+        {"enc_a", 3},
+        {"enc_b", 4},
+        {"enc_z", 5},
+        {"hall_inbound", 33}, //actually estop outbound
+        {"hall_outbound", 32}, //actually estop inbound
+        {"engine_geartooth", 37},
+        {"gearbox_geartooth", 36},
+        {"thermistor_1", 40},
+        {"thermistor_2", 39},
+        {"thermistor_3", 38}
+      };
+  #elif MODELNUMBER == 20
+    std::map<String, int> pins = {
+        {"estop", 36},
+        {"enc_a", 2},
+        {"enc_b", 3},
+        {"hall_inbound", 23},
+        {"hall_outbound", 22},
+        {"engine_geartooth", 41},
+        {"gearbox_geartooth", 40},
+        {"thermistor_1", 24},
+        {"thermistor_2", 38},
+        {"thermistor_3", 39}
+      };
+  #else // to fail on compile time if model number not specified
+  #endif
+
+
 
   std::map<String, float> float_constants = {
     {"proportional_gain", 0.015},
@@ -75,6 +96,7 @@ struct Constant
   const int thermistor_1_pin = pins["thermistor_1"];
   const int thermistor_2_pin = pins["thermistor_2"];
   const int thermistor_3_pin = pins["thermistor_3"];
+  const int thermistor_pins[3] = {thermistor_1_pin, thermistor_2_pin, thermistor_3_pin};  // C
 
   // Actuator Constants
   const int actuator_motor_number = int_constants["actuator_motor_number"];     // odrive axis

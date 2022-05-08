@@ -191,7 +191,7 @@ float Actuator::calc_gearbox_rpm(float dt)
 {
   noInterrupts();
   float rps = float(*m_gb_tooth_count - m_last_gb_tooth_count) / dt;
-  rps *= 6.0/17.0;
+  rps *= 6.0/17.0; //    M20: (48/(17))/8  M21: ~(9)/12  
   float rpm = rps * 1000.0 * 60.0;
   m_last_gb_tooth_count = *m_gb_tooth_count;
   interrupts();
