@@ -38,6 +38,7 @@ public:
   unsigned int ROLLING_FRAME = 16;
   unsigned int EXP_DECAY = 17;
   unsigned int REF_RPM = 18;
+  unsigned int ENC_VEL = 19;
 
 
   Actuator(HardwareSerial& serial, Constant constant, 

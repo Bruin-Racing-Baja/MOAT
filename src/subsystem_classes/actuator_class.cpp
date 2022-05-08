@@ -156,19 +156,24 @@ int* Actuator::control_function(int* out)
   if (outbound_signal) out[STATUS] = 1;  // Outbound
   if (inbound_signal) out[STATUS] = 2;  // Inbound
   
+  float voltage, current;
+  int encoder_pos;
+  float encoder_vel;
+  odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
   out[RPM] = eg_rpm;
   out[RPM_COUNT] = *m_eg_tooth_count;
   out[DT] = dt;
   out[ACT_VEL] = motor_velocity;
-  out[ENC_POS] = odrive.get_encoder_pos(constant.actuator_motor_number);
+  out[ENC_POS] = encoder_pos;
   out[HALL_IN] = inbound_signal;
   out[HALL_OUT] = outbound_signal;
   out[T_START] = timestamp;
-  out[ODRV_VOLT] = odrive.get_voltage();
-  out[ODRV_CUR] = odrive.get_cur();
+  out[ODRV_VOLT] = voltage;
+  out[ODRV_CUR] = current;
   out[ROLLING_FRAME] = gb_rolling;
   out[EXP_DECAY] = gb_exp_decay;
   out[REF_RPM] = ref_rpm;
+  out[ENC_VEL] = encoder_vel;
   out[T_STOP] = millis();
 
   return out;
