@@ -3,6 +3,7 @@
 #include <iostream>
 #include <Arduino.h>
 #include <Constant.h>
+#include <EduIntro.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
@@ -17,6 +18,7 @@
 class Oled
 {
 public:
+  Oled(Constant constant);
   void init();
   void write();
   void moveUpOrDown();
@@ -36,6 +38,11 @@ private:
    {"Name8",31},
    {"Name9",32}
   };
+  Button up;
+  Button down;
+  Button center;
+  Button right;
+  Button left;
 };
 
 #endif  //! OLED_H

@@ -93,7 +93,7 @@ unsigned int ENC_VEL = 19;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o(constant);
-Oled oled;
+Oled oled(constant);
 
 // Actuator settings
 #define PRINT_TO_SERIAL false

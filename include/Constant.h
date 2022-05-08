@@ -30,7 +30,12 @@ struct Constant
         {"gearbox_geartooth", 36},
         {"thermistor_1", 40},
         {"thermistor_2", 39},
-        {"thermistor_3", 38}
+        {"thermistor_3", 38},
+        {"up_button", 8},
+        {"down_button", 12},
+        {"center_button", 10},
+        {"right_button", 11},
+        {"left_button", 9}
       };
 
     std::map<String, float> float_constants = {
@@ -44,6 +49,7 @@ struct Constant
     };
 
     std::map<String, int> int_constants = {
+      {"has_oled", 1},
       {"actuator_motor_number", 1},
       {"cooling_motor_number", 0},
       {"homing_timeout", 50e6}, // ms
@@ -75,6 +81,7 @@ struct Constant
     };
 
     std::map<String, int> int_constants = {
+      {"has_oled", 0},
       {"actuator_motor_number", 1},
       {"cooling_motor_number", 0},
       {"homing_timeout", 50e6}, // ms
@@ -113,6 +120,11 @@ struct Constant
   const int thermistor_1_pin = pins["thermistor_1"];
   const int thermistor_2_pin = pins["thermistor_2"];
   const int thermistor_3_pin = pins["thermistor_3"];
+  const int up_button_pin = pins["up_button"];
+  const int down_button_pin = pins["down_button"];
+  const int center_button_pin = pins["center_button"];
+  const int right_button_pin = pins["right_button"];
+  const int left_button_pin = pins["left_button"];
 
   // Actuator Constants
   const int actuator_motor_number = int_constants["actuator_motor_number"];     // odrive axis

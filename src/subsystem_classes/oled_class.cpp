@@ -1,4 +1,5 @@
 #include <EduIntro.h>
+#include <Constant.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -8,11 +9,6 @@
 #include <iostream>
 #include <utility>
 using namespace std;
-Button up(8);
-Button down(12);
-Button cen(10);
-Button inc(11);
-Button decr(9);
 
 Adafruit_SSD1306 oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, 4);
 
@@ -20,6 +16,11 @@ int place=0;
 int first_visible=0;
 bool onstate;
 
+Oled::Oled(Constant constant)
+ : up(constant.up_button_pin), down(constant.down_button_pin), center(constant.center_button_pin), right(constant.right_button_pin), left(constant.left_button_pin)
+{
+  Constant constant = constant;
+}
 
 void Oled::init()
 {
