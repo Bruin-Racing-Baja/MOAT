@@ -4,7 +4,7 @@
 #include <SD.h>
 #include <map>
 
-#define MODELNUMBER 21
+#define MODELNUMBER 20
 
 #define dancing 13
 
@@ -55,8 +55,8 @@ struct Constant
     std::map<String, int> pins = {
         {"enc_a", 2},
         {"enc_b", 3},
-        {"estop_inbound", 23},
-        {"estop_outbound", 22},
+        {"estop_inbound", 36},
+        {"estop_outbound", 37},
         {"engine_geartooth", 41},
         {"gearbox_geartooth", 40},
         {"thermistor_1", 24},
@@ -71,13 +71,13 @@ struct Constant
       {"exponential_filter_alpha", 0.5},
       {"overdrive_ratio", 0.85},
       {"ecvt_max_ratio", 4.25},
-      {"actuator_velocity_wiggle", 0.1}
+      {"actuator_velocity_wiggle", 1}
     };
 
     std::map<String, int> int_constants = {
       {"actuator_motor_number", 1},
       {"cooling_motor_number", 0},
-      {"homing_timeout", 50e6}, // ms
+      {"homing_timeout", 5e6}, // ms
       {"cycle_period", 10},     // ms
       // This also has to be changed in actuator header
       {"gearbox_rolling_frames", 60}

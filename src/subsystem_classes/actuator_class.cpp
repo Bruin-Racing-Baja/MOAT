@@ -63,10 +63,10 @@ int Actuator::init(int odrive_timeout)
   // Runs encoder index search to find z index
   bool encoder_index_search = odrive.run_state(constant.actuator_motor_number, 6, true, 5);
 
-  // If successful, set ODRV to idle
-  if(!encoder_index_search) 
+  // If successful, set ODRV to closed loop control
+  if(encoder_index_search) 
   {
-    odrive.run_state(constant.actuator_motor_number, 1, true, 1);
+    odrive.run_state(constant.actuator_motor_number, 8, true, 1);
   }
   else status = 1003;
 
@@ -84,7 +84,7 @@ int* Actuator::homing_sequence(int* out)
   // Home outbound
   int start = millis();
 
-  odrive.set_velocity(constant.actuator_motor_number, 2);
+  odrive.set_velocity(constant.actuator_motor_number, 1);
 
   while (digitalReadFast(constant.estop_outbound_pin) == 0)
   {
@@ -144,7 +144,7 @@ int* Actuator::control_function(int* out)
 
   float instructed_actuator_velocity = odrive.update_velocity(constant.actuator_motor_number, new_motor_velocity);
   
-  odrive.run_state(constant.actuator_motor_number, 8, false, 0);
+  //odrive.run_state(constant.actuator_motor_number, 8, false, 0);
 
   // Logging
   // TODO: calculate status
@@ -152,11 +152,12 @@ int* Actuator::control_function(int* out)
   if (outbound_signal) out[STATUS] = 1;  // Outbound
   if (inbound_signal) out[STATUS] = 2;  // Inbound
   
-  float voltage, current;
-  int encoder_pos;
-  float encoder_vel;
+  float voltage = -69;
+  float current = -69;
+  int encoder_pos = -69;
+  float encoder_vel = -69;
   // Query ODrive for data and report
-  odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
+  //odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
   out[ODRV_VOLT] = voltage;
   out[ODRV_CUR] = current * 1.0e6;
   out[ENC_VEL] = encoder_vel;
