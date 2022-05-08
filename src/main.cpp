@@ -13,6 +13,9 @@ General code to oversee all functions of the Teensy
 #include <SD.h>
 #include <SoftwareSerial.h>
 #include <string>
+#include <vector>
+#include <iostream>
+#include <utility>
 
 // Classes
 #include <Actuator.h>
@@ -39,8 +42,11 @@ General code to oversee all functions of the Teensy
  * Wave (4): Operates the actuator in a wave pattern while logging data to the serial monitor
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
+ * Oled (5): Runs OLED control loop for quick variable checking and editing
+ * 
  */
-#define MODE 0
+
+#define MODE 5
 
 // Startup
 #define WAIT_SERIAL_STARTUP 0  // Set headless mode or not
@@ -92,6 +98,8 @@ Cooling cooler_o;
 #define HALL_OUTBOUND_PIN 22
 #define GEARTOOTH_ENGINE_PIN 41
 #define GEARTOOTH_GEARBOX_PIN 40
+
+Oled o;
 
 Actuator actuator(Serial1, ENC_A_PIN, ENC_B_PIN, GEARTOOTH_ENGINE_PIN, GEARTOOTH_GEARBOX_PIN ,HALL_INBOUND_PIN, HALL_OUTBOUND_PIN,
                   PRINT_TO_SERIAL);
@@ -187,6 +195,9 @@ void setup()
 
   //------------------ODrive------------------//
 
+  //-------------------OLED--------------------//
+  o.init();
+  
   //------------------Cooling------------------//
 
   cooler_o.init();
@@ -246,9 +257,8 @@ void setup()
 // "wheel_count",
 // "wheel_rpm",
 
-  Oled o;
-  std::map<String,int> cons=o.createMap();
-  o.init(cons);
+
+
 }
 
 // OPERATING MODE
@@ -259,6 +269,8 @@ int save_count = 0;
 int last_save = 0;
 void loop()
 {
+
+
   // Main control loop, with actuator
   actuator.control_function(o_control);
   // Report output with log
@@ -353,6 +365,17 @@ void loop() {
   Serial.println("Estop pressed: " + String(estop_pressed));
   estop_pressed = 0;
   actuator.diagnostic(true, true);
+}
+
+
+//OLED MODE
+#elif MODE==5
+void loop(){
+  o.moveUpOrDown();
+  o.write();
+  o.change();
+  o.clear();
+  o.power();
 }
 
 #endif
