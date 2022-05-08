@@ -82,6 +82,7 @@ unsigned int DT = 15;
 unsigned int ROLLING_FRAME = 16;
 unsigned int EXP_DECAY = 17;
 unsigned int REF_RPM = 18;
+unsigned int ENC_VEL = 19;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o;
@@ -221,7 +222,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   // This message is critical as it sets the order that the analysis script will read the data in
-  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, hall_in, hall_out, s_time, f_time, o_vol, o_curr, roll_frame, exp_decay, ref_rpm, therm1, therm2, therm3, estop" CR);
+  Log.notice("status, rpm, rpm_count, dt, act_vel, enc_pos, enc_vel, hall_in, hall_out, s_time, f_time, o_vol, o_curr, roll_frame, exp_decay, ref_rpm, therm1, therm2, therm3, estop" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
 }
@@ -242,13 +243,14 @@ void loop()
   if (o_control[STATUS] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %d" CR, 
     o_control[STATUS], 
     o_control[RPM],
     o_control[RPM_COUNT],
     o_control[DT],
     o_control[ACT_VEL], 
     o_control[ENC_POS],
+    o_control[ENC_VEL],
     o_control[HALL_IN], 
     o_control[HALL_OUT],
     o_control[T_START], 

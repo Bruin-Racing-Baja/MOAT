@@ -17,6 +17,7 @@ public:
   float get_encoder_pos(int motor_number);
   float get_vel(int motor_number);
   float get_voltage();
+  void get_voltage_current_encoder(int motor_number, float *voltage, float *current, int *encoder_count, float *encoder_vel);
   int32_t read_int();
   String read_string();
   String dump_errors();

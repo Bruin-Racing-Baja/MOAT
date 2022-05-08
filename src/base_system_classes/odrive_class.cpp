@@ -91,6 +91,23 @@ float ODrive::get_encoder_pos(int motor_number){
   return ODrive::read_float();
 }
 
+void ODrive::get_voltage_current_encoder(int motor_number, float *voltage, float *current, int *encoder_count, float *encoder_vel){
+  OdriveSerial << "?4 vbus_voltage ibus axis" << motor_number << ".encoder.shadow_count axis" << motor_number << ".encoder.vel_estimate\n";
+  String response = ODrive::read_string();
+  int start = 0;
+  int len = response.indexOf(",");
+  *voltage = response.substring(0, len ).toFloat();
+  start = len+1;
+  len = response.indexOf(",", start);
+  *current = response.substring(start, len).toFloat();
+  start = len+1;
+  len = response.indexOf(",", start);
+  *encoder_count = response.substring(start, len).toInt();
+  start = len+1;
+  len = response.indexOf(",", start);
+  *encoder_vel = response.substring(start, len).toFloat();
+}
+
 float ODrive::get_cur()
 {
   OdriveSerial << "r ibus\n";
