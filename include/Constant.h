@@ -35,7 +35,8 @@ struct Constant
     {"derivative_gain", 0},
     {"exponential_filter_alpha", 0.5},
     {"overdrive_ratio", 0.85},
-    {"ecvt_max_ratio", 4.25}
+    {"ecvt_max_ratio", 4.25},
+    {"actuator_velocity_wiggle", 0.1}
   };
 
   std::map<String, int> int_constants = {
@@ -89,6 +90,8 @@ struct Constant
   const float exponential_filter_alpha = float_constants["exponential_filter_alpha"];
 
   const float position_p_gain = proportional_gain;
+
+  const float actuator_velocity_wiggle = float_constants["actuator_velocity_wiggle"];
 
   // Physical Constants
   const float ecvt_max_ratio = float_constants["ecvt_max_ratio"];

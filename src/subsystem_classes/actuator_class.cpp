@@ -141,14 +141,19 @@ int* Actuator::control_function(int* out)
   // Stop shifting out if shifted out completely
   bool outbound_signal = !digitalReadFast(constant.hall_outbound_pin);
   bool inbound_signal = !digitalReadFast(constant.hall_inbound_pin);
-  // if (outbound_signal && error > 0) error = 0;
-  // if (inbound_signal && error < 0) error = 0;
 
   // Calculate control signal
-  float motor_velocity = constant.proportional_gain * error;
+  float new_motor_velocity = constant.proportional_gain * error;
 
-  odrive.set_velocity(constant.actuator_motor_number, motor_velocity);
+  if (abs(new_motor_velocity - m_past_motor_velocity) > constant.actuator_velocity_wiggle){
+    m_past_motor_velocity = new_motor_velocity;
+    odrive.set_velocity(constant.actuator_motor_number, m_past_motor_velocity);
+  }
+  
+
+
   odrive.run_state(constant.actuator_motor_number, 8, false, 0);
+
 
   // Logging
   // TODO: calculate status
@@ -159,7 +164,7 @@ int* Actuator::control_function(int* out)
   out[RPM] = eg_rpm;
   out[RPM_COUNT] = *m_eg_tooth_count;
   out[DT] = dt;
-  out[ACT_VEL] = motor_velocity;
+  out[ACT_VEL] = m_motor_velocity;
   out[ENC_POS] = odrive.get_encoder_pos(constant.actuator_motor_number);
   out[HALL_IN] = inbound_signal;
   out[HALL_OUT] = outbound_signal;

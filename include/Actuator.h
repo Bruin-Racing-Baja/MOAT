@@ -113,6 +113,7 @@ private:
   // float m_currentrpm_eg_accum = 0;
   // float m_gb_rpm = 0;
   // float m_currentrpm_gb_accum = 0;
+  float m_past_motor_velocity = 0;
 
 
   // running control terms
