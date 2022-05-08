@@ -93,7 +93,7 @@ unsigned int ENC_VEL = 19;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o(constant);
-Oled oled(constant);
+Oled o(constant);
 
 // Actuator settings
 #define PRINT_TO_SERIAL false
@@ -181,7 +181,7 @@ void setup()
   //------------------ODrive------------------//
 
   //-------------------OLED--------------------//
-  oled.init();
+  o.init();
   
   //------------------Cooling------------------//
 
@@ -354,11 +354,11 @@ void loop() {
 //OLED MODE
 #elif MODE==5
 void loop(){
-  oled.moveUpOrDown();
-  oled.write();
-  oled.change();
-  oled.clear();
-  oled.power();
+  o.moveUpOrDown();
+  o.write();
+  o.change();
+  o.clear();
+  o.power();
 }
 
 #endif

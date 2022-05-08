@@ -1,5 +1,6 @@
-#ifndef OLED_H
-#define OLED_H
+#ifndef oled_h
+#define oled_h
+
 #include <iostream>
 #include <Arduino.h>
 #include <Constant.h>
@@ -43,6 +44,7 @@ private:
   Button center;
   Button right;
   Button left;
+  Constant constant;
 };
 
 #endif  //! OLED_H

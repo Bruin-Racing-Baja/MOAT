@@ -16,10 +16,10 @@ int place=0;
 int first_visible=0;
 bool onstate;
 
-Oled::Oled(Constant constant)
- : up(constant.up_button_pin), down(constant.down_button_pin), center(constant.center_button_pin), right(constant.right_button_pin), left(constant.left_button_pin)
+Oled::Oled(Constant constant_in)
+ : up(constant_in.up_button_pin), down(constant_in.down_button_pin), center(constant_in.center_button_pin), right(constant_in.right_button_pin), left(constant_in.left_button_pin)
 {
-  Constant constant = constant;
+  Constant constant = constant_in;
 }
 
 void Oled::init()
@@ -84,7 +84,7 @@ void Oled::moveUpOrDown(){
 };
 
 void Oled::change(){
-  if(inc.pressed()){
+  if(right.pressed()){
     switch(place){
       case 0:
         constants[0].second+=1;
@@ -117,7 +117,7 @@ void Oled::change(){
         oled.print("FAILURE");
     }
   }
-  if(decr.pressed()){
+  if(left.pressed()){
     switch(place){
       case 0:
         constants[0].second-=1;
@@ -153,7 +153,7 @@ void Oled::change(){
   
 };
 void Oled::power(){
-  if(cen.pressed()){
+  if(center.pressed()){
     Serial.print("center");
     if(onstate==true){
       oled.ssd1306_command(SSD1306_DISPLAYOFF);
