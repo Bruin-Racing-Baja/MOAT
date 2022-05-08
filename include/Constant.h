@@ -12,12 +12,12 @@ struct Constant
 {
   private:
   const int payload_size = 20;  // Bytes
+  // NOTE: To read in the values requires a hard-coded array, this can be found and changed in the read_memory function.
   const int header_size = 4;    // Bytes
   const int eeprom_size = 4284; // Bytes
-  const int eeprom_lifecycle = 1e6; // No. Writes
+  const int eeprom_lifecycle = 1e6; // # Writes
 
-  float* read_memory();
-  bool save_constants(float* constants_array);
+  int find_free_address();
 
   #if MODELNUMBER == 21
     std::map<String, int> pins = {
@@ -86,6 +86,8 @@ struct Constant
   #endif
   
   public:
+  float* read_memory();
+  bool save_constants(float* constants_array);
   // These constants do not change between models
 
   // Engine Constants (ty Tyler)

@@ -11,9 +11,13 @@ int Constant::find_free_address()
     return -1;
 }
 
-bool Constant::save_constants(int address, float* in)
+bool Constant::save_constants(float* in)
 {
     if (sizeof(in) > payload_size) return false;
+
+    int address = find_free_address() + header_size;
+    if (address == -1 + header_size) return false;
+
     EEPROM.put(address + header_size, in);
     int old_lifecycle;
     EEPROM.get(address, old_lifecycle);
@@ -21,8 +25,11 @@ bool Constant::save_constants(int address, float* in)
     return true;
 }
 
-float* Constant::read_memory(int address)
+float* Constant::read_memory()
 {
-    float out[4];
+    int address = find_free_address() + header_size;
+    
+    float out[5];
     EEPROM.get(address, out);
+    return out;
 }
