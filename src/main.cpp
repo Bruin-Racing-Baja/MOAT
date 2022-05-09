@@ -243,7 +243,7 @@ void setup()
 int o_control[30];
 int save_count = 0;
 int last_save = 0;
-bool running_led = false;
+int running_led_cycle = 3000;
 
 void loop()
 {
@@ -280,12 +280,11 @@ void loop()
   {
     save_log();
     save_count = 0;
-
-    // Toggle running led
-    if (running_led) set_led(1, 0);
-    else set_led(1, 1);
   }
   save_count++;
+
+  if ((millis() / running_led_cycle) % 2) set_led(4, 1);
+  else set_led(4, 0);
 }
 
 // HEADLESS DIAGNOSTIC MODE
@@ -320,7 +319,7 @@ void loop()
 {
   Log.notice((actuator.diagnostic(is_main_power, 10, true)).c_str());
   //Serial.print(cooler_o.diagnostic());
-  //actuator.move_back_and_forth_slowly();
+  actuator.move_back_and_forth_slowly();
   delay(100);
 }
 

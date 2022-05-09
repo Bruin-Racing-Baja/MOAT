@@ -159,10 +159,10 @@ int* Actuator::control_function(int* out)
   else set_led(1, 0);
 
   if (inbound_signal){
-   set_led(4, 1);
+   set_led(2, 1);
    out[STATUS] = 2;  // Inbound
   }
-  else set_led(4, 0);
+  else set_led(2, 0);
 
   float voltage = -1;
   float current = -1e-6;
