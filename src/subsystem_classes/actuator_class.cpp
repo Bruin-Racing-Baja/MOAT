@@ -48,13 +48,13 @@ Actuator::Actuator(HardwareSerial& serial, Constant constant_in, volatile unsign
   }
 }
 
-int Actuator::init(int odrive_timeout)
+int Actuator::init(int odrive_connection_timeout)
 {
   status = 0;
   interrupts();
 
   // Initialize Odrive object
-  int o_init = odrive.init(odrive_timeout);
+  int o_init = odrive.init(odrive_connection_timeout);
   if (o_init != 0)
   {
     status = o_init;
@@ -62,7 +62,7 @@ int Actuator::init(int odrive_timeout)
   }
 
   // Runs encoder index search to find z index
-  activate_led(3);
+  set_led(3, 1);
   bool encoder_index_search = odrive.run_state(constant.actuator_motor_number, 6, true, 5);
 
   // If successful, set ODRV to closed loop control
@@ -86,7 +86,7 @@ int* Actuator::homing_sequence(int* out)
   // Home outbound
   int start = millis();
 
-  odrive.set_velocity(constant.actuator_motor_number, 1);
+  odrive.set_velocity(constant.actuator_motor_number, 5);
 
   while (digitalReadFast(constant.estop_outbound_pin) == 0)
   {
@@ -151,13 +151,23 @@ int* Actuator::control_function(int* out)
   // Logging
   // TODO: calculate status
   out[STATUS] = 0;  // Nominal
-  if (outbound_signal) out[STATUS] = 1;  // Outbound
-  if (inbound_signal) out[STATUS] = 2;  // Inbound
-  
-  float voltage = -69;
-  float current = -69e-6;
-  int encoder_pos = -69;
-  float encoder_vel = -69;
+
+  if (outbound_signal){// Outbound
+   set_led(1, 1);
+   out[STATUS] = 1;
+   }  
+  else set_led(1, 0);
+
+  if (inbound_signal){
+   set_led(4, 1);
+   out[STATUS] = 2;  // Inbound
+  }
+  else set_led(4, 0);
+
+  float voltage = -1;
+  float current = -1e-6;
+  int encoder_pos = -1;
+  float encoder_vel = -1;
   // Query ODrive for data and report
   odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
   out[ODRV_VOLT] = voltage;
