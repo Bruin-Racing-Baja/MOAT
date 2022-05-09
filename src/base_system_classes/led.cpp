@@ -10,6 +10,23 @@ void setup_led(){
     pinMode(led_4_pin, OUTPUT);
 }
 
+void clear_one_led(int LED_num){
+    switch (LED_num) {
+        case 1:
+            digitalWrite(led_1_pin, HIGH);
+            break;
+        case 2:
+            digitalWrite(led_2_pin, HIGH);
+            break;
+        case 3:
+            digitalWrite(led_3_pin, HIGH);
+            break;
+        case 4:
+            digitalWrite(led_4_pin, HIGH);
+            break;
+    }
+}
+
 void activate_one_led(int LED_num){
     clear_all_leds();
     activate_led(LED_num);

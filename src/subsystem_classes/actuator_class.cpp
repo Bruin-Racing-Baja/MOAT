@@ -93,6 +93,7 @@ int* Actuator::homing_sequence(int* out)
     delay(10);
     if (digitalReadFast(constant.estop_outbound_pin) == 1)
     {
+      activate_one_led(1);
       break;
     }
     m_encoder_outbound = odrive.get_encoder_pos(constant.actuator_motor_number);
@@ -151,13 +152,23 @@ int* Actuator::control_function(int* out)
   // Logging
   // TODO: calculate status
   out[STATUS] = 0;  // Nominal
-  if (outbound_signal) out[STATUS] = 1;  // Outbound
-  if (inbound_signal) out[STATUS] = 2;  // Inbound
-  
-  float voltage = -69;
-  float current = -69e-6;
-  int encoder_pos = -69;
-  float encoder_vel = -69;
+
+  if (outbound_signal){// Outbound
+   activate_one_led(1);
+   out[STATUS] = 1;
+   }  
+  else clear_all_leds();
+
+  if (inbound_signal){
+   activate_one_led(4);
+   out[STATUS] = 2;  // Inbound
+  }
+  else clear_all_leds();
+
+  float voltage = -1;
+  float current = -1e-6;
+  int encoder_pos = -1;
+  float encoder_vel = -1;
   // Query ODrive for data and report
   odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
   out[ODRV_VOLT] = voltage;
