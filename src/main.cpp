@@ -189,7 +189,7 @@ void setup()
   //-------------Actuator-----------------//
   // General Init
   Serial.println("Actuator Init");
-  int o_actuator_init = actuator.init(constant.homing_timeout);
+  int o_actuator_init = actuator.init(constant.odrive_connection_timeout);
   if (o_actuator_init)
   {
     Log.error("Actuator Init Failed code: %d" CR, o_actuator_init);
@@ -243,6 +243,7 @@ void setup()
 int o_control[30];
 int save_count = 0;
 int last_save = 0;
+bool running_led = false;
 
 void loop()
 {
@@ -279,6 +280,10 @@ void loop()
   {
     save_log();
     save_count = 0;
+    if (running_led) set_led(1, false);
+    else set_led(1, true);
+
+
   }
   save_count++;
 }

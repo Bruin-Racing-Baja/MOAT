@@ -56,7 +56,7 @@ struct Constant
       {"homing_timeout", 50e6}, // ms
       {"cycle_period", 10},     // ms
       // This also has to be changed in actuator header
-      {"gearbox_rolling_frames", 60}
+      {"gearbox_rolling_frames", 60},
     };
   #elif MODELNUMBER == 20
     std::map<String, int> pins = {
@@ -106,6 +106,9 @@ struct Constant
   const float rpm_target_multiplier = 1.5;
 
   const static int minimum_rpm = 1000;        // rpm
+
+  // Odrive
+  const int odrive_connection_timeout = 2000;  // ms
 
   // These constants change between models
 

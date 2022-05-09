@@ -48,13 +48,13 @@ Actuator::Actuator(HardwareSerial& serial, Constant constant_in, volatile unsign
   }
 }
 
-int Actuator::init(int odrive_timeout)
+int Actuator::init(int odrive_connection_timeout)
 {
   status = 0;
   interrupts();
 
   // Initialize Odrive object
-  int o_init = odrive.init(odrive_timeout);
+  int o_init = odrive.init(odrive_connection_timeout);
   if (o_init != 0)
   {
     status = o_init;

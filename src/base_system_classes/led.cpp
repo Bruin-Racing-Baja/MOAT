@@ -15,19 +15,19 @@ void activate_one_led(int LED_num){
     activate_led(LED_num);
 }
 
-void activate_led(int LED_num){
+void set_led(int LED_num, bool state){
     switch (LED_num) {
         case 1:
-            digitalWrite(led_1_pin, LOW);
+            digitalWrite(led_1_pin, !state);
             break;
         case 2:
-            digitalWrite(led_2_pin, LOW);
+            digitalWrite(led_2_pin, !state);
             break;
         case 3:
-            digitalWrite(led_3_pin, LOW);
+            digitalWrite(led_3_pin, !state);
             break;
         case 4:
-            digitalWrite(led_4_pin, LOW);
+            digitalWrite(led_4_pin, !state);
             break;
     }
 }
