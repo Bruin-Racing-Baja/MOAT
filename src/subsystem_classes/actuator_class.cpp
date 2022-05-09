@@ -61,6 +61,7 @@ int Actuator::init(int odrive_timeout)
   }
 
   // Runs encoder index search to find z index
+  digitalWrite(constant.led_3_pin, HIGH);
   bool encoder_index_search = odrive.run_state(constant.actuator_motor_number, 6, true, 5);
 
   // If successful, set ODRV to closed loop control

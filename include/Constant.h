@@ -11,9 +11,6 @@
 struct Constant
 {
   private:
-  
-  
-
   // This sets which model number is currently selected
   //std::map<String, int> pins = m_20_pins;
   // std::map<String, float> float_constants = m_20_float_constants;
@@ -30,7 +27,11 @@ struct Constant
         {"gearbox_geartooth", 36},
         {"thermistor_1", 40},
         {"thermistor_2", 39},
-        {"thermistor_3", 38}
+        {"thermistor_3", 38},
+        {"LED_1", 28},
+        {"LED_2", 29},
+        {"LED_3", 30},
+        {"LED_4", 31},
       };
 
     std::map<String, float> float_constants = {
@@ -113,6 +114,10 @@ struct Constant
   const int thermistor_1_pin = pins["thermistor_1"];
   const int thermistor_2_pin = pins["thermistor_2"];
   const int thermistor_3_pin = pins["thermistor_3"];
+  const int led_1_pin = pins["LED_1"];
+  const int led_2_pin = pins["LED_2"];
+  const int led_3_pin = pins["LED_3"];
+  const int led_4_pin = pins["LED_4"];
 
   // Actuator Constants
   const int actuator_motor_number = int_constants["actuator_motor_number"];     // odrive axis
