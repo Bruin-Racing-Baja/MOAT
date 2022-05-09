@@ -137,7 +137,7 @@ void setup()
 {
   setup_led();
   blink_in_series();
-  activate_led(1);
+  set_led(1, 1);
 
   Serial.println("Starting...");
   //-------------Attach E-Stop interrupt-----------------//
@@ -172,7 +172,7 @@ void setup()
 
   log_file = SD.open(log_name.c_str(), FILE_WRITE);
 
-  activate_led(2);
+  set_led(2, 1);
   Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started - Model: %d " CR, constant.model_number);
   // This is for the data analysis tool to be able to change the log order easily
@@ -214,7 +214,7 @@ void setup()
   // Homing
   if (HOME_ON_STARTUP)
   {
-    activate_led(4);
+    set_led(4, 1);
     int o_homing[3];
     actuator.homing_sequence(o_homing);
     Serial.println("Homing sequence: " + String(o_homing[0]) + " " + String(o_homing[1]) + " " + String(o_homing[2]));
@@ -280,10 +280,10 @@ void loop()
   {
     save_log();
     save_count = 0;
-    if (running_led) set_led(1, false);
-    else set_led(1, true);
 
-
+    // Toggle running led
+    if (running_led) set_led(1, 0);
+    else set_led(1, 1);
   }
   save_count++;
 }

@@ -29,7 +29,7 @@ void clear_one_led(int LED_num){
 
 void activate_one_led(int LED_num){
     clear_all_leds();
-    activate_led(LED_num);
+    set_led(LED_num, 1);
 }
 
 void set_led(int LED_num, bool state){
@@ -58,13 +58,13 @@ void clear_all_leds(){
 
 void blink_in_series(){
     int timeout = 500;
-    activate_one_led(1);
+    set_led(1, 1);
     delay(timeout);
-    activate_one_led(2);
+    set_led(2, 1);
     delay(timeout);
-    activate_one_led(3);
+    set_led(3, 1);
     delay(timeout);
-    activate_one_led(4);
+    set_led(4, 1);
     delay(timeout);
     clear_all_leds();
 }
