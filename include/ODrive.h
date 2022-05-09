@@ -24,6 +24,7 @@ public:
   String dump_errors();
   float read_float();
   float get_cur();
+  float get_state(int motor_number);
 
 private:
   int m_current_state = -1;

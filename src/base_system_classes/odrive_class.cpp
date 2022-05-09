@@ -94,6 +94,12 @@ float ODrive::get_vel(int motor_number)
   return ODrive::read_float();
 }
 
+float ODrive::get_state(int motor_number)
+{
+  OdriveSerial << "r axis" << motor_number << ".current_state\n";
+  return ODrive::read_float();
+}
+
 float ODrive::get_voltage()
 {
   OdriveSerial << "r vbus_voltage\n";

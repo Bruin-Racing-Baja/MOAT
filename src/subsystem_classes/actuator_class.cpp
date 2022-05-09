@@ -167,7 +167,7 @@ int* Actuator::control_function(int* out)
 
   // Report control function data
   out[RPM] = eg_rpm;
-  out[RPM_COUNT] = *m_eg_tooth_count;
+  out[RPM_COUNT] = m_control_function_count; //*m_eg_tooth_count;
   out[DT] = dt;
   out[ACT_VEL] = instructed_actuator_velocity;
   out[ESTOP_IN] = inbound_signal;
