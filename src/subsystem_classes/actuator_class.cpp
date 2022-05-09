@@ -123,9 +123,11 @@ int* Actuator::control_function(int* out)
     out[STATUS] = 3;
     return out;
   }
+  printToSerial("starting control function: ");
   m_last_control_execution = timestamp;
 
   m_control_function_count++;
+  printToSerial(String(m_control_function_count));
 
   float eg_rpm = calc_engine_rpm(dt);
   float gb_rpm = calc_gearbox_rpm(dt);
@@ -137,6 +139,7 @@ int* Actuator::control_function(int* out)
 
   float error = ref_rpm - eg_rpm;
 
+  printToSerial("read Estops");
   // Read estop pin values to report
   bool outbound_signal = digitalReadFast(constant.estop_outbound_pin);
   bool inbound_signal = digitalReadFast(constant.estop_inbound_pin);
@@ -153,7 +156,7 @@ int* Actuator::control_function(int* out)
   out[STATUS] = 0;  // Nominal
 
   if (outbound_signal){// Outbound
-   set_led(1, 1);
+   //set_led(1, 1);
    out[STATUS] = 1;
    }  
   else set_led(1, 0);
@@ -169,8 +172,9 @@ int* Actuator::control_function(int* out)
   int encoder_pos = -1;
   float encoder_vel = -1;
   // Query ODrive for data and report
-  odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
-  out[ODRV_VOLT] = voltage;
+  printToSerial("getting odrive data");
+  //odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
+  out[ODRV_VOLT] = odrive.get_voltage();
   out[ODRV_CUR] = current * 1.0e6;
   out[ENC_VEL] = encoder_vel;
   out[ENC_POS] = encoder_pos;
@@ -187,7 +191,7 @@ int* Actuator::control_function(int* out)
   out[EXP_DECAY] = gb_exp_decay;
   out[REF_RPM] = ref_rpm;
   out[T_STOP] = millis();
-
+  printToSerial("getting odrive data");
   return out;
 }
 
@@ -399,4 +403,10 @@ void Actuator::move_back_and_forth_slowly(){
     odrive.set_velocity(constant.actuator_motor_number, -1); 
   }
   odrive.run_state(constant.actuator_motor_number, 8, false, 0);
+}
+
+void Actuator::printToSerial(String toPrint){
+  if(m_print_to_serial){
+    Serial.println(toPrint);
+  }
 }

@@ -69,6 +69,7 @@ private:
   Encoder encoder;
   ODrive odrive;
 
+  void printToSerial(String toPrint);
   // Functions that get information from Odrive
   int get_encoder_count();
 

@@ -105,7 +105,7 @@ Cooling cooler_o(constant);
 volatile unsigned long ext_eg_tooth_count = 0;
 volatile unsigned long ext_gb_tooth_count = 0;
 
-Actuator actuator(Serial1, constant, &ext_eg_tooth_count, &ext_gb_tooth_count, PRINT_TO_SERIAL);
+Actuator actuator(Serial1, constant, &ext_eg_tooth_count, &ext_gb_tooth_count, WAIT_SERIAL_STARTUP);
 
 // externally declared for interrupt
 void external_count_eg_tooth(){
