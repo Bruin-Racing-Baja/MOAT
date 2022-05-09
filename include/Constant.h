@@ -48,6 +48,8 @@ struct Constant
       {"ecvt_max_ratio", 4.31},
       {"actuator_velocity_allowance", 0.1},
       {"gearbox_to_secondary_ratio", (9)/12},
+      {"cooling_target_temperature", 82.2},    // degrees C
+      {"cooling_temperature_tolerance", 0.5}, // degrees C
     };
 
     std::map<String, int> int_constants = {
@@ -55,6 +57,7 @@ struct Constant
       {"cooling_motor_number", 0},
       {"homing_timeout", 50e6}, // ms
       {"cycle_period", 10},     // ms
+      {"cooling_cycle_period", 10},     // ms
       // This also has to be changed in actuator header
       {"gearbox_rolling_frames", 60}
     };
@@ -142,6 +145,11 @@ struct Constant
   // const float position_p_gain = proportional_gain;
 
   const float actuator_velocity_allowance = float_constants["actuator_velocity_allowance"];
+
+  // Cooling Constants
+  const float cooling_target_temperature = float_constants["cooling_target_temperature"];
+  const float cooling_temperature_tolerance = float_constants["cooling_temperature_tolerance"];
+  const float cooling_cycle_period = int_constants["cooling_cycle_period"];
 
   // Physical Constants
   const float ecvt_max_ratio = float_constants["ecvt_max_ratio"];

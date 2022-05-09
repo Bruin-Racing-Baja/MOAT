@@ -10,33 +10,23 @@
 
 class Cooling
 {
-  
-  static const int k_motor_number = 1;
-  static const double k_temp_threshold = 100;  // C
-  static const int k_thermocouple_pin = 38;    // C
-  static const float k_voltage = 3.3;          // volts
-  static const int k_cooling_rpm = 500;        // rpm
-  static const int k_cycle_period = 10;        // ms
   // therm 1 - belt
   // therm 2 - secondary
   // therm 3 - primary
 
 public:
-  Cooling(Constant constant_in);
-  void init();
-  void control_function();
-
+  Cooling(Constant constant_in, HardwareSerial& serial);
+  int control_function();
   float get_temperature();
-  float get_thermistor(int thermistor_num);
+  float get_thermistor(int thermistor_pin);
   void stop_fan();
-  void set_fan_speed(int rpm);
-
+  void start_fan();
   String diagnostic();
 private:
-  bool m_fan_enabled;
   unsigned long m_last_control_execution;
   unsigned long m_control_execution_count;
   Constant constant;
+  ODrive odrive;
 };
 
 #endif  //! COOLING_H

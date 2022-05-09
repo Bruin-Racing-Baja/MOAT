@@ -2,38 +2,29 @@
 #include <Cooling.h>
 #include <ODrive.h>
 
-// Cooling::Cooling()
-// {
-//     m_fan_enabled = false;
-// }
-
-Cooling::Cooling(Constant constant_in){
-  Constant constant = constant_in;
-}
-
-void Cooling::init()
+Cooling::Cooling(Constant constant_in, HardwareSerial& serial) : odrive(serial, constant_in)
 {
+  Constant constant = constant_in;
 }
 
 // NOTE: The current odrive implementation won't work due to reasons we do not understand
 // This needs to be fixed before we can use this class to actually control the fan
 void Cooling::stop_fan()
 {
-  // odrive->set_velocity(motor_number, 0);
+  odrive.run_state(constant.cooling_motor_number, 1, 0, 1);
 }
 
-void Cooling::set_fan_speed(int rpm)
-// NOTE: Dont know how rpm -> velocity works, so should look into that
+void Cooling::start_fan()
 {
-  // odrive->set_velocity(motor_number, rpm);
+  odrive.run_state(constant.cooling_motor_number, 8, 0, 1);
 }
 
-float Cooling::get_temperature()
-{
-  int raw = analogRead(k_thermocouple_pin);
-  float voltage = raw * (AREF / (pow(2, ADC_RESOLUTION) - 1));
-  return (voltage - 1.25) / 0.005;
-}
+// float Cooling::get_temperature()
+// {
+//   int raw = analogRead(k_thermocouple_pin);
+//   float voltage = raw * (AREF / (pow(2, ADC_RESOLUTION) - 1));
+//   return (voltage - 1.25) / 0.005;
+// }
 
 float Cooling::get_thermistor(int thermistor_pin)
 {
@@ -44,22 +35,27 @@ float Cooling::get_thermistor(int thermistor_pin)
   return T - 273.15;
 }
 
-void Cooling::control_function()
+int Cooling::control_function()
 {
   m_control_execution_count++;
-  if (millis() - m_last_control_execution > k_cycle_period)
+  if (millis() - m_last_control_execution > constant.cooling_cycle_period)
   {
-    float temperature = get_temperature();
-    m_fan_enabled = temperature > k_temp_threshold;
-    if (m_fan_enabled)
+    // 180 F (82.2 C) at secondary (therm 3)
+    float temperature = Cooling::get_thermistor(constant.thermistor_3_pin);
+    if (temperature > constant.cooling_target_temperature + constant.cooling_temperature_tolerance)
     {
-      set_fan_speed(k_cooling_rpm);
+      Cooling::start_fan();
+      return 2;
     }
-    else
+    else if (temperature < constant.cooling_target_temperature - constant.cooling_temperature_tolerance)
     {
-      stop_fan();
+      Cooling::stop_fan();
+      return 1;
     }
+    // Within temp tolerance
+    return 3;
   }
+  else return 0;
 }
 
 String Cooling::diagnostic(){

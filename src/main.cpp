@@ -42,7 +42,7 @@ General code to oversee all functions of the Teensy
  * This will go from software stop to software stop continuously to hceck ay errors with the odrive or teensy
  * 
  */
-#define MODE 0
+#define MODE 4
 
 // Startup
 #define WAIT_SERIAL_STARTUP 0
@@ -89,7 +89,7 @@ unsigned int REF_RPM = 18;
 unsigned int ENC_VEL = 19;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
-Cooling cooler_o(constant);
+Cooling cooler(constant, Serial1);
 
 // Actuator settings
 #define PRINT_TO_SERIAL false
@@ -140,9 +140,6 @@ void setup()
   activate_led(1);
 
   Serial.println("Starting...");
-  //-------------Attach E-Stop interrupt-----------------//
-  // interrupts();
-  // attachInterrupt(ESTOP_PIN, odrive_estop, RISING);
 
   //-------------Wait for serial-----------------//
   if (WAIT_SERIAL_STARTUP)
@@ -181,11 +178,7 @@ void setup()
   save_log();
 
   //------------------ODrive------------------//
-
   //------------------Cooling------------------//
-
-  cooler_o.init();
-
   //-------------Actuator-----------------//
   // General Init
   Serial.println("Actuator Init");
@@ -204,8 +197,6 @@ void setup()
   save_log();
 
   // Geartooth Interrupts
-  Serial.println(constant.engine_geartooth_pin);
-  Serial.println(constant.gearbox_geartooth_pin);
   pinMode(constant.engine_geartooth_pin, INPUT_PULLUP);
   pinMode(constant.gearbox_geartooth_pin, INPUT_PULLUP);
   attachInterrupt(constant.engine_geartooth_pin, external_count_eg_tooth, FALLING);
@@ -231,7 +222,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   // This message is critical as it sets the order that the analysis script will read the data in
-  Log.notice("status, rpm, roll_frame, act_vel, enc_vel, estop_in, estop_out, dt, enc_pos, rpm_count, s_time, f_time, exp_decay, ref_rpm, o_vol, o_curr, therm1, therm2, therm3" CR);
+  Log.notice("status, rpm, roll_frame, act_vel, enc_vel, estop_in, estop_out, dt, enc_pos, rpm_count, s_time, f_time, exp_decay, ref_rpm, o_vol, cooling_status, o_curr, therm1, therm2, therm3" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
   clear_all_leds();
@@ -243,15 +234,17 @@ void setup()
 int o_control[30];
 int save_count = 0;
 int last_save = 0;
+int cooling_status = 0;
 
 void loop()
 {
+  cooling_status = cooler_o.control_function();
   actuator.control_function(o_control);
   
   if (o_control[STATUS] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F" CR, 
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F" CR, 
     o_control[STATUS], 
     o_control[RPM],
     o_control[ROLLING_FRAME],
@@ -267,6 +260,7 @@ void loop()
     o_control[EXP_DECAY],
     o_control[REF_RPM],
     o_control[ODRV_VOLT], 
+    cooling_status,
     static_cast < float >(o_control[ODRV_CUR]) / 1000.0,
     cooler_o.get_thermistor(constant.thermistor_1_pin), 
     cooler_o.get_thermistor(constant.thermistor_2_pin), 
@@ -337,18 +331,17 @@ void loop()
 
 // Wave Mode
 #elif MODE == 4
-int shift_o;
+int cooling_period = 10000;   // ms
+int wave_start = millis();
+bool fan_state = false;
 void loop() {
-  shift_o = actuator.fully_shift(true, 10000);
-  Serial.println("Shifted in, status: " + String(shift_o));
-  Serial.println("Estop pressed: " + String(estop_pressed));
-  estop_pressed = 0;
-  actuator.diagnostic(true, true);
-  shift_o = actuator.fully_shift(false, 10000);
-  Serial.println("Shifted out, status: " + String(shift_o));
-  Serial.println("Estop pressed: " + String(estop_pressed));
-  estop_pressed = 0;
-  actuator.diagnostic(true, true);
+  actuator.move_back_and_forth_slowly();
+  if (millis() > wave_start + cooling_period) 
+  {
+    wave_start = millis();
+    if (fan_state) cooler.stop_fan();
+    else cooler.start_fan();
+  }
 }
 
 #endif
