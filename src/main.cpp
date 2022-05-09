@@ -20,6 +20,9 @@ General code to oversee all functions of the Teensy
 #include <Cooling.h>
 #include <Radio.h>
 
+//Helper Functions
+#include <Led.h>
+
 // Modes
 /*
  * Operating (0): For normal operation. Initializes then runs main control function in loop.
@@ -129,9 +132,13 @@ void odrive_estop()
   // Serial.println("ESTOP PRESSED" + String(millis()));
 }
 
+
 void setup()
 {
-  digitalWrite(constant.led_1_pin, HIGH);
+  setup_led();
+  blink_in_series();
+  activate_led(1);
+
   Serial.println("Starting...");
   //-------------Attach E-Stop interrupt-----------------//
   // interrupts();
@@ -165,7 +172,7 @@ void setup()
 
   log_file = SD.open(log_name.c_str(), FILE_WRITE);
 
-  digitalWrite(constant.led_2_pin, HIGH);
+  activate_led(2);
   Log.begin(LOG_LEVEL, &log_file, false);
   Log.notice("Initialization Started - Model: %d " CR, constant.model_number);
   // This is for the data analysis tool to be able to change the log order easily
@@ -207,7 +214,7 @@ void setup()
   // Homing
   if (HOME_ON_STARTUP)
   {
-    digitalWrite(constant.led_4_pin, HIGH);
+    activate_led(4);
     int o_homing[3];
     actuator.homing_sequence(o_homing);
     Serial.println("Homing sequence: " + String(o_homing[0]) + " " + String(o_homing[1]) + " " + String(o_homing[2]));
@@ -227,10 +234,7 @@ void setup()
   Log.notice("status, rpm, roll_frame, act_vel, enc_vel, estop_in, estop_out, dt, enc_pos, rpm_count, s_time, f_time, exp_decay, ref_rpm, o_vol, o_curr, therm1, therm2, therm3" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
-  digitalWrite(constant.led_4_pin, LOW);
-  digitalWrite(constant.led_3_pin, LOW);
-  digitalWrite(constant.led_2_pin, LOW);
-  digitalWrite(constant.led_1_pin, LOW);
+  clear_all_leds();
 }
 
 // OPERATING MODE

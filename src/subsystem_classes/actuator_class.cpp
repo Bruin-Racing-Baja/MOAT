@@ -5,6 +5,7 @@
 #include <queue>
 #include <SoftwareSerial.h>
 #include <TimerThree.h>
+#include "Led.h"
 
 // Print with stream operator
 template <class T>
@@ -61,7 +62,7 @@ int Actuator::init(int odrive_timeout)
   }
 
   // Runs encoder index search to find z index
-  digitalWrite(constant.led_3_pin, HIGH);
+  activate_led(3);
   bool encoder_index_search = odrive.run_state(constant.actuator_motor_number, 6, true, 5);
 
   // If successful, set ODRV to closed loop control
@@ -187,7 +188,7 @@ float Actuator::calc_gearbox_rpm(float dt)
 {
   noInterrupts();
   float rps = float(*m_gb_tooth_count - m_last_gb_tooth_count) / dt;
-  rps *= 6.0/17.0; //    M20: (48/(17))/8  M21: ~(9)/12  
+  rps *= constant.gearbox_to_secondary_ratio; //    M20: (48/(17))/8  M21: (9)/12  
   float rpm = rps * 1000.0 * 60.0;
   m_last_gb_tooth_count = *m_gb_tooth_count;
   interrupts();

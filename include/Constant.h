@@ -8,6 +8,11 @@
 
 #define dancing 13
 
+const int led_1_pin = 28;
+const int led_2_pin = 29;
+const int led_3_pin = 30;
+const int led_4_pin = 31;
+
 struct Constant
 {
   private:
@@ -41,7 +46,8 @@ struct Constant
       {"exponential_filter_alpha", 0.5},
       {"overdrive_ratio", 0.85},
       {"ecvt_max_ratio", 4.31},
-      {"actuator_velocity_allowance", 0.1}
+      {"actuator_velocity_allowance", 0.1},
+      {"gearbox_to_secondary_ratio", (9)/12},
     };
 
     std::map<String, int> int_constants = {
@@ -72,7 +78,8 @@ struct Constant
       {"exponential_filter_alpha", 0.5},
       {"overdrive_ratio", 0.85},
       {"ecvt_max_ratio", 4.25},
-      {"actuator_velocity_wiggle", 1}
+      {"actuator_velocity_wiggle", 1},
+      {"gearbox_to_secondary_ratio", (48/(17))/8},
     };
 
     std::map<String, int> int_constants = {
@@ -142,6 +149,7 @@ struct Constant
   const int gearbox_engage_rpm = engine_engage / ecvt_max_ratio;
   const int gearbox_power_rpm = engine_power / ecvt_max_ratio;
   const int gearbox_overdrive_rpm = engine_power / overdrive_ratio;
+  const float gearbox_to_secondary_ratio = float_constants["gearbox_to_secondary_ratio"];
 
   // Linear Actuator Math
   constexpr static float linear_distance_per_rotation = 0.125;            // inches/rotation
