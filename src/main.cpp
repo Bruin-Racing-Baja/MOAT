@@ -247,6 +247,9 @@ int running_led_cycle = 3000;
 
 void loop()
 {
+  bool error_state = digitalReadFast(2);
+  digitalWriteFast(LED_BUILTIN,error_state);
+
   actuator.control_function(o_control);
   
   if (o_control[STATUS] != 3)
@@ -282,9 +285,6 @@ void loop()
     save_count = 0;
   }
   save_count++;
-
-  if ((millis() / running_led_cycle) % 2) set_led(4, 1);
-  else set_led(4, 0);
 }
 
 // HEADLESS DIAGNOSTIC MODE
