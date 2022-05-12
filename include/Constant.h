@@ -47,7 +47,7 @@ struct Constant
       {"overdrive_ratio", 0.85},
       {"ecvt_max_ratio", 4.31},
       {"actuator_velocity_allowance", 0.1},
-      {"gearbox_to_secondary_ratio", (9)/12},
+      {"gearbox_to_secondary_ratio", 9./12},
     };
 
     std::map<String, int> int_constants = {
@@ -79,7 +79,7 @@ struct Constant
       {"overdrive_ratio", 0.85},
       {"ecvt_max_ratio", 4.25},
       {"actuator_velocity_wiggle", 1},
-      {"gearbox_to_secondary_ratio", (48/(17))/8},
+      {"gearbox_to_secondary_ratio", (48./17)/8},
     };
 
     std::map<String, int> int_constants = {
@@ -165,7 +165,7 @@ struct Constant
   constexpr static float linear_engage_buffer = .2;                       // inches
   constexpr static int32_t encoder_engage_buffer = 
       (linear_engage_buffer) / linear_distance_per_rotation * 4 * 2048;   // encoder count
-  const float cycle_period_minutes = (cycle_period / 1e3) / 60;         // minutes
+  const float cycle_period_minutes = (cycle_period / 1.e3) / 60;         // minutes
   constexpr static int eg_teeth_per_rotation = 88;
 };
 
