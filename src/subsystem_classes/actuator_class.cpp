@@ -100,7 +100,7 @@ int* Actuator::homing_sequence(int* out)
     {
       out[0] = 2;
       odrive.run_state(constant.actuator_motor_number, 1, false, 0);
-      out[1], out[2] = -1;
+      out[1] = out[2] = -1; 
       return out;
     }
   }
@@ -135,7 +135,7 @@ int* Actuator::control_function(int* out)
   float gb_rolling = calc_gearbox_rpm_rolling(gb_rpm);
   float gb_exp_decay = calc_gearbox_rpm_exponential(gb_rpm);
 
-  float ref_rpm = calc_reference_rpm(m_gb_rolling);
+  float ref_rpm =  calc_reference_rpm(gb_rolling);
 
   float error = ref_rpm - eg_rpm;
 
@@ -169,19 +169,19 @@ int* Actuator::control_function(int* out)
 
   float voltage = -1;
   float current = -1e-6;
-  int encoder_pos = -1;
+  int encoder_pos = odrive.get_encoder_pos(1);
   float encoder_vel = -1;
   // Query ODrive for data and report
   printToSerial("getting odrive data");
   //odrive.get_voltage_current_encoder(constant.actuator_motor_number, &voltage, &current, &encoder_pos, &encoder_vel);
-  out[ODRV_VOLT] = odrive.get_voltage();
+  out[ODRV_VOLT] = voltage;
   out[ODRV_CUR] = current * 1.0e6;
   out[ENC_VEL] = encoder_vel;
   out[ENC_POS] = encoder_pos;
 
   // Report control function data
   out[RPM] = eg_rpm;
-  out[RPM_COUNT] = m_control_function_count; //*m_eg_tooth_count;
+  out[RPM_COUNT] = *m_eg_tooth_count;
   out[DT] = dt;
   out[ACT_VEL] = instructed_actuator_velocity;
   out[ESTOP_IN] = inbound_signal;
@@ -190,6 +190,8 @@ int* Actuator::control_function(int* out)
   out[ROLLING_FRAME] = gb_rolling;
   out[EXP_DECAY] = gb_exp_decay;
   out[REF_RPM] = ref_rpm;
+  out[GB_TOOTH_COUNT] = *m_gb_tooth_count;
+  out[GB_RPM] = gb_rpm;
   out[T_STOP] = millis();
   printToSerial("getting odrive data");
   return out;
@@ -200,6 +202,7 @@ int* Actuator::control_function(int* out)
 float Actuator::calc_gearbox_rpm(float dt)
 // Secondary rpm
 {
+  // TODO: CRITICAL SECTION
   noInterrupts();
   float rps = float(*m_gb_tooth_count - m_last_gb_tooth_count) / dt;
   rps *= constant.gearbox_to_secondary_ratio; //    M20: (48/(17))/8  M21: (9)/12  
@@ -257,6 +260,7 @@ float Actuator::calc_reference_rpm(float gearbox_rpm)
     output = constant.engine_power;
   }
   // Region 4: Overdrive zone
+  // TODO: remove?
   else
   {
     output = gearbox_rpm * constant.overdrive_ratio;

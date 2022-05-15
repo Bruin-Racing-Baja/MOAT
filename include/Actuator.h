@@ -39,6 +39,8 @@ public:
   unsigned int EXP_DECAY = 17;
   unsigned int REF_RPM = 18;
   unsigned int ENC_VEL = 19;
+  unsigned int GB_TOOTH_COUNT = 20;
+  unsigned int GB_RPM = 21;
 
 
   Actuator(HardwareSerial& serial, Constant constant, 

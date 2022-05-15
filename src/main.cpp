@@ -87,12 +87,14 @@ unsigned int ROLLING_FRAME = 16;
 unsigned int EXP_DECAY = 17;
 unsigned int REF_RPM = 18;
 unsigned int ENC_VEL = 19;
+unsigned int GB_TOOTH_COUNT = 20;
+unsigned int GB_RPM = 21;
 
 //<--><--><--><-->< Subsystems ><--><--><--><--><-->
 Cooling cooler_o(constant);
 
 // Actuator settings
-#define PRINT_TO_SERIAL false
+#define PRINT_TO_SERIAL 0
 
 // PINS CAR
 #define ENC_A_PIN 2
@@ -231,7 +233,7 @@ void setup()
   Log.verbose("Initialization Complete" CR);
   Log.notice("Starting mode %d" CR, MODE);
   // This message is critical as it sets the order that the analysis script will read the data in
-  Log.notice("status, rpm, roll_frame, act_vel, enc_vel, estop_in, estop_out, dt, enc_pos, rpm_count, s_time, f_time, exp_decay, ref_rpm, o_vol, o_curr, therm1, therm2, therm3" CR);
+  Log.notice("status, rpm, gb_tooth_count, gb_rpm, roll_frame, act_vel, enc_vel, estop_in, estop_out, dt, enc_pos, rpm_count, s_time, f_time, exp_decay, ref_rpm, o_vol, o_curr, therm1, therm2, therm3" CR);
   save_log();
   Serial.println("Starting mode " + String(MODE));
   clear_all_leds();
@@ -255,9 +257,11 @@ void loop()
   if (o_control[STATUS] != 3)
   {
     // For log output format check log statement after log begins in init
-    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F" CR, 
+    Log.notice("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %F, %F, %F, %F" CR, 
     o_control[STATUS], 
     o_control[RPM],
+    o_control[GB_TOOTH_COUNT],
+    o_control[GB_RPM],
     o_control[ROLLING_FRAME],
     o_control[ACT_VEL], 
     o_control[ENC_VEL],
