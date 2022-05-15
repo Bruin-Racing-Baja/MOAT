@@ -208,8 +208,8 @@ void setup()
   // Geartooth Interrupts
   Serial.println(constant.engine_geartooth_pin);
   Serial.println(constant.gearbox_geartooth_pin);
-  pinMode(constant.engine_geartooth_pin, INPUT_PULLUP);
-  pinMode(constant.gearbox_geartooth_pin, INPUT_PULLUP);
+  //pinMode(constant.engine_geartooth_pin, INPUT_PULLUP);
+  //pinMode(constant.gearbox_geartooth_pin, INPUT_PULLUP);
   attachInterrupt(constant.engine_geartooth_pin, external_count_eg_tooth, FALLING);
   attachInterrupt(constant.gearbox_geartooth_pin, external_count_gb_tooth, FALLING);
 
