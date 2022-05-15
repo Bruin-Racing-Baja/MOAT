@@ -202,13 +202,15 @@ int* Actuator::control_function(int* out)
 float Actuator::calc_gearbox_rpm(float dt)
 // Secondary rpm
 {
-  // TODO: CRITICAL SECTION
+  // CRITICAL SECTION
   noInterrupts();
-  float rps = float(*m_gb_tooth_count - m_last_gb_tooth_count) / dt;
+  unsigned long gb_count = *m_gb_tooth_count;
+  interrupts();
+  // END CRITICAL SECTION
+  float rps = float(gb_count - m_last_gb_tooth_count) / dt;
   rps *= constant.gearbox_to_secondary_ratio; //    M20: (48/(17))/8  M21: (9)/12  
   float rpm = rps * 1000.0 * 60.0;
-  m_last_gb_tooth_count = *m_gb_tooth_count;
-  interrupts();
+  m_last_gb_tooth_count = gb_count;
   return rpm;
 }
 
